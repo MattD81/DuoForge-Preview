@@ -136,7 +136,8 @@ async function loadLibrary(){
  const holder=$("library");holder.replaceChildren();
  for(const item of catalog.models){
   const button=document.createElement("button");button.className="library-item";button.textContent=item.name;button.onclick=async()=>{
-   if(item.kind==="primitive"){const obj=make(item.shape,item.name);obj.scale.set(...(item.scale||[1,1,1]));sync();return}\n   if(item.kind==="preset"){addPreset(item.shape,item.name);return}
+   if(item.kind==="primitive"){const obj=make(item.shape,item.name);obj.scale.set(...(item.scale||[1,1,1]));sync();return}
+   if(item.kind==="preset"){addPreset(item.shape,item.name);return}
    if(item.kind!=="glb"||typeof item.path!=="string"||!item.path.startsWith("./models/"))return notice("Otillåten modellsökväg");
    try{notice("Hämtar "+item.name+" …");const gltf=await new GLTFLoader().loadAsync(new URL(item.path,location.href).href);gltf.scene.name=item.name;root.add(gltf.scene);select(gltf.scene);fit(gltf.scene);notice(item.name+" hämtad från GitHub.")}catch(e){notice("Kunde inte hämta modell: "+e.message)}
   };holder.append(button);
