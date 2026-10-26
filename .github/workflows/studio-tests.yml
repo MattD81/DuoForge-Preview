@@ -12,6 +12,7 @@ on:
       - 'tests/wheel-rig-smoke.mjs'
       - 'tests/steering-controls-smoke.mjs'
       - 'tests/render-world-smoke.mjs'
+      - 'tests/render-missions.test.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 concurrency:
@@ -38,12 +39,13 @@ jobs:
           node --check workshop/studio/wheel-rig.mjs
           node --check workshop/studio/render-world.mjs
           node --check workshop/studio/render-environments.mjs
+          node --check workshop/studio/render-missions.mjs
           node --check tests/render-world-smoke.mjs
           node --check tests/wheel-rig-smoke.mjs
           node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
-          node --test tests/living-physics.test.mjs tests/world-planner.test.mjs
+          node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs
       - name: Install browser test dependencies
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
