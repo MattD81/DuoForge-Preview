@@ -58,3 +58,14 @@
  .drive-pad button.gas{font-size:13px}
  .living-play .workspace{height:calc(100dvh - 105px)}
 }
+
+/* Client-only world builder. Uses procedural reusable meshes, never external AI. */
+.world-panel{background:linear-gradient(155deg,#17352f 0%,#101f2f 64%);border-bottom:1px solid #327461}
+.world-panel .mini-pill{font-size:9px;color:#a4f4ca;background:#173a2f;border-color:#388962;white-space:nowrap}
+.world-panel .field-label{color:#cbf3e2}
+.world-panel textarea{width:100%;max-width:100%;min-height:83px;padding:10px;resize:vertical;border:1px solid #3c7764;border-radius:9px;background:#0b1c20;color:#e6fff0;line-height:1.5;font:inherit}
+.world-panel textarea:focus{outline:2px solid #4adbb0}
+.world-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:11px 0}
+.world-presets button{padding:8px 5px;font-size:11px;background:#17342e;border-color:#2a5f51}
+.world-plan{font-size:11px;line-height:1.55;color:#b9edcd;padding:10px;border:1px solid #2c6055;border-radius:9px;margin:10px 0;background:#0b2423}
+.world-panel .row.two button{white-space:normal;font-size:11px;line-height:1.3;min-height:43px}
