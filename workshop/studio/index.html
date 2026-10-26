@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=2">
+<link rel="stylesheet" href="./studio.css?v=3">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -51,6 +51,27 @@
   <main class="viewport">
     <div id="viewportMessage" class="viewport-status" role="status">Redigeraren startar …</div>
     <canvas id="scene" aria-label="Interaktiv 3D-vy"></canvas>
+    <div class="play-topbar">
+      <button id="togglePlay" class="accent" title="Starta eller avsluta spelläge">▶ Spela</button>
+      <span id="playStatus" class="play-status">Byggläge</span>
+    </div>
+    <div id="playToolbar" class="play-toolbar" hidden>
+      <button id="pausePlay">Ⅱ Pausa</button><button id="exitPlay">■ Avsluta spel</button>
+      <span id="controllerStatus">⌨️ Tangentbord / touch</span>
+    </div>
+    <div id="playMode" class="play-mode" hidden>
+      <div class="drive-dashboard" aria-live="off">
+        <div><strong id="speedKmh">0</strong><small>km/h</small></div>
+        <div><strong id="distanceM">0</strong><small>meter</small></div>
+        <div><strong id="elapsedTime">0.0</strong><small>sekunder</small></div>
+        <div><strong id="collisionCount">0</strong><small>kollisioner</small></div>
+      </div>
+      <span id="nearbyDoor" class="door-hint"></span>
+      <div class="drive-pad" aria-label="Spelkontroller för mobil">
+        <div class="drive-direction"><button data-drive="left" aria-label="Styr vänster">◀</button><button data-drive="right" aria-label="Styr höger">▶</button></div>
+        <div class="drive-pedals"><button data-drive="interact" aria-label="Öppna dörr">E</button><button data-drive="brake" aria-label="Bromsa och backa">BROMS</button><button data-drive="gas" class="gas" aria-label="Gasa">GAS</button></div>
+      </div>
+    </div>
     <div class="toolbar">
       <div class="tool-segment" aria-label="Transformverktyg">
         <button id="toolMove" class="active" title="Flytta (G)">Flytta</button>
@@ -104,6 +125,32 @@
         </div>
       </div>
     </section>
+    <section class="panel-section" id="livingObjectsPanel">
+      <div class="section-heading"><h2>Living Objects</h2><span class="mini-pill">PLAY & BUILD</span></div>
+      <p class="hint">Ge dina 3D-objekt beteenden. Testa dem direkt utan server eller AI-kostnad.</p>
+      <div class="row two"><button id="makeVehicle" class="accent-outline">🚗 Gör körbar</button><button id="makeDoor">🚪 Gör till dörr</button></div>
+      <div class="row two"><button id="removeBehavior" disabled>Ta bort beteende</button><button id="addTestTrack">Skapa testbana</button></div>
+      <p class="hint">Valt objekt: <strong id="behaviorType">Inget beteende</strong></p>
+      <div id="vehicleSettings" hidden>
+        <div class="subheading">Fordon <small>värden lagras i GLB som metadata</small></div>
+        <label class="field-label" for="vehiclemaxSpeed">Maxhastighet (m/s)</label>
+        <input id="vehiclemaxSpeed" type="number" min="1" max="60" step="1" value="19">
+        <label class="field-label" for="vehicleacceleration">Acceleration (m/s²)</label>
+        <input id="vehicleacceleration" type="number" min=".5" max="35" step=".5" value="9">
+        <label class="field-label" for="vehiclebraking">Bromskraft (m/s²)</label>
+        <input id="vehiclebraking" type="number" min="1" max="55" step="1" value="16">
+        <label class="field-label" for="vehiclesteeringDegrees">Max styrvinkel (grader)</label>
+        <input id="vehiclesteeringDegrees" type="number" min="5" max="50" step="1" value="28">
+        <div class="row two">
+          <div><label class="field-label" for="vehiclewheelBase">Hjulbas (m)</label><input id="vehiclewheelBase" type="number" min=".5" max="12" step=".1" value="2.2"></div>
+          <div><label class="field-label" for="vehiclewheelRadius">Hjulradie (m)</label><input id="vehiclewheelRadius" type="number" min=".05" max="3" step=".05" value=".42"></div>
+        </div>
+        <p id="wheelDetection" class="hint">Identifierar hjul …</p>
+      </div>
+      <div id="doorSettings" hidden><p class="hint">I spelläge: kör nära dörren och tryck E, △ på gamepad eller mobilknappen E för att öppna och stänga den.</p></div>
+      <div class="row two"><button id="playFromPanel" class="accent">▶ Testkör i 3D-vyn</button></div>
+      <p class="hint">W/A/S/D eller piltangenter. Gamepad: vänster styrspak och avtryckare. Mobil: skärmknappar. Pausa med P.</p>
+    </section>
     <section class="panel-section">
       <div class="section-heading"><h2>Scen & export</h2></div>
       <div class="row two"><button id="screenshot">Spara PNG-bild</button><button id="downloadProject">Projektfil (.json)</button></div>
@@ -120,5 +167,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=2"></script>
+<script type="module" src="./studio.mjs?v=3"></script>
 </body></html>
