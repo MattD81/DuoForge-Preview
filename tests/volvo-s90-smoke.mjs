@@ -27,6 +27,7 @@ try{
   const THREE=await import("three");
   const {S90_REFERENCE,createVolvoS90}=await import("./volvo-s90-model.mjs");
   const {inspectWheels,createWheelRig}=await import("./wheel-rig.mjs");
+  const {optimizeRenderPreview}=await import("./preview-batch.mjs");
   const car=createVolvoS90({quality:"performance",interior:"black",paint:"#244e75"});
   const box=new THREE.Box3().setFromObject(car),size=box.getSize(new THREE.Vector3());
   const named=[],materials=new Set(),groups=[];
@@ -38,6 +39,9 @@ try{
   const rig=createWheelRig(car,{forwardSign:-1});
   rig.step({distance:.4,steerAngleDegrees:11,wheelRadius:.365});
   const wheels=rig.wheels.map(w=>({key:w.key,axis:w.axis,steering:w.steer.rotation.y,roll:w.spin.rotation.x}));
+  const optimized=optimizeRenderPreview({model:car,wheelRig:rig,quality:"low"});
+  const savedDrawCalls=optimized.drawsSaved;
+  optimized.dispose();
   rig.dispose();
   const restored=car.children.every(node=>!node.name.startsWith("Temporary"));
   const more=createVolvoS90({quality:"detailed"});
@@ -46,7 +50,7 @@ try{
   more.traverse(obj=>{if(obj.isMesh)detailed++});
   return {length:S90_REFERENCE.length,wheelbase:S90_REFERENCE.wheelbase,size:size.toArray(),
    body:car.userData.duoforgeS90,vehicle:car.userData.duoforgeLiving,
-   named,materials:[...materials],wheels,restored,performance,detailed,partCount:analysis.partCount};
+   named,materials:[...materials],wheels,restored,performance,detailed,partCount:analysis.partCount,savedDrawCalls};
  });
  assert.equal(info.length,4.969);
  assert.equal(info.wheelbase,2.941);
@@ -63,6 +67,7 @@ try{
  assert.ok(info.named.some(n=>n.includes("seat")));
  assert.ok(info.named.some(n=>n.includes("Charging port")));
  assert.equal(info.restored,true);
+ assert.ok(info.savedDrawCalls>70,"Preview batching removes excessive per-frame S90 draw calls");
  assert.ok(info.detailed>info.performance,"showroom version has extra details");
  console.log("PASS: dimensioned S90 has 4 correct X-axle wheels, cabin, lamps, charging port and detailed LOD");
 
