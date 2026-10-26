@@ -7,7 +7,7 @@ const FIXED_PART=/caliper|insignia|fender|wheel arch|mirror|steering wheel|intak
 const TIRE_PART=/\btire\b|\btyre\b|sidewall|wheel[_-]/i;
 
 export function classifyWheelName(name){
- const n=String(name||"");
+ const n=String(name||"").replace(/[_-]+/g," "); // GLTFLoader sanitizes spaces to underscores
  if(!WHEEL_PART.test(n)||FIXED_PART.test(n))return null;
  let side=null,axle=null;
  if(/\bleft\b/i.test(n))side="left";
@@ -25,7 +25,7 @@ export function classifyWheelMesh(mesh,vehicle){
  let node=mesh;
  let merged=null;
  while(node&&node!==vehicle){
-  if(FIXED_PART.test(node.name||""))return null;
+  if(FIXED_PART.test(String(node.name||"").replace(/[_-]+/g," ")))return null;
   const part=classifyWheelName(node.name);
   if(part){
    merged={
