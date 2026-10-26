@@ -2,6 +2,7 @@
 // Built from original procedural geometry using published vehicle dimensions.
 // NOT Volvo Cars CAD, and NOT Adam Wiese/lazercar's high-poly CC BY model.
 import * as THREE from "three";
+import {RoundedBoxGeometry} from "three/addons/geometries/RoundedBoxGeometry.js";
 import {createSurfaceLibrary} from "./procedural-materials.mjs";
 
 export const S90_REFERENCE=Object.freeze({
@@ -24,6 +25,10 @@ function add(group,geo,material,name,pos,rotation){
 function box(parent,material,name,w,h,d,x,y,z,rotation){
  return add(parent,new THREE.BoxGeometry(w,h,d),material,name,[x,y,z],rotation);
 }
+function roundedBox(parent,material,name,w,h,d,x,y,z,r=.05){
+ const radius=Math.max(.005,Math.min(r,w*.24,h*.24,d*.24));
+ return add(parent,new RoundedBoxGeometry(w,h,d,3,radius),material,name,[x,y,z]);
+}
 function cylinder(parent,material,name,rad,height,segments,x,y,z,rotation){
  return add(parent,new THREE.CylinderGeometry(rad,rad,height,segments),material,name,[x,y,z],rotation);
 }
@@ -44,7 +49,8 @@ function polygon(parent,points,material,name){
  geo.setAttribute("position",new THREE.Float32BufferAttribute(vertices,3));
  geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));
  geo.computeVertexNormals();
- return add(parent,geo,material,name);
+ const twoSided=material.clone();twoSided.side=THREE.DoubleSide;
+ return add(parent,geo,twoSided,name);
 }
 function loft(parent,stations,profiles,material,name){
  // Closed longitudinal hull. Stations are ordered -Z to +Z.
@@ -132,14 +138,14 @@ function cabinInterior(root,m,quality){
   const seat=new THREE.Group();seat.name=(row<0?"Front":"Rear")+(side<0?" left":" right")+" seat";
   seat.position.set(side*.49,0,row);
   interior.add(seat);
-  box(seat,m.seat,"Seat cushion",.58,.18,.63,0,.54,.04);
-  const back=box(seat,m.seat,"Seat backrest",.6,.65,.145,0,.88,.28);
+  roundedBox(seat,m.seat,"Seat cushion",.58,.18,.63,0,.54,.04,.06);
+  const back=roundedBox(seat,m.seat,"Seat backrest",.6,.65,.145,0,.88,.28,.045);
   back.rotation.x=-.16;
-  box(seat,m.seat,"Headrest",.39,.23,.17,0,1.31,.3);
-  box(seat,m.seatSeam,"Center leather stitched bolster",.4,.045,.48,0,.65,.03);
+  roundedBox(seat,m.seat,"Headrest",.39,.23,.17,0,1.31,.3,.055);
+  roundedBox(seat,m.seatSeam,"Center leather stitched bolster",.4,.045,.48,0,.65,.03,.012);
   for(const sx of [-.25,.25]){
-   box(seat,m.seatSeam,"Outer side bolster",.06,.11,.55,sx,.65,.06);
-   box(seat,m.seatSeam,"Back support side",.06,.47,.16,sx,.93,.27);
+   roundedBox(seat,m.seatSeam,"Outer side bolster",.06,.11,.55,sx,.65,.06,.012);
+   roundedBox(seat,m.seatSeam,"Back support side",.06,.47,.16,sx,.93,.27,.012);
   }
   if(quality!=="performance"){
    for(let i=0;i<6;i++)box(seat,m.seatSeam,"Fine seat stitching "+i,.006,.002,.31,0,.657,-.17+i*.085);
