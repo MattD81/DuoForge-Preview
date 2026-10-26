@@ -3,6 +3,24 @@
   "notes": "Öppet bibliotek med startformer. Lägg GLB-filer under workshop/models/ och komplettera katalogen med kind: glb och path: ./models/fil.glb.",
   "models": [
     {
+      "id": "duoforge-cart-starter",
+      "name": "DuoForge Kart – startmodell",
+      "kind": "preset",
+      "shape": "cart"
+    },
+    {
+      "id": "house-starter",
+      "name": "Hus med tak och fönster",
+      "kind": "preset",
+      "shape": "house"
+    },
+    {
+      "id": "tree-starter",
+      "name": "Tall – spelmiljö",
+      "kind": "preset",
+      "shape": "tree"
+    },
+    {
       "id": "cube",
       "name": "Byggkloss",
       "kind": "primitive",
