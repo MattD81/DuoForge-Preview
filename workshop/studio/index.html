@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=7">
+<link rel="stylesheet" href="./studio.css?v=8">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -184,6 +184,27 @@
         </div>
       </div>
     </section>
+    <section class="panel-section material-lab-panel" id="materialLabPanel">
+      <div class="section-heading"><h2>✦ Material Lab</h2><span class="mini-pill">PBR • TEXTUR</span></div>
+      <p class="hint">Texturera modellen med riktiga 3D-material som har ytstruktur, ljusreflektioner och lack. Gratis, direkt i webbläsaren.</p>
+      <div id="surfaceTarget" class="material-target">Markera ett objekt i scenen</div>
+      <div class="subheading">Materialbibliotek <small id="surfacePresetName">Billack / metallic</small></div>
+      <div id="materialSwatches" class="surface-swatches" aria-label="Välj PBR-material"></div>
+      <label class="field-label surface-label" for="surfaceTint">Materialfärg</label>
+      <input id="surfaceTint" type="color" value="#2465ba" aria-label="Välj materialfärg">
+      <div id="surfaceColorHint" class="hint">PBR · metall och ytstruktur</div>
+      <label class="range-line surface-label">Texturens skala
+        <input id="surfaceTile" type="range" min=".5" max="12" value="2" step=".5">
+        <output id="surfaceTileOut">2.0×</output>
+      </label>
+      <button id="applySurface" class="accent" disabled>✦ Applicera material på markerat</button>
+      <divider></divider>
+      <div class="subheading">Smart Finish</div>
+      <p class="hint">Identifierar bland annat däck, glas, fälgar, lack, trä och byggnader via modellens delnamn. Befintliga importerade bildtexturer skyddas som standard.</p>
+      <label class="check-line"><input type="checkbox" id="surfaceOverwrite"> Ersätt även befintliga bildtexturer</label>
+      <button id="autoSurface" disabled>✨ Auto-texturera modellen</button>
+      <p id="surfaceStatus" class="surface-status" role="status">Välj ett material eller auto-texturera den markerade modellen.</p>
+    </section>
     <section class="panel-section" id="livingObjectsPanel">
       <div class="section-heading"><h2>Living Objects</h2><span class="mini-pill">PLAY & BUILD</span></div>
       <p class="hint">Ge dina 3D-objekt beteenden. Testa dem direkt utan server eller AI-kostnad.</p>
@@ -247,5 +268,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=7"></script>
+<script type="module" src="./studio.mjs?v=8"></script>
 </body></html>
