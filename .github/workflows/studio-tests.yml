@@ -5,6 +5,8 @@ on:
       - 'workshop/studio/**'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
+      - 'tests/living-objects-smoke.mjs'
+      - 'tests/living-physics.test.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 permissions:
@@ -21,7 +23,11 @@ jobs:
       - name: JavaScript syntax check
         run: |
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/living-objects.mjs
+          node --check workshop/studio/living-physics.mjs
           node --check tests/studio-smoke.mjs
+          node --check tests/living-objects-smoke.mjs
+          node --test tests/living-physics.test.mjs
       - name: Install browser test dependencies
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
@@ -30,6 +36,8 @@ jobs:
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
+      - name: Test Living Objects and Play & Build in Chromium
+        run: node tests/living-objects-smoke.mjs
       - name: Upload screenshots if tests ran
         uses: actions/upload-artifact@v4
         if: always()
@@ -38,4 +46,6 @@ jobs:
           path: |
             studio-desktop.png
             studio-mobile.png
+            living-desktop.png
+            living-mobile.png
           if-no-files-found: ignore
