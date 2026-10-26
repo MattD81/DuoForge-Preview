@@ -393,12 +393,12 @@ function buildDoors(root,m){
    side+" "+kind+" premium speaker grill",[-sign*.12,.653,mid-.3],[0,Math.PI/2,0]);
   if(isFront){
    const mirror=new THREE.Group();mirror.name=side+" door mirror with indicator";
-   mirror.position.set(sign*.097,1.071,.10);door.add(mirror);
+   mirror.position.set(sign*.022,1.071,.10);door.add(mirror);
    const cap=add(mirror,new THREE.SphereGeometry(.092,14,10),m.paint,side+" aerodynamic door mirror",
-    [sign*.042,.044,0]);
-   cap.scale.set(1.45,.65,.88);
-   box(mirror,m.glassDark,side+" mirror glass",.012,.072,.12,sign*.116,.043,.016);
-   box(mirror,m.indicator,side+" mirror indicator",.015,.013,.14,sign*.145,.055,-.01);
+    [sign*.034,.044,0]);
+   cap.scale.set(1.08,.65,.88);
+   box(mirror,m.glassDark,side+" mirror glass",.012,.072,.12,sign*.072,.043,.016);
+   box(mirror,m.indicator,side+" mirror indicator",.015,.013,.14,sign*.087,.055,-.01);
   }
   doors.push({name:side+" "+kind,side,kind,pivot:hinge,open:0});
  }
