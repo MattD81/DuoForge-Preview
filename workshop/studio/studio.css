@@ -69,3 +69,84 @@
 .world-presets button{padding:8px 5px;font-size:11px;background:#17342e;border-color:#2a5f51}
 .world-plan{font-size:11px;line-height:1.55;color:#b9edcd;padding:10px;border:1px solid #2c6055;border-radius:9px;margin:10px 0;background:#0b2423}
 .world-panel .row.two button{white-space:normal;font-size:11px;line-height:1.3;min-height:43px}
+
+/* DuoForge Render World: renderer, levels and UI are ephemeral, not serialized. */
+.render-launch{position:absolute;top:15px;right:188px;z-index:6;display:flex;gap:7px;max-width:calc(100% - 15px)}
+.render-launch button.render-primary{background:linear-gradient(110deg,#166a66,#239e77);border:1px solid #4de3bb;color:#fafff7;font-weight:800;white-space:nowrap;box-shadow:0 6px 24px #011c24a8}
+.render-launch button:hover{background:#25866b}
+.render-panel{background:linear-gradient(145deg,#153743,#142233);border-bottom:1px solid #2b6e7d}
+.render-panel .mini-pill{font-size:9px;white-space:nowrap}
+.render-panel select{width:100%;background:#0d2030;border:1px solid #365b6b;border-radius:8px;padding:10px;color:#e3fff7;margin:4px 0 13px;font:inherit}
+.render-panel label{display:block}
+.render-world-overlay{position:absolute;inset:0;pointer-events:none;z-index:8}
+.render-world-top{position:absolute;top:10px;left:12px;right:12px;display:flex;align-items:center;justify-content:flex-start;gap:7px;flex-wrap:wrap;background:#0b1b2fe8;border:1px solid #375b68;padding:8px;border-radius:13px;box-shadow:0 10px 35px #0009;pointer-events:auto;backdrop-filter:blur(10px)}
+.render-head{display:flex;flex-direction:column;min-width:140px;margin:0 6px;color:#defdef}
+.render-head strong{font-size:14px;color:#75f3c6}.render-head span{font-size:10px;color:#c0d5e8;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.render-world-top label{display:flex;flex-direction:column;gap:4px;color:#bdd8e7;font-size:10px}
+.render-world-top select{background:#152c3d;color:#fff;border:1px solid #497385;padding:7px 6px;border-radius:8px;max-width:150px;font:inherit;font-size:12px}
+.render-world-top button{padding:8px;font-size:11px;white-space:nowrap}
+.render-exit{margin-left:auto;background:#9d4654;color:#fff;border-color:#cf6a7d;font-weight:750}
+.render-world-hud{position:absolute;top:120px;left:17px;max-width:270px;background:#0c1c2fdc;border:1px solid #447185;border-radius:14px;padding:13px;color:#e7fafb;box-shadow:0 10px 30px #0007;backdrop-filter:blur(7px);pointer-events:auto}
+.render-hud-heading{display:flex;justify-content:space-between;gap:15px;font-size:11px;color:#b6eed9}
+#renderMissionDescription{font-size:11px;line-height:1.55;color:#b4c9dc;margin:10px 0}
+.render-hud-stats{display:flex;gap:12px;margin:10px 0}
+.render-hud-stats>div{min-width:56px}.render-hud-stats strong{display:block;font-size:15px;font-variant-numeric:tabular-nums;color:white}
+.render-hud-stats small{font-size:9px;color:#9bb8c5}
+#renderMissionStatus{font-size:11px;margin:8px 0;color:#86f4be}
+#renderResetMission{padding:6px 9px;font-size:11px}
+.render-camera-tip{margin-top:8px;font-size:10px;color:#abc3d6}
+.render-interact-hint{position:absolute;top:60%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#d3ffe8;text-shadow:0 2px 5px #000}
+.render-drive{position:absolute;bottom:20px;left:15px;right:15px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;pointer-events:none}
+.render-direction,.render-pedals{display:flex;gap:9px;align-items:flex-end;pointer-events:auto}
+.render-drive button{touch-action:none;user-select:none;width:66px;height:67px;background:#183646dd;border:2px solid #88b5b6;border-radius:19px;font-size:19px;font-weight:850;box-shadow:0 7px 25px #0008;color:white}
+.render-drive button[data-preview-drive="brake"]{border-color:#fa977c;font-size:11px}
+.render-drive button[data-preview-drive="gas"]{border-color:#5cfdc2;background:#24795fe0;font-size:13px}
+.render-drive button[data-preview-drive="interact"]{font-size:13px;width:52px;height:51px;border-color:#c5b0e8}
+.render-drive button.held{background:#c7ffdc;color:#035838;transform:scale(.96)}
+.render-world-active .workspace{grid-template-columns:0 minmax(0,1fr) 0}
+.render-world-active .sidebar{display:none}
+.render-world-active .viewport{grid-column:2;background:#12283b}
+.render-world-active .viewport .toolbar,.render-world-active .viewport-bottom,.render-world-active .viewport-help,.render-world-active .viewport .play-topbar,.render-world-active .viewport .render-launch{display:none!important}
+.render-world-active .topbar .top-actions,.render-world-active .topbar .project-name{pointer-events:none;opacity:.48}
+.render-world-active .viewport canvas{cursor:grab}
+.render-world-active .viewport canvas:active{cursor:grabbing}
+[hidden]{display:none!important}
+@media(max-width:1420px){
+ .render-launch{right:13px;top:62px}.render-world-hud{top:130px}
+ .render-world-top{gap:5px}
+ .render-world-top select{max-width:115px}
+ .render-head{min-width:100px}
+}
+@media(max-width:960px){
+ .render-world-active .workspace{display:block;height:calc(100dvh - 108px)}
+ .render-world-active .viewport{height:100%;min-height:0}
+ .render-launch{top:15px;right:12px}
+ .render-world-top{align-items:flex-end;top:5px;left:5px;right:5px;gap:4px;padding:6px}
+ .render-world-top label{font-size:9px}
+ .render-world-top select{max-width:110px;font-size:11px;padding:5px 3px}
+ .render-world-top button{padding:6px}
+ .render-head{display:none}
+ .render-world-hud{top:112px;left:8px;max-width:235px;padding:10px}
+}
+@media(max-width:580px){
+ .render-launch{right:80px;left:8px;top:10px}
+ .render-launch button{font-size:11px;padding:6px 9px}
+ .render-world-active .workspace{height:calc(100dvh - 107px)}
+ .render-world-top{justify-content:space-between}
+ .render-world-top select{max-width:100px}
+ .render-world-top button{font-size:10px}
+ .render-exit{margin-left:0}
+ .render-world-hud{top:113px;left:7px;max-width:195px;padding:8px}
+ .render-hud-heading{font-size:10px}
+ #renderMissionDescription{display:none}
+ .render-hud-stats{gap:5px}
+ .render-hud-stats strong{font-size:13px}
+ .render-hud-stats small{font-size:8px}
+ #renderMissionStatus{font-size:10px}
+ .render-camera-tip{display:none}
+ .render-drive{bottom:10px;left:8px;right:8px;gap:6px}
+ .render-direction,.render-pedals{gap:6px}
+ .render-drive button{width:53px;height:60px;border-radius:16px;font-size:17px}
+ .render-drive button[data-preview-drive="interact"]{width:42px;height:45px}
+ .render-drive button[data-preview-drive="gas"]{font-size:11px}
+}
