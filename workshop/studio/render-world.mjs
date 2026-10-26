@@ -402,7 +402,7 @@ export function initRenderWorld(ctx){
   ["renderQualitySelect",value=>{if(active)applyQuality(value);else{quality=value;syncChoices()}}],
   ["renderCamera",chooseCamera],
   ["renderCameraSelect",chooseCamera]
- ])$(id).onchange=event=>handler(event.target.value);
+ ])$(id).onchange=event=>{handler(event.target.value);event.target.blur();};
  syncChoices();
  return {start,stop,update,isActive,resize,render};
 }
