@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'workshop/studio/**'
+      - 'index.html'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
@@ -12,6 +13,7 @@ on:
       - 'tests/wheel-rig-smoke.mjs'
       - 'tests/steering-controls-smoke.mjs'
       - 'tests/render-world-smoke.mjs'
+      - 'tests/ocean-world-smoke.mjs'
       - 'tests/render-missions.test.mjs'
       - 'tests/surface-classifier.test.mjs'
       - 'tests/material-lab-smoke.mjs'
@@ -41,6 +43,9 @@ jobs:
           node --check workshop/studio/wheel-rig.mjs
           node --check workshop/studio/render-world.mjs
           node --check workshop/studio/render-environments.mjs
+          node --check workshop/studio/ocean-water.mjs
+          node --check workshop/studio/ocean-scene.mjs
+          node --check tests/ocean-world-smoke.mjs
           node --check workshop/studio/render-missions.mjs
           node --check workshop/studio/procedural-materials.mjs
           node --check workshop/studio/material-lab.mjs
@@ -58,6 +63,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Test Ocean Render World waves, storm, preview, desktop and mobile
+        run: node tests/ocean-world-smoke.mjs
       - name: Test PBR Material Lab and real GLB embedded texture roundtrip
         run: node tests/material-lab-smoke.mjs
       - name: Test render-world environments, controls and preview restoration
@@ -85,6 +92,9 @@ jobs:
             world-builder-desktop.png
             render-world-desktop.png
             render-world-mobile.png
+            ocean-render-world-desktop.png
+            ocean-sunset.png
+            ocean-render-world-mobile.png
             material-world-desktop.png
             material-lab-mobile.png
           if-no-files-found: ignore
