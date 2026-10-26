@@ -346,7 +346,11 @@ export function initRenderWorld(ctx){
   }
   checkInteract(controls.interact||pad?.interact);
   if(car)checkpointUpdate();
-  if(++frame%9===0)updateHUD();
+  // Update driving HUD on every simulation step. Large high-detail GLBs can
+  // reduce SwiftShader/mobile frame rates: waiting nine frames left speed stuck
+  // at 0 km/h even while the car was already moving.
+  if(car&&Math.abs(simulation.state.speed)>.01)updateHUD();
+  else if(++frame%9===0)updateHUD();
   environment?.update?.(sessionTime,step);
  }
  function onKey(event,pressed){
