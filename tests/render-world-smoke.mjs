@@ -43,13 +43,21 @@ try{
  await page.locator("#renderCameraSelect").selectOption("follow");
  console.log("PASS: orbit, cinematic, free and follow camera modes are available");
 
- await page.locator("#renderScreenshot").click();
- const imageDownload=await page.waitForEvent("download");
+ const [imageDownload]=await Promise.all([page.waitForEvent("download"),page.locator("#renderScreenshot").click()]);
  assert.match(imageDownload.suggestedFilename(),/racetrack\.png$/);
  console.log("PASS: rendered environment PNG screenshot download works");
 
+ await page.locator("#scene").click({position:{x:650,y:430}});
  await page.keyboard.down("w");
- await page.waitForFunction(()=>document.querySelector("#renderCheckpointCount")?.textContent?.startsWith("1/"),{timeout:13000});
+ await page.waitForTimeout(1600);
+ console.log("DEBUG rendered drive",JSON.stringify(await page.evaluate(()=>({
+  speed:document.querySelector("#renderSpeed")?.textContent,
+  checkpoint:document.querySelector("#renderCheckpointCount")?.textContent,
+  camera:document.querySelector("#renderCameraSelect")?.value,
+  focus:document.activeElement?.tagName,
+  mission:document.querySelector("#renderMissionStatus")?.textContent
+ }))));
+ await page.waitForFunction(()=>document.querySelector("#renderCheckpointCount")?.textContent?.startsWith("1/"),null,{timeout:16000});
  await page.keyboard.up("w");
  assert.match(await page.locator("#renderMissionStatus").textContent(),/Kör igenom/);
  console.log("PASS: driving the kart crosses a real checkpoint in rendered world");
