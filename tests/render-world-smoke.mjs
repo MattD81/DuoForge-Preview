@@ -66,6 +66,11 @@ try{
  }
 
  await page.locator("#scene").click({position:{x:650,y:430}});
+ console.log("DEBUG before driving",JSON.stringify(await page.evaluate(()=>({
+  kind:document.querySelector("#renderMissionKind")?.textContent,
+  time:document.querySelector("#renderTime")?.textContent,
+  body:document.body.className
+ }))));
  await page.keyboard.down("w");
  await page.waitForTimeout(1600);
  console.log("DEBUG rendered drive",JSON.stringify(await page.evaluate(()=>({
@@ -73,7 +78,11 @@ try{
   checkpoint:document.querySelector("#renderCheckpointCount")?.textContent,
   camera:document.querySelector("#renderCameraSelect")?.value,
   focus:document.activeElement?.tagName,
-  mission:document.querySelector("#renderMissionStatus")?.textContent
+  mission:document.querySelector("#renderMissionStatus")?.textContent,
+  time:document.querySelector("#renderTime")?.textContent,
+  source:document.querySelector("#renderMissionKind")?.textContent,
+  controlsVisible:getComputedStyle(document.querySelector("#renderDrivingControls")).display,
+  errors:window.__previewErrors||[]
  }))));
  await page.waitForFunction(()=>document.querySelector("#renderCheckpointCount")?.textContent?.startsWith("1/"),null,{timeout:16000});
  await page.keyboard.up("w");
