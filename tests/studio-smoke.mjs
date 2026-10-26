@@ -31,12 +31,24 @@ try{
  const [glb]=await Promise.all([page.waitForEvent("download"),page.locator("#exportGLB").click()]);
  assert.match(glb.suggestedFilename(),/\.glb$/);
  console.log("PASS: GLB export downloads");
+ const filePath=await glb.path();
+ await page.locator("#importFile").setInputFiles(filePath);
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="4");
+ console.log("PASS: exported GLB can be re-imported and edited");
+
  await page.locator("#saveProject").click();
  await page.waitForFunction(()=>document.querySelector("#saveIndicator")?.textContent.includes("Sparad lokalt"));
  await page.locator("#openProject").click();
  await page.waitForFunction(()=>document.querySelector("#savedProjects")?.textContent.includes("Min 3D-scen"));
  console.log("PASS: local IndexedDB project save/list");
- await page.locator("#projectDialog button[value=cancel]").click();
+ page.on("dialog",dialog=>dialog.accept());
+ await page.locator("#savedProjects .saved-row button").first().click();
+ await page.waitForFunction(()=>document.querySelector("#projectDialog")?.open===false);
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1" || document.querySelector("#objectCount")?.textContent==="4");
+ assert.match(await page.locator("#saveIndicator").textContent(),/Sparad lokalt/);
+ console.log("PASS: stored GLB project can be reopened");
+
+ 
  const [json]=await Promise.all([page.waitForEvent("download"),page.locator("#downloadProject").click()]);
  assert.match(json.suggestedFilename(),/\.duoforge\.json$/);
  console.log("PASS: editor project JSON download");
