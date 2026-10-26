@@ -40,7 +40,14 @@ try{
  });
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
  await page.locator("#makeVehicle").click();
- await page.waitForFunction(()=>document.querySelector("#wheelDetection")?.textContent.includes("4 hjulgrupper"));
+ await page.waitForTimeout(300);
+ console.log("DEBUG steering fixture",JSON.stringify(await page.evaluate(()=>({
+  detection:document.querySelector("#wheelDetection")?.textContent,
+  behavior:document.querySelector("#behaviorType")?.textContent,
+  status:document.querySelector("#viewportMessage")?.textContent,
+  hierarchy:document.querySelector("#hierarchy")?.textContent?.slice(0,700)
+ }))));
+ await page.waitForFunction(()=>document.querySelector("#wheelDetection")?.textContent.includes("4 hjulgrupper"),{timeout:3000});
  assert.match(await page.locator("#wheelDetection").textContent(),/Framåt −Z/);
  const measuredWheelbase=Number(await page.locator("#vehiclewheelBase").inputValue());
  assert.ok(Math.abs(measuredWheelbase-2.87)<.01,"Inferred Vortex wheelbase from real-shaped geometry");
