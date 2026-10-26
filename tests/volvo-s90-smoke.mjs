@@ -110,9 +110,21 @@ try{
  assert.match(await page.locator("#renderMissionKind").textContent(),/Fordonstest/);
  await page.screenshot({path:"volvo-s90-showroom.png"});
  await page.locator("#renderWorldSelect").selectOption("racetrack");
+ await page.locator("#renderQualitySelect").selectOption("low");
  await page.locator("#renderCameraSelect").selectOption("follow");
+ await page.locator("#scene").click({position:{x:640,y:420}});
  await page.keyboard.down("w");
- await page.waitForFunction(()=>parseInt(document.querySelector("#renderSpeed")?.textContent||"0",10)>0,{timeout:16000});
+ await page.waitForTimeout(2100);
+ console.log("DEBUG S90 drive",JSON.stringify(await page.evaluate(()=>({
+   speed:document.querySelector("#renderSpeed")?.textContent,
+   time:document.querySelector("#renderTime")?.textContent,
+   mode:document.querySelector("#renderCameraSelect")?.value,
+   quality:document.querySelector("#renderQualitySelect")?.value,
+   car:document.querySelector("#renderMissionKind")?.textContent,
+   active:document.body.classList.contains("render-world-active"),
+   focus:document.activeElement?.tagName
+ }))));
+ await page.waitForFunction(()=>parseInt(document.querySelector("#renderSpeed")?.textContent||"0",10)>0,null,{timeout:14000});
  await page.keyboard.up("w");
  await page.screenshot({path:"volvo-s90-track.png"});
  await page.locator("#renderExit").click();
