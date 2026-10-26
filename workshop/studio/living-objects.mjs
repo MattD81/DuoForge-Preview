@@ -149,7 +149,8 @@ export function initLivingObjects(ctx){
   const action=button.dataset.drive;
   button.addEventListener("pointerdown",event=>{
    if(!runtime.active)return;event.preventDefault();
-   button.setPointerCapture(event.pointerId);input[action]=true;button.classList.add("held");
+   try{button.setPointerCapture(event.pointerId)}catch{ /* Safari or synthetic touch may not permit capture */ }
+   input[action]=true;button.classList.add("held");
   });
   for(const name of ["pointerup","pointercancel","lostpointercapture"]){
    button.addEventListener(name,()=>{input[action]=false;button.classList.remove("held")});
