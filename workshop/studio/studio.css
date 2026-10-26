@@ -150,3 +150,29 @@
  .render-drive button[data-preview-drive="interact"]{width:42px;height:45px}
  .render-drive button[data-preview-drive="gas"]{font-size:11px}
 }
+
+/* Material Lab: responsive locally generated high-resolution PBR swatches */
+.material-lab-panel{background:linear-gradient(145deg,#14293c 0%,#151f30 66%,#182b36);border-bottom:1px solid #2f6871}
+.material-lab-panel>.hint{font-size:11px;line-height:1.55}
+.material-lab-panel .mini-pill{background:#164b42;border:1px solid #31977a;color:#adf9d7;white-space:nowrap;font-size:9px}
+.material-target{padding:9px 10px;background:#091d2a;border:1px solid #375a63;border-radius:9px;color:#b9f4e1;font-size:11px;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.surface-swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 15px}
+.surface-swatch{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:9px 3px 8px;min-height:75px;background:#0c1e2d;border:1px solid #345168;border-radius:9px;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.surface-swatch[aria-pressed="true"]{background:#10463f;border:2px solid #55e0bb;box-shadow:0 0 18px #27be932b}
+.surface-swatch:hover{transform:translateY(-2px);background:#1d394b}
+.swatch-dot{display:block;flex:none;width:39px;height:39px;border-radius:50%;box-shadow:inset -5px -7px 9px #0008,inset 2px 2px 5px #ffffff39,0 3px 10px #0007;border:1px solid #ffffff35}
+.surface-swatch small{display:block;font-size:9px;line-height:1.2;max-width:95%;text-align:center;color:#d1e3e8}
+.material-lab-panel #surfaceTint{width:100%;height:40px;background:#132a36;border:1px solid #446779;border-radius:9px;margin:4px 0 7px;cursor:pointer}
+.material-lab-panel #applySurface,.material-lab-panel #autoSurface{width:100%;white-space:normal;min-height:38px;line-height:1.25}
+.material-lab-panel #autoSurface{color:#dcf6e8;border-color:#48ad9a;background:#1d4c4f;font-weight:750}
+.material-lab-panel #autoSurface:hover{background:#266862}
+.material-lab-panel button:disabled{opacity:.5}
+.material-lab-panel .surface-label{margin:11px 0 6px}
+.material-lab-panel #surfaceColorHint{margin:5px 0 12px}
+.material-lab-panel #surfaceTileOut{min-width:42px}
+.material-lab-panel hr{margin:17px 0 12px;border:0;border-top:1px solid #2b5868}
+.material-lab-panel .check-line{font-size:11px;line-height:1.35;margin:11px 0;align-items:flex-start}
+.material-lab-panel .check-line input{margin-top:2px}
+.surface-status{margin:10px 0 0;min-height:38px;color:#9fdbce;font-size:11px;line-height:1.5;background:#122a36;padding:9px;border-radius:9px;border:1px solid #2e5666}
+@media(max-width:960px){.surface-swatches{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:580px){.surface-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}.surface-swatch{min-height:76px}}
