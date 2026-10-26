@@ -24,6 +24,8 @@ export function sampleCameraPath(keyframes,progress,{ease=true}={}){
  if(frames.length===0)throw Error("En film måste ha minst två kamerapositioner.");
  if(frames.length===1)return {...frames[0]};
  const t=clamp(Number(progress)||0,0,1);
+ if(t===0)return {...frames[0]};
+ if(t===1)return {...frames.at(-1)};
  const u=ease?(t*t*(3-2*t)):t;
  const n=frames.length-1,i=Math.min(n-1,Math.floor(u*n));
  const f=clamp(u*n-i,0,1),a=frames[Math.max(0,i-1)],b=frames[i],c=frames[i+1],d=frames[Math.min(n,i+2)];
