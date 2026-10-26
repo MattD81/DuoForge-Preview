@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "notes": "Öppet bibliotek med startformer. Lägg GLB-filer under workshop/models/ och komplettera katalogen med kind: glb och path: ./models/fil.glb.",
+  "models": [
+    {
+      "id": "cube",
+      "name": "Byggkloss",
+      "kind": "primitive",
+      "shape": "box",
+      "scale": [
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sphere",
+      "name": "Klot",
+      "kind": "primitive",
+      "shape": "sphere",
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "pillar",
+      "name": "Pelare",
+      "kind": "primitive",
+      "shape": "cylinder",
+      "scale": [
+        0.65,
+        2,
+        0.65
+      ]
+    },
+    {
+      "id": "roof",
+      "name": "Takkon",
+      "kind": "primitive",
+      "shape": "cone",
+      "scale": [
+        1.6,
+        0.7,
+        1.6
+      ]
+    }
+  ]
+}
