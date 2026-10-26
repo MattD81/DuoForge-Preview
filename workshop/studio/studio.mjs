@@ -43,6 +43,7 @@ const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
 
 let selected=null, isDirty=false, projectId=null;
+const sculpt={enabled:false,dragging:false,mesh:null};
 const past=[],future=[],MAX_HISTORY=35;
 const loader=new GLTFLoader(),exporter=new GLTFExporter();
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -102,8 +103,9 @@ function firstMaterial(obj){
 function selectedInsideRoot(obj){while(obj&&obj!==root){if(obj.parent===root)return true;obj=obj.parent}return false}
 function select(obj){
  if(obj&&!selectedInsideRoot(obj))obj=null;
+ if(sculpt.enabled&&obj!==selected)toggleSculpt(false);
  selected=obj;
- transform.detach();if(selected)transform.attach(selected);
+ transform.detach();if(selected&&!sculpt.enabled)transform.attach(selected);
  refreshTree();updateInspector();
  $("duplicate").disabled=!obj;$("deleteObject").disabled=!obj;
 }
@@ -139,6 +141,7 @@ function updateStats(){
 function updateInspector(){
  const has=Boolean(selected);
  $("inspector").hidden=!has;$("emptySelection").hidden=has;
+ $("sculptPanel").hidden=!has||!selected.isMesh;
  if(!has)return;
  $("objectName").value=selected.name||selected.type;
  $("objectVisible").checked=selected.visible;
@@ -211,9 +214,82 @@ $("resetCamera").onclick=()=>{orbit.target.set(0,1,0);camera.position.set(7,5,9)
 $("showGrid").onchange=e=>grid.visible=e.target.checked;
 $("showAxes").onchange=e=>axes.visible=e.target.checked;
 function setTool(mode){
+ if(sculpt.enabled)toggleSculpt(false);
  transform.setMode(mode);
  for(const [id,m] of [["toolMove","translate"],["toolRotate","rotate"],["toolScale","scale"]])$(id).classList.toggle("active",m===mode);
 }
+function toggleSculpt(value){
+ const next=typeof value==="boolean"?value:!sculpt.enabled;
+ if(next&&!selected?.isMesh){notify("Välj ett enskilt mesh i objektträdet först.");return}
+ sculpt.enabled=next;sculpt.dragging=false;sculpt.mesh=null;
+ if(next){transform.detach();orbit.enabled=false}
+ else{orbit.enabled=true;if(selected)transform.attach(selected)}
+ $("sculptMode").classList.toggle("active",next);
+ $("sculptMode").textContent=next?"Avsluta skulptering":"Skulptera mesh";
+ canvas.style.cursor=next?"crosshair":"grab";
+ if(next)notify("Skulpteringsläge på: dra på meshens yta.");
+}
+$("sculptMode").onclick=()=>toggleSculpt();
+function raycastMesh(event,mesh){
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return null;
+ pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
+ raycaster.setFromCamera(pointer,camera);
+ return raycaster.intersectObject(mesh,false).find(hit=>hit.face)||null;
+}
+function sculptAt(event){
+ const mesh=sculpt.mesh;
+ if(!mesh?.geometry?.attributes?.position)return;
+ const hit=raycastMesh(event,mesh);if(!hit)return;
+ mesh.updateMatrixWorld(true);
+ const hitLocal=mesh.worldToLocal(hit.point.clone());
+ const localNormal=hit.face.normal.clone().normalize();
+ const scale=mesh.getWorldScale(new THREE.Vector3());
+ const averageScale=Math.max(.001,(Math.abs(scale.x)+Math.abs(scale.y)+Math.abs(scale.z))/3);
+ const radius=Number($("brushRadius").value)/averageScale;
+ const strength=Number($("brushStrength").value)/averageScale;
+ const positions=mesh.geometry.attributes.position,point=new THREE.Vector3();
+ for(let i=0;i<positions.count;i++){
+  point.fromBufferAttribute(positions,i);
+  const distance=point.distanceTo(hitLocal);
+  if(distance>=radius)continue;
+  const weight=Math.pow(1-distance/radius,2);
+  point.addScaledVector(localNormal,strength*weight);
+  positions.setXYZ(i,point.x,point.y,point.z);
+ }
+ positions.needsUpdate=true;
+ mesh.geometry.computeVertexNormals();
+ mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();
+ dirty();
+}
+canvas.addEventListener("pointerdown",event=>{
+ if(!sculpt.enabled||!selected?.isMesh||event.button!==0)return;
+ if(!raycastMesh(event,selected))return;
+ const positions=selected.geometry?.attributes?.position;
+ if(!positions||positions.count>250000){notify("Skulptering stöds för meshar med högst 250 000 punkter.");return}
+ pushHistory();
+ selected.geometry=selected.geometry.clone();
+ sculpt.mesh=selected;sculpt.dragging=true;
+ canvas.setPointerCapture(event.pointerId);
+ sculptAt(event);
+},true);
+canvas.addEventListener("pointermove",event=>{if(sculpt.enabled&&sculpt.dragging)sculptAt(event)},true);
+function finishSculpt(){
+ if(!sculpt.dragging)return;
+ sculpt.dragging=false;sculpt.mesh=null;updateStats();updateInspector();
+ notify("Meshens geometri ändrad. Ångra med Ctrl/Cmd+Z.");
+}
+canvas.addEventListener("pointerup",finishSculpt);
+canvas.addEventListener("pointercancel",finishSculpt);
+$("brushRadius").oninput=()=>{$("brushRadiusOut").textContent=Number($("brushRadius").value).toFixed(1)};
+$("brushStrength").oninput=()=>{$("brushStrengthOut").textContent=Number($("brushStrength").value).toFixed(2)};
+$("smoothNormals").onclick=()=>{
+ if(!selected?.isMesh||!selected.geometry)return;
+ pushHistory();selected.geometry=selected.geometry.clone();
+ selected.geometry.computeVertexNormals();selected.geometry.computeBoundingSphere();
+ dirty();notify("Ytnormaler uppdaterade.");
+};
+
 $("toolMove").onclick=()=>setTool("translate");
 $("toolRotate").onclick=()=>setTool("rotate");
 $("toolScale").onclick=()=>setTool("scale");
@@ -225,6 +301,7 @@ $("toggleSnap").onclick=()=>{
 };
 canvas.addEventListener("pointerdown",e=>{downPoint={x:e.clientX,y:e.clientY}},true);
 canvas.addEventListener("pointerup",e=>{
+ if(sculpt.enabled)return;
  if(!downPoint)return;const d=Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y);downPoint=null;
  if(d>5||transform.dragging)return;
  const rect=canvas.getBoundingClientRect();
@@ -456,6 +533,7 @@ window.addEventListener("keydown",event=>{
   if(key==="r")setTool("rotate");
   if(key==="s")setTool("scale");
   if(key==="f")fitScene(selected||root);
+  if(key==="escape"&&sculpt.enabled)toggleSculpt(false);
   if(key==="delete"||key==="backspace"){event.preventDefault();removeSelected()}
  }
 });
