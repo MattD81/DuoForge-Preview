@@ -34,6 +34,11 @@ try{
  await page.locator("#renderQualitySelect").selectOption("medium");
  assert.equal(await page.locator("#renderQuality").inputValue(),"medium");
  console.log("PASS: low/medium quality switching updates both control panels");
+ await page.locator("#renderQualitySelect").selectOption("high");
+ await page.waitForTimeout(1200);
+ assert.equal(await page.locator("#renderQuality").inputValue(),"high");
+ await page.locator("#renderQualitySelect").selectOption("medium");
+ console.log("PASS: high-quality postprocessing mode initializes and returns to medium safely");
 
  await page.locator("#renderCameraSelect").selectOption("cinematic");
  assert.equal(await page.locator("#renderCameraTip").textContent(),"Automatisk filmkamera");
@@ -46,6 +51,15 @@ try{
  const [imageDownload]=await Promise.all([page.waitForEvent("download"),page.locator("#renderScreenshot").click()]);
  assert.match(imageDownload.suggestedFilename(),/racetrack\.png$/);
  console.log("PASS: rendered environment PNG screenshot download works");
+ if(await page.evaluate(()=>typeof MediaRecorder!=="undefined"&&!!document.querySelector("#scene")?.captureStream)){
+  await page.locator("#renderRecord").click();
+  if((await page.locator("#renderRecord").textContent()).includes("Stoppa")){
+   await page.waitForTimeout(1000);
+   const [clip]=await Promise.all([page.waitForEvent("download",{timeout:18000}),page.locator("#renderRecord").click()]);
+   assert.match(clip.suggestedFilename(),/renderworld\.(?:webm|mp4)$/);
+   console.log("PASS: recording Render World video downloads locally");
+  }
+ }
 
  await page.locator("#scene").click({position:{x:650,y:430}});
  await page.keyboard.down("w");
