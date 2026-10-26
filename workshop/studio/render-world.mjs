@@ -26,6 +26,7 @@ export function initRenderWorld(ctx){
  let saved=null,environment=null,quality="medium",world="showroom",mode="orbit";
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
+ let recording=null,recordTimer=null;
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
  const previewPane=$("renderWorldOverlay"),controlsPanel=$("renderWorldControls");
  const viewOptions=[{value:"orbit",label:"Orbit"},{value:"follow",label:"Följkamera"},{value:"free",label:"Fri kamera"},{value:"cinematic",label:"Film-kamera"}];
@@ -274,6 +275,7 @@ export function initRenderWorld(ctx){
  }
  function stop(){
   if(!active)return;
+  finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;
   if(environment){environment.dispose();environment=null;}
@@ -374,6 +376,39 @@ export function initRenderWorld(ctx){
   for(const e of ["pointerup","pointercancel","lostpointercapture"])
    button.addEventListener(e,()=>{controls[key]=false;button.classList.remove("held")});
  }
+ function finishRecording(){
+  if(!recording)return;
+  clearTimeout(recordTimer);
+  const recorder=recording;recording=null;
+  $("renderRecord").textContent="🎥 Spela in";
+  if(recorder.state!=="inactive")recorder.stop();
+ }
+ function recordClip(){
+  if(recording){finishRecording();return;}
+  if(!active)return notify("Öppna Render World innan du spelar in.");
+  if(typeof MediaRecorder==="undefined"||!canvas.captureStream)
+   return notify("Videoinspelning stöds inte i den här webbläsaren. Använd Bild i stället.",5000);
+  try{
+   const supported=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"].find(type=>MediaRecorder.isTypeSupported(type));
+   const stream=canvas.captureStream(24),chunks=[];
+   const recorder=new MediaRecorder(stream,supported?{mimeType:supported,videoBitsPerSecond:3200000}:undefined);
+   recording=recorder;
+   recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};
+   recorder.onerror=event=>notify("Videoinspelning avbröts. Testa PNG-bild i stället.",4500);
+   recorder.onstop=()=>{
+    for(const track of stream.getTracks())track.stop();
+    if(!chunks.length)return notify("Ingen video kunde spelas in på enheten.");
+    const extension=recorder.mimeType.includes("mp4")?"mp4":"webm";
+    downloadBlob(new Blob(chunks,{type:recorder.mimeType}),filename()+"-"+world+"-renderworld."+extension);
+    notify("Videoklippet har sparats på enheten.");
+   };
+   recorder.start(500);
+   $("renderRecord").textContent="■ Stoppa";
+   notify("Spelar in Render World lokalt. Tryck Stoppa för att ladda ner.",3700);
+   recordTimer=setTimeout(finishRecording,12000);
+  }catch(err){recording=null;console.warn("Recorder unsupported",err);
+   notify("Den här webbläsaren tillåter inte inspelning. Prova PNG-bild.",4500);}
+ }
  function exportScreenshot(){
   if(!active)return notify("Öppna Render World för att ta en bild.");
   if(composer)composer.render();else renderer.render(scene,camera);
@@ -385,6 +420,7 @@ export function initRenderWorld(ctx){
  $("openRenderWorld").onclick=start;
  $("renderExit").onclick=stop;
  $("renderScreenshot").onclick=exportScreenshot;
+ $("renderRecord").onclick=recordClip;
  $("renderScreenshotPanel").onclick=()=>active?exportScreenshot():start();
  $("renderCinematic").onclick=()=>chooseCamera(mode==="cinematic"?"orbit":"cinematic");
  $("renderResetMission").onclick=()=>{
