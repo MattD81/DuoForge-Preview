@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs";
+import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs?v=steering-fix-2";
 import {inspectWheels,createWheelRig} from "./wheel-rig.mjs?v=steering-fix-2";
 
 const $=id=>document.getElementById(id);
