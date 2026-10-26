@@ -3,6 +3,7 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
+import {initLivingObjects} from "./living-objects.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -39,6 +40,8 @@ transform.addEventListener("dragging-changed",e=>{orbit.enabled=!e.value});
 transform.addEventListener("mouseDown",()=>{pushHistory();});
 transform.addEventListener("mouseUp",()=>{updateInspector();refreshTree();dirty();});
 transform.addEventListener("objectChange",()=>{updateInspector();updateStats();});
+let livingRuntime=null;
+const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
 
@@ -62,8 +65,11 @@ function resize(){
 }
 new ResizeObserver(resize).observe(canvas);resize();
 function animate(){
- requestAnimationFrame(animate);orbit.update();
- if(selected){
+ requestAnimationFrame(animate);
+ const dt=Math.min(frameClock.getDelta(),.06);
+ if(livingRuntime?.isPlaying())livingRuntime.update(dt);
+ else orbit.update();
+ if(selected&&!livingRuntime?.isPlaying()){
   boundsHelper.setFromObject(selected);
   boundsHelper.visible=!new THREE.Box3().setFromObject(selected).isEmpty();
  }else boundsHelper.visible=false;
@@ -108,6 +114,7 @@ function select(obj){
  transform.detach();if(selected&&!sculpt.enabled)transform.attach(selected);
  refreshTree();updateInspector();
  $("duplicate").disabled=!obj;$("deleteObject").disabled=!obj;
+ livingRuntime?.onSelectionChanged();
 }
 function refreshTree(){
  const list=$("hierarchy");list.replaceChildren();
@@ -301,7 +308,7 @@ $("toggleSnap").onclick=()=>{
 };
 canvas.addEventListener("pointerdown",e=>{downPoint={x:e.clientX,y:e.clientY}},true);
 canvas.addEventListener("pointerup",e=>{
- if(sculpt.enabled)return;
+ if(livingRuntime?.isPlaying()||sculpt.enabled)return;
  if(!downPoint)return;const d=Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y);downPoint=null;
  if(d>5||transform.dragging)return;
  const rect=canvas.getBoundingClientRect();
@@ -523,6 +530,7 @@ projectInput.onchange=async e=>{
 };
 
 window.addEventListener("keydown",event=>{
+ if(livingRuntime?.isPlaying())return;
  const target=event.target;
  if(target instanceof HTMLElement&&(target.matches("input,textarea,select")||target.isContentEditable))return;
  const key=event.key.toLowerCase(),ctrl=event.ctrlKey||event.metaKey;
@@ -540,6 +548,7 @@ window.addEventListener("keydown",event=>{
 
 // An editable starter kart makes the interface useful on its first visit.
 addPreset("cart","DuoForge Kart – startmodell");
+livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSelected:()=>selected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
