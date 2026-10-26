@@ -18,6 +18,26 @@ export function classifyWheelName(name){
  else if(/\brear\b|[_-]rear[_-]/i.test(n))axle="rear";
  return {side,axle,preferTire:TIRE_PART.test(n)&&!/groove/i.test(n)};
 }
+// Some GLB exporters put the descriptive wheel name on an Object3D/Group
+// wrapper and leave the actual Mesh named just "Mesh". Walk ancestors, but
+// reject brake-caliper branches before collecting any animated parts.
+export function classifyWheelMesh(mesh,vehicle){
+ let node=mesh;
+ let merged=null;
+ while(node&&node!==vehicle){
+  if(FIXED_PART.test(node.name||""))return null;
+  const part=classifyWheelName(node.name);
+  if(part){
+   merged={
+    side:merged?.side||part.side,
+    axle:merged?.axle||part.axle,
+    preferTire:Boolean(merged?.preferTire||part.preferTire)
+   };
+  }
+  node=node.parent;
+ }
+ return merged;
+}
 function wheelMeshData(vehicle){
  vehicle.updateMatrixWorld(true);
  const body=new THREE.Box3().setFromObject(vehicle);
@@ -25,7 +45,7 @@ function wheelMeshData(vehicle){
  const candidates=[];
  vehicle.traverse(obj=>{
   if(!obj.isMesh||obj.isSkinnedMesh||!obj.visible||!obj.geometry)return;
-  const label=classifyWheelName(obj.name);
+  const label=classifyWheelMesh(obj,vehicle);
   if(!label)return;
   const box=new THREE.Box3().setFromObject(obj);
   if(box.isEmpty())return;
