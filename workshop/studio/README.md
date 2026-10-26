@@ -15,6 +15,16 @@ A self-contained, browser-based 3D editor at `/workshop/studio/`. It works with 
 - Undo/redo (up to 35 steps), duplication, deletion and place object on ground.
 - Desktop and mobile layout, keyboard shortcuts.
 
+## Render World Preview (free, three stages)
+
+The **🌍 Testa i renderad värld** button runs a *non-destructive cloned asset* in an ephemeral procedural environment. The original editable model, transform and GLB exports are unaffected.
+
+1. **Worlds**: Showroom (PBR presentation pedestal), racetrack, forest, city and neon night. All geometry, stars, roads, lights and sky are authored procedurally. No copyrighted/private assets or paid model API.
+2. **Graphics**: WebGL renderer with ACES tone mapping, real-time directional shadows, fog, emissive accents and RoomEnvironment PMREM lighting (a locally generated reflection environment, not external HDRI). Low/Medium/High switches limit render resolution and shadows; High tries bloom and SSAO. If post-processing is unsupported, preview falls back to the normal renderer. High can be slow on mobile and software renderers.
+3. **Play and inspect**: Orbit, follow, free-camera WASD and automated cinematic orbit; playable vehicles with wheel animation/keyboard/gamepad/touch; four simple glowing checkpoints; interactive city door (E when close); reset challenge; PNG screenshots and optional short local WebM/MP4 recordings using MediaRecorder when supported. Other static GLBs can be inspected, but no automatic character rigging/walking or full physical collisions are claimed.
+
+The preview content is never put in the editable scene root and is never saved to the GLB. Switching worlds and exiting restores the editor. It renders on the user's GPU through WebGL, so no cloud GPU rental; browser/device performance still varies.
+
 ## Test
 
 On PRs affecting this editor, the `studio-tests.yml` workflow checks JS syntax and starts Chromium for a browser smoke test, editing and GLB download. Tests must pass before merging.
