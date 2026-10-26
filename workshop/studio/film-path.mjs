@@ -9,7 +9,7 @@ const pointMix=(a,b,t)=>a.map((x,i)=>x*(1-t)+b[i]*t);
 export function normalizedDuration(value){return clamp(Number(value)||12,4,40)}
 export function normalizeKeyframes(value){
  if(!Array.isArray(value))return [];
- return value.slice(0,12).filter(item=>item&&Array.isArray(item.position)&&Array.isArray(item.target)&&
+ return value.slice(0,24).filter(item=>item&&Array.isArray(item.position)&&Array.isArray(item.target)&&
   item.position.length===3&&item.target.length===3&&[...item.position,...item.target].every(Number.isFinite))
   .map(item=>({position:toPoint(item.position),target:toPoint(item.target)}));
 }
