@@ -15,7 +15,7 @@ export function seededRandom(seed){
 }
 const types={
  houses:{match:/\b(?:hus|stugor|byggnader|houses?|buildings?)\b/u,singular:"hus",limit:24,base:5},
- trees:{match:/\b(?:träd|tallar|skog|trees?|forest)\b/u,singular:"träd",limit:70,base:12},
+ trees:{match:/\b(?:träd|tallar|skog|trees?|forest)\b/u,singular:"träd",limit:70,base:18},
  cars:{match:/\b(?:bilar|bil|kart|fordon|cars?|vehicles?)\b/u,singular:"bil",limit:3,base:1},
  crates:{match:/\b(?:hinder|lådor|boxar|obstacles?|crates?)\b/u,singular:"hinder",limit:18,base:4},
  doors:{match:/\b(?:dörrar|dörr|doors?)\b/u,singular:"dörr",limit:6,base:1}
