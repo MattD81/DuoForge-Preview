@@ -1,0 +1,41 @@
+name: Test DuoForge 3D Studio
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/**'
+      - 'workshop/models.json'
+      - 'tests/studio-smoke.mjs'
+      - '.github/workflows/studio-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  studio-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax check
+        run: |
+          node --check workshop/studio/studio.mjs
+          node --check tests/studio-smoke.mjs
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start local static server
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Test editing and downloads in Chromium
+        run: node tests/studio-smoke.mjs
+      - name: Upload screenshots if tests ran
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: duoforge-studio-smoke-screenshots
+          path: |
+            studio-desktop.png
+            studio-mobile.png
+          if-no-files-found: ignore

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
+<title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
+<link rel="stylesheet" href="./studio.css?v=2">
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app">
+<header class="topbar">
+  <a class="brand" href="../../"><span class="brandmark">◈</span><span>DuoForge <b>Studio</b></span></a>
+  <span class="version">3D WORKSHOP • BETA</span>
+  <input id="projectName" class="project-name" value="Min 3D-scen" maxlength="80" aria-label="Projektets namn">
+  <div class="top-actions">
+    <button id="newScene" title="Ny tom scen">Ny scen</button>
+    <label for="importFile" class="btn" title="Importera GLB">Importera GLB</label>
+    <input id="importFile" type="file" accept=".glb,model/gltf-binary" hidden>
+    <button id="openProject" title="Öppna ett tidigare sparat projekt på enheten">Öppna sparat</button>
+    <button id="saveProject" class="accent" title="Spara projektet lokalt på den här enheten">Spara projekt</button>
+    <button id="exportGLB" class="accent-outline" title="Ladda ner scenen som GLB">Exportera GLB ↓</button>
+  </div>
+</header>
+<div class="workspace">
+  <aside class="sidebar left-panel">
+    <section class="panel-section">
+      <div class="section-heading"><h2>Objekt i scenen</h2><span id="objectCount">0</span></div>
+      <div class="row two"><button id="undo" title="Ångra (Ctrl/Cmd+Z)" disabled>↶ Ångra</button><button id="redo" title="Gör om (Ctrl/Cmd+Shift+Z)" disabled>↷ Gör om</button></div>
+      <div id="hierarchy" class="hierarchy" role="tree" aria-label="Scenens objekt"></div>
+      <div class="row two"><button id="duplicate" disabled>Duplicera</button><button id="deleteObject" disabled>Ta bort</button></div>
+    </section>
+    <section class="panel-section">
+      <div class="section-heading"><h2>Skapa 3D-objekt</h2></div>
+      <div class="primitive-grid">
+        <button data-add="box">▣<small>Kub</small></button><button data-add="sphere">◉<small>Sfär</small></button>
+        <button data-add="cylinder">▥<small>Cylinder</small></button><button data-add="cone">▲<small>Kon</small></button>
+        <button data-add="torus">◎<small>Torus</small></button><button data-add="plane">▱<small>Plan</small></button>
+      </div>
+    </section>
+    <section class="panel-section">
+      <div class="section-heading"><h2>Modellbibliotek</h2><span class="mini-pill">GitHub</span></div>
+      <p class="hint">Startmodeller i det publika GitHub-biblioteket. Privata spelmodeller laddas inte upp automatiskt.</p>
+      <div id="library" class="library">Läser bibliotek …</div>
+    </section>
+  </aside>
+  <main class="viewport">
+    <div id="viewportMessage" class="viewport-status" role="status">Redigeraren startar …</div>
+    <canvas id="scene" aria-label="Interaktiv 3D-vy"></canvas>
+    <div class="toolbar">
+      <div class="tool-segment" aria-label="Transformverktyg">
+        <button id="toolMove" class="active" title="Flytta (G)">Flytta</button>
+        <button id="toolRotate" title="Rotera (R)">Rotera</button>
+        <button id="toolScale" title="Skala (S)">Skala</button>
+      </div>
+      <div class="tool-segment">
+        <button id="toolLocal" title="Byt mellan lokala och globala axlar">Global</button>
+        <button id="toggleSnap" title="Fäst till rutnät (0,5 m / 15°)">Snäpp av</button>
+      </div>
+      <div class="tool-segment">
+        <button id="focusSelection" title="Fokusera valt objekt (F)">Fokusera</button>
+        <button id="resetCamera" title="Återställ kamera">Kamera</button>
+      </div>
+    </div>
+    <div class="viewport-bottom">
+      <div class="viewport-flags"><label><input id="showGrid" type="checkbox" checked> Rutnät</label><label><input id="showAxes" type="checkbox"> Axlar</label></div>
+      <span id="sceneStats">0 objekt • 0 trianglar</span>
+    </div>
+    <div class="viewport-help">Dra för att rotera kameran · Scroll/nyp för zoom · Klicka på ett objekt för att välja · G / R / S</div>
+  </main>
+  <aside class="sidebar right-panel">
+    <section class="panel-section">
+      <div class="section-heading"><h2>Objektinställningar</h2></div>
+      <div id="emptySelection" class="empty">Markera ett objekt i 3D-vyn eller objektlistan för att redigera det.</div>
+      <div id="inspector" hidden>
+        <label class="field-label" for="objectName">Namn</label><input id="objectName" type="text" maxlength="100">
+        <div class="row check-row"><label><input id="objectVisible" type="checkbox" checked> Synlig</label><button id="groundObject">Till marken</button></div>
+        <div class="subheading">Position <small>meter · X / Y / Z</small></div>
+        <div class="xyz"><input id="px" type="number" step=".1" aria-label="Position X"><input id="py" type="number" step=".1" aria-label="Position Y"><input id="pz" type="number" step=".1" aria-label="Position Z"></div>
+        <div class="subheading">Rotation <small>grader · X / Y / Z</small></div>
+        <div class="xyz"><input id="rx" type="number" step="5" aria-label="Rotation X"><input id="ry" type="number" step="5" aria-label="Rotation Y"><input id="rz" type="number" step="5" aria-label="Rotation Z"></div>
+        <div class="row two preset-row"><button id="rotateXPlus">X +90°</button><button id="rotateXMinus">X −90°</button></div>
+        <div class="subheading">Skala <small>X / Y / Z</small></div>
+        <div class="xyz"><input id="sx" type="number" step=".1" min=".001" aria-label="Skala X"><input id="sy" type="number" step=".1" min=".001" aria-label="Skala Y"><input id="sz" type="number" step=".1" min=".001" aria-label="Skala Z"></div>
+        <div id="materialPanel">
+          <div class="subheading">Material <small>för markerade objektets ytor</small></div>
+          <label class="color-line">Grundfärg <input id="materialColor" type="color" value="#3acaa2"></label>
+          <label class="range-line">Metall <input id="metalness" type="range" min="0" max="1" step=".01" value=".1"><output id="metalnessOut">0.10</output></label>
+          <label class="range-line">Ytstruktur <input id="roughness" type="range" min="0" max="1" step=".01" value=".55"><output id="roughnessOut">0.55</output></label>
+          <label class="range-line">Opacitet <input id="opacity" type="range" min=".05" max="1" step=".05" value="1"><output id="opacityOut">1.00</output></label>
+          <label class="check-line"><input id="wireframe" type="checkbox"> Visa trådram</label>
+        </div>
+        <div id="sculptPanel">
+          <div class="subheading">Meshverktyg <small>för vald geometrisk yta</small></div>
+          <button id="sculptMode" title="Redigera geometrins punkter med pensel">Skulptera mesh</button>
+          <label class="range-line">Penselstorlek <input id="brushRadius" type="range" min=".1" max="3" step=".1" value=".8"><output id="brushRadiusOut">0.8</output></label>
+          <label class="range-line">Styrka <input id="brushStrength" type="range" min=".01" max=".3" step=".01" value=".08"><output id="brushStrengthOut">0.08</output></label>
+          <button id="smoothNormals" title="Beräkna om modellens ljussättningsnormaler">Jämna ut normaler</button>
+          <p class="hint">Skulpteringsläge: dra direkt på ett mesh för att forma geometrin. Ångra fungerar också. Tryck Esc för att avsluta.</p>
+        </div>
+      </div>
+    </section>
+    <section class="panel-section">
+      <div class="section-heading"><h2>Scen & export</h2></div>
+      <div class="row two"><button id="screenshot">Spara PNG-bild</button><button id="downloadProject">Projektfil (.json)</button></div>
+      <p class="hint">Projektet sparas lokalt i webbläsaren med geometri och material. Exportera GLB för att använda modellen i spel. Ingen AI, GPU-server eller Work krävs.</p>
+      <div id="saveIndicator" class="save-indicator">Inte sparad än</div>
+    </section>
+  </aside>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<dialog id="projectDialog"><form method="dialog">
+  <h2>Sparade projekt</h2>
+  <p class="hint">Projekt ligger bara på den här enheten. Exportera GLB för att flytta dem.</p>
+  <div id="savedProjects">Läser …</div>
+  <div class="dialog-actions"><button value="cancel">Stäng</button></div>
+</form></dialog>
+</div>
+<script type="module" src="./studio.mjs?v=2"></script>
+</body></html>
