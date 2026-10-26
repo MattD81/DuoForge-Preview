@@ -8,7 +8,7 @@ const LIVING_KEY="duoforgeLiving";
 export function initLivingObjects(ctx){
  const {scene,root,camera,orbit,transform,canvas,getSelected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene}=ctx;
  const input={left:false,right:false,gas:false,brake:false,handbrake:false,interact:false};
- const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0};
+ const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0,vehicleRadius:.6};
  let lastInteract=false,frameCount=0;
  function topLevel(node){
   let current=node;
@@ -32,7 +32,22 @@ export function initLivingObjects(ctx){
   if(type==="vehicle"){
    const previous=target.userData[LIVING_KEY]||{};
    const analysis=inspectWheels(target);
-   target.userData[LIVING_KEY]={...previous,...vehicleConfig(previous),type:"vehicle",forwardSign:previous.forwardSign===-1||previous.forwardSign===1?previous.forwardSign:analysis.forwardSign};
+   const front=analysis.wheels.filter(w=>w.axle==="front");
+   const rear=analysis.wheels.filter(w=>w.axle==="rear");
+   const avgZ=items=>items.reduce((sum,w)=>sum+w.center.z,0)/items.length;
+   const wheelBase=front.length&&rear.length?Math.abs(avgZ(front)-avgZ(rear)):null;
+   const tireRadii=analysis.wheels.map(w=>{
+    const tire=w.parts.find(p=>p.preferTire)||w.parts[0];
+    if(!tire)return 0;
+    const size=tire.box.getSize(new THREE.Vector3());
+    return Math.max(size.y,size.z)/2;
+   }).filter(radius=>radius>.05&&radius<3);
+   const radius=tireRadii.length?tireRadii.reduce((a,b)=>a+b,0)/tireRadii.length:null;
+   const dimensions={...previous};
+   // A freshly imported model gets values measured from its actual wheel positions.
+   if(!Number.isFinite(previous.wheelBase)&&wheelBase>.5&&wheelBase<12)dimensions.wheelBase=wheelBase;
+   if(!Number.isFinite(previous.wheelRadius)&&radius)dimensions.wheelRadius=radius;
+   target.userData[LIVING_KEY]={...previous,...vehicleConfig(dimensions),type:"vehicle",forwardSign:previous.forwardSign===-1||previous.forwardSign===1?previous.forwardSign:analysis.forwardSign};
    notify("Körbart fordon skapat. "+analysis.wheels.length+" hjulgrupper / "+analysis.partCount+" rörliga delar identifierade.");
   }else if(type==="door"){
    target.userData[LIVING_KEY]={type:"door",version:1,openAngle:90,interactionDistance:3};
@@ -210,10 +225,12 @@ export function initLivingObjects(ctx){
   select(vehicle);
   const cameraState={position:camera.position.clone(),quaternion:camera.quaternion.clone(),target:orbit.target.clone(),enabled:orbit.enabled};
   runtime.vehicle=vehicle;
+  const modelBounds=new THREE.Box3().setFromObject(vehicle),span=modelBounds.getSize(new THREE.Vector3());
+  runtime.vehicleRadius=clamp(Math.min(span.x,span.z)*.27,.35,2.4);
   runtime.snapshot={position:vehicle.position.clone(),rotation:vehicle.rotation.clone(),camera:cameraState};
   runtime.wheelRig=createWheelRig(vehicle,{forwardSign:meta.forwardSign});
   runtime.forwardBias=runtime.wheelRig.forwardSign===-1?Math.PI:0;
-  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0};
+  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0,steering:0,steerAngleDegrees:0};
   runtime.elapsed=0;runtime.collisions=0;runtime.paused=false;
   runtime.prevTime=null;runtime.active=true;lastInteract=false;clearInput();
   snapshotDoors();
@@ -265,17 +282,15 @@ export function initLivingObjects(ctx){
   };
   const vehicle=runtime.vehicle,config=vehicleConfig(living(vehicle));
   const prev=runtime.state,next=driveStep(prev,control,dt,config);
-  const bounds=new THREE.Box3().setFromObject(vehicle),span=bounds.getSize(new THREE.Vector3());
-  const radius=clamp(Math.min(span.x,span.z)*.27,.35,2.4);
-  const collided=collectColliders().some(b=>touchesBox(next.x,next.z,radius,b));
+  const collided=collectColliders().some(b=>touchesBox(next.x,next.z,runtime.vehicleRadius,b));
   if(collided){
-   runtime.state={...next,x:prev.x,z:prev.z,speed:0};
-   runtime.wheelRig?.step({distance:0,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
+   runtime.state={...next,x:prev.x,z:prev.z,yaw:prev.yaw,speed:0};
+   runtime.wheelRig?.step({distance:0,steerAngleDegrees:next.steerAngleDegrees,wheelRadius:config.wheelRadius});
    runtime.collisions++;
   }else{
    runtime.state=next;vehicle.position.set(next.x,vehicle.position.y,next.z);
    vehicle.rotation.y=next.yaw-runtime.forwardBias;
-   runtime.wheelRig?.step({distance:next.speed*dt,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
+   runtime.wheelRig?.step({distance:next.speed*dt,steerAngleDegrees:next.steerAngleDegrees,wheelRadius:config.wheelRadius});
   }
   const heading=new THREE.Vector3(Math.sin(runtime.state.yaw),0,Math.cos(runtime.state.yaw));
   const target=vehicle.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,1.2,0));
