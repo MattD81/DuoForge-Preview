@@ -42,7 +42,7 @@ export function parseWorldPrompt(input){
  if(/\b(?:stad|city|village|by|samhälle)\b/u.test(text)&&counts.houses===0)counts.houses=6;
  if(/\b(?:skog|forest|natur)\b/u.test(text)&&counts.trees===0)counts.trees=18;
  const road=/\b(?:väg|vägar|körbana|racerbana|racing|road|street|track|bana|motorväg)\b/u.test(text);
- const theme=/\b(?:natt|night|mörker)\b/u.test(text)?"night":
+ const theme=/\b(?:nattstad|natt|night|mörker)\b/u.test(text)?"night":
  /\b(?:solnedgång|kväll|sunset|evening)\b/u.test(text)?"sunset":
  /\b(?:öken|desert)\b/u.test(text)?"desert":
  /\b(?:vinter|snö|snow|winter)\b/u.test(text)?"winter":"day";
