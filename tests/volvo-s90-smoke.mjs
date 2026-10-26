@@ -59,7 +59,7 @@ try{
  assert.ok(info.wheels.filter(w=>w.key.endsWith("rear")).every(w=>w.steering===0),"rear wheels do not steer");
  assert.ok(info.wheels.every(w=>w.roll<0),"wheels spin about X with -Z-forward orientation");
  assert.ok(info.named.some(n=>n.includes("Volvo Thor hammer LED")));
- assert.ok(info.named.some(n=>n.includes("Front windshield")));
+ assert.ok(info.named.some(n=>n.includes("Front windscreen")));
  assert.ok(info.named.some(n=>n.includes("seat")));
  assert.ok(info.named.some(n=>n.includes("Charging port")));
  assert.equal(info.restored,true);
