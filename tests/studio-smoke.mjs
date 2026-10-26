@@ -17,6 +17,13 @@ try{
  await page.locator('[data-add="box"]').click();
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
  console.log("PASS: create primitive");
+ await page.locator("#sculptMode").click();
+ assert.match(await page.locator("#sculptMode").getAttribute("class"),/active/);
+ const sceneBox=await page.locator("#scene").boundingBox();
+ await page.mouse.click(sceneBox.x+sceneBox.width/2,sceneBox.y+sceneBox.height/2);
+ await page.waitForFunction(()=>document.querySelector("#viewportMessage")?.textContent.includes("Meshens geometri ändrad"));
+ await page.locator("#sculptMode").click();
+ console.log("PASS: real vertex sculpt brush modifies selected mesh");
  await page.locator("#toolRotate").click();
  assert.match(await page.locator("#toolRotate").getAttribute("class"),/active/);
  await page.locator("#rx").fill("45");
