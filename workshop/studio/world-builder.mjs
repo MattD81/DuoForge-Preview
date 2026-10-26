@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import {parseWorldPrompt,seededRandom} from "./world-planner.mjs";
+import {createSurfaceLibrary} from "./procedural-materials.mjs";
 
 const $=id=>document.getElementById(id);
+const surfaces=createSurfaceLibrary("medium");
+const textured=(type,color,repeat=[2,2])=>surfaces.material(type,{color,repeat});
 const MATERIALS={
  brick:0xc5aa8e,roof:0x98584d,wood:0x765136,glass:0x78adc9,
  road:0x2b343f,leaves:0x28764d,leaves2:0x329868,trunk:0x775339,
@@ -11,7 +14,7 @@ function material(color,roughness=.8,metalness=0){
  return new THREE.MeshStandardMaterial({color,roughness,metalness});
 }
 function part(parent,geometry,color,position,rotation){
- const mesh=new THREE.Mesh(geometry,material(color));
+ const mesh=new THREE.Mesh(geometry,color?.isMaterial?color:material(color));
  mesh.position.set(...position);
  if(rotation)mesh.rotation.set(...rotation);
  mesh.castShadow=true;mesh.receiveShadow=true;
@@ -21,47 +24,47 @@ function createHouse(n,rng,theme){
  const g=new THREE.Group();g.name="Hus "+String(n).padStart(2,"0");
  const color=theme==="winter"?0xc9d5d8:[0xc5aa8e,0xdec6a1,0xc9b79a,0xabc5b4][n%4];
  const w=2.5+rng()*1.1,h=2+rng()*1.2,d=2.4+rng()*.9;
- part(g,new THREE.BoxGeometry(w,h,d),color,[0,h/2,0]);
- const roof=part(g,new THREE.ConeGeometry(w*.83,1.35,4),0x98584d,[0,h+.55,0],[0,Math.PI/4,0]);
+ part(g,new THREE.BoxGeometry(w,h,d),textured(n%3?"plaster":"brick",color,[2,3]),[0,h/2,0]);
+ const roof=part(g,new THREE.ConeGeometry(w*.83,1.35,4),textured("brick",0xa96b57),[0,h+.55,0],[0,Math.PI/4,0]);
  roof.name="Tak";
- const door=part(g,new THREE.BoxGeometry(.55,1.3,.1),0x61402e,[0,.65,d/2+.06]);
+ const door=part(g,new THREE.BoxGeometry(.55,1.3,.1),textured("wood",0x966746),[0,.65,d/2+.06]);
  door.name="Entrédörr (dekor)";
  for(const x of [-w*.3,w*.3]){
-  for(const y of [h*.6])part(g,new THREE.BoxGeometry(.48,.5,.08),MATERIALS.glass,[x,y,d/2+.07]);
+  for(const y of [h*.6])part(g,new THREE.BoxGeometry(.48,.5,.08),textured("glass",0x76abc8),[x,y,d/2+.07]);
  }
- const chimney=part(g,new THREE.BoxGeometry(.35,.8,.35),0x75665e,[w*.2,h+.55,-.25]);
+ const chimney=part(g,new THREE.BoxGeometry(.35,.8,.35),textured("stone",0x8e8d84),[w*.2,h+.55,-.25]);
  chimney.name="Skorsten";
  return g;
 }
 function createTree(n,rng,theme){
  const g=new THREE.Group();g.name="Tall "+String(n).padStart(2,"0");
  const h=2.1+rng()*1.7,leaf=theme==="winter"?0xb0c8c3:MATERIALS.leaves;
- part(g,new THREE.CylinderGeometry(.12,.18,h*.42,8),MATERIALS.trunk,[0,h*.21,0]).name="Stam";
+ part(g,new THREE.CylinderGeometry(.12,.18,h*.42,8),textured("bark",0x856344,[1,3]),[0,h*.21,0]).name="Stam";
  for(let i=0;i<3;i++){
-  part(g,new THREE.ConeGeometry(.65-i*.12,h*.63,9),i%2?MATERIALS.leaves2:leaf,[0,h*.48+i*h*.19,0]).name="Krona "+(i+1);
+  part(g,new THREE.ConeGeometry(.65-i*.12,h*.63,9),textured("grass",i%2?0x619354:leaf),[0,h*.48+i*h*.19,0]).name="Krona "+(i+1);
  }
  return g;
 }
 function createKart(){
  const g=new THREE.Group();g.name="Körbar racerbil";
  g.userData.duoforgeLiving={type:"vehicle",kind:"vehicle",version:1,maxSpeed:19,reverseSpeed:6,acceleration:9,braking:16,rollingResistance:2.2,wheelBase:2.3,steeringDegrees:29,wheelRadius:.42};
- part(g,new THREE.BoxGeometry(2.3,.5,3.5),0x24b78b,[0,.7,0]).name="Chassi";
- part(g,new THREE.BoxGeometry(1.55,.65,1.7),0x3e668b,[0,1.18,-.4]).name="Förarplats";
+ part(g,new THREE.BoxGeometry(2.3,.5,3.5),textured("paint",0x298dc7),[0,.7,0]).name="Chassi";
+ part(g,new THREE.BoxGeometry(1.55,.65,1.7),textured("carbon",0x576879),[0,1.18,-.4]).name="Förarplats";
  for(const x of [-1.18,1.18])for(const z of [-1.05,1.1]){
-  const wheel=part(g,new THREE.CylinderGeometry(.42,.42,.28,28),MATERIALS.tire,[x,.42,z],[0,0,Math.PI/2]);
+  const wheel=part(g,new THREE.CylinderGeometry(.42,.42,.28,28),textured("rubber",0x43474a),[x,.42,z],[0,0,Math.PI/2]);
   wheel.name="wheel_"+(z>0?"front":"rear")+"_"+(x<0?"L":"R")+"_tire";
-  part(g,new THREE.CylinderGeometry(.2,.2,.29,20),MATERIALS.metal,[x,.42,z],[0,0,Math.PI/2]).name="Fälg";
+  part(g,new THREE.CylinderGeometry(.2,.2,.29,20),textured("chrome",0xc7d4e2),[x,.42,z],[0,0,Math.PI/2]).name="Fälg";
  }
  return g;
 }
 function createObstacle(i){
- const box=part(new THREE.Group(),new THREE.BoxGeometry(1.4,1.3,1.4),MATERIALS.crate,[0,.65,0]);
+ const box=part(new THREE.Group(),new THREE.BoxGeometry(1.4,1.3,1.4),textured("wood",0xb18b5b),[0,.65,0]);
  box.name="Hinder "+String(i).padStart(2,"0");box.userData.livingCollider=true;
  return box.parent;
 }
 function createDoor(i){
  const g=new THREE.Group();g.name="Öppningsbar dörr "+String(i).padStart(2,"0");
- const mesh=part(g,new THREE.BoxGeometry(.9,1.8,.14),0x7c5537,[0,.9,0]);
+ const mesh=part(g,new THREE.BoxGeometry(.9,1.8,.14),textured("wood",0x986743),[0,.9,0]);
  mesh.name="Dörrblad";
  g.userData.duoforgeLiving={type:"door",version:1,openAngle:90,interactionDistance:3};
  g.userData.livingCollider=true;
@@ -71,9 +74,8 @@ function createRoad(){
  const group=new THREE.Group();group.name="Väg med körfält";
  group.userData.livingCollider=false;
  group.userData.duoforgeRoad=true;
- const road=new THREE.Mesh(new THREE.PlaneGeometry(10.5,130),material(MATERIALS.road,.96));
+ const road=new THREE.Mesh(new THREE.PlaneGeometry(10.5,130),textured("asphalt",0x555b5e,[3,38]));
  road.rotation.x=-Math.PI/2;road.position.set(0,.02,27);road.receiveShadow=true;group.add(road);
- const line=material(0xe0d9bd,.95),mark=material(0xf0c44b,.95);
  for(const x of [-4.9,4.9])part(group,new THREE.BoxGeometry(.12,.018,130),0xd7d9d3,[x,.044,27]);
  for(let z=-33;z<90;z+=9)part(group,new THREE.BoxGeometry(.17,.02,4),0xf3c756,[0,.05,z]);
  return group;
