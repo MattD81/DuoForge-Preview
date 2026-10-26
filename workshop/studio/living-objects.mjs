@@ -8,7 +8,7 @@ const LIVING_KEY="duoforgeLiving";
 export function initLivingObjects(ctx){
  const {scene,root,camera,orbit,transform,canvas,getSelected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene}=ctx;
  const input={left:false,right:false,gas:false,brake:false,handbrake:false,interact:false};
- const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0,vehicleRadius:.6};
+ const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0,vehicleRadius:.6,colliders:[],spawnIgnored:new Set()};
  let lastInteract=false,frameCount=0;
  function topLevel(node){
   let current=node;
@@ -201,13 +201,9 @@ export function initLivingObjects(ctx){
   const colliders=[];
   for(const obj of root.children){
    if(obj===runtime.vehicle||obj.userData?.livingCollider===false||!obj.visible)continue;
-   const b=new THREE.Box3().setFromObject(obj);
-   if(b.isEmpty()||b.max.y-b.min.y<.38)continue;
-   if(living(obj)?.type==="door"){
-    const d=runtime.doorSnapshots.find(x=>x.obj===obj);
-    if(d?.open)continue;
-   }
-   colliders.push(b);
+   const box=new THREE.Box3().setFromObject(obj);
+   if(box.isEmpty()||box.max.y-box.min.y<.38)continue;
+   colliders.push({object:obj,box,door:runtime.doorSnapshots.find(d=>d.obj===obj)||null});
   }
   return colliders;
  }
@@ -234,6 +230,13 @@ export function initLivingObjects(ctx){
   runtime.elapsed=0;runtime.collisions=0;runtime.paused=false;
   runtime.prevTime=null;runtime.active=true;lastInteract=false;clearInput();
   snapshotDoors();
+  // Cache static collision boxes once instead of rebuilding the whole scene at
+  // every animation frame. Importing a GLB over the starter kart must not trap
+  // the new vehicle inside a collider before it has moved.
+  runtime.colliders=collectColliders();
+  runtime.spawnIgnored=new Set(runtime.colliders.filter(({box})=>
+   touchesBox(runtime.state.x,runtime.state.z,runtime.vehicleRadius,box)
+  ).map(({object})=>object));
   transform.detach();orbit.enabled=false;
   $("playMode").hidden=false;
   $("playToolbar").hidden=false;
@@ -252,6 +255,7 @@ export function initLivingObjects(ctx){
   orbit.target.copy(saved.camera.target);orbit.enabled=saved.camera.enabled;orbit.update();
   transform.attach(vehicle);
   runtime.wheelRig=null;runtime.doorSnapshots=[];runtime.vehicle=null;runtime.snapshot=null;runtime.forwardBias=0;
+  runtime.colliders=[];runtime.spawnIgnored.clear();
   $("playMode").hidden=true;$("playToolbar").hidden=true;document.body.classList.remove("living-play");
   $("nearbyDoor").textContent="";
   syncPlayUI();refreshTree();updateInspector();
@@ -282,7 +286,14 @@ export function initLivingObjects(ctx){
   };
   const vehicle=runtime.vehicle,config=vehicleConfig(living(vehicle));
   const prev=runtime.state,next=driveStep(prev,control,dt,config);
-  const collided=collectColliders().some(b=>touchesBox(next.x,next.z,runtime.vehicleRadius,b));
+  const collided=runtime.colliders.some(({object,box,door})=>{
+   if(runtime.spawnIgnored.has(object)){
+    if(touchesBox(prev.x,prev.z,runtime.vehicleRadius,box))return false;
+    runtime.spawnIgnored.delete(object);
+   }
+   if(door?.open)return false;
+   return touchesBox(next.x,next.z,runtime.vehicleRadius,box);
+  });
   if(collided){
    runtime.state={...next,x:prev.x,z:prev.z,yaw:prev.yaw,speed:0};
    runtime.wheelRig?.step({distance:0,steerAngleDegrees:next.steerAngleDegrees,wheelRadius:config.wheelRadius});
