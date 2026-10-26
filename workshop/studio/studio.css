@@ -176,3 +176,27 @@
 .surface-status{margin:10px 0 0;min-height:38px;color:#9fdbce;font-size:11px;line-height:1.5;background:#122a36;padding:9px;border-radius:9px;border:1px solid #2e5666}
 @media(max-width:960px){.surface-swatches{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:580px){.surface-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}.surface-swatch{min-height:76px}}
+
+/* Ocean Engine — unobtrusive wave controls for desktop and touch. */
+.ocean-control-panel{padding:11px;background:linear-gradient(145deg,#103a4b,#122c40);border:1px solid #267e96;border-radius:12px;margin:10px 0 14px}
+.ocean-control-panel>strong{display:block;margin-bottom:12px;font-size:13px;color:#8ae9e9}
+.ocean-control-panel .range-line{display:grid;grid-template-columns:85px 1fr 50px;gap:8px;align-items:center;margin:12px 0;font-size:11px}
+.ocean-control-panel .range-line input{width:100%;accent-color:#5cebd2}
+.ocean-control-panel output{font-size:10px;color:#c4eaf5;text-align:right}
+.ocean-control-panel select{width:100%;background:#0c2436;color:#defaff;border:1px solid #438b9c;border-radius:8px;padding:8px;margin:5px 0}
+.ocean-control-panel .hint{margin:5px 0 0;font-size:10px;line-height:1.5}
+.ocean-inline-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-left:1px solid #357a85;padding-left:9px}
+.ocean-inline-controls label{display:flex;flex-direction:column;gap:4px;font-size:10px;color:#b5e6f0}
+.ocean-inline-controls input[type=range]{max-width:90px;min-width:50px;accent-color:#46e3ce}
+.ocean-inline-controls select{max-width:100px!important;background:#0d3b49!important}
+@media(max-width:980px){
+ .ocean-inline-controls{gap:5px;flex-basis:100%;border:0;border-top:1px solid #325568;padding:6px 0 0}
+ .ocean-inline-controls label{flex:1}
+ .ocean-inline-controls input[type=range]{width:100%;max-width:none}
+ .ocean-inline-controls select{max-width:100%!important}
+ .render-world-active:has(#oceanOverlayControls:not([hidden])) .render-world-hud{top:175px}
+}
+@media(max-width:580px){
+ .render-world-active:has(#oceanOverlayControls:not([hidden])) .render-world-hud{top:185px}
+ .ocean-inline-controls{width:100%}
+}
