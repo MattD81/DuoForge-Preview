@@ -107,13 +107,36 @@ $("exportJSON").onclick=()=>{
 };
 $("screenshot").onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(blob)download("duoforge-preview.png",blob)},"image/png")};
 
+function addPreset(kind,name){
+ const group=new THREE.Group();group.name=name;
+ const part=(geo,color,x,y,z,rx=0,ry=0,rz=0)=>{
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:.7,metalness:.08}));
+  mesh.position.set(x,y,z);mesh.rotation.set(rx,ry,rz);group.add(mesh);return mesh;
+ };
+ if(kind==="house"){
+  part(new THREE.BoxGeometry(3,2.4,2.6),0xc6bca5,0,1.2,0);
+  part(new THREE.ConeGeometry(2.35,1.5,4),0x9f5040,0,3.03,0,0,Math.PI/4,0);
+  part(new THREE.BoxGeometry(.7,1.4,.08),0x654433,0,.7,1.34);
+  for(const x of [-1,1])part(new THREE.BoxGeometry(.55,.6,.09),0x74acc3,x,1.65,1.35);
+ }else if(kind==="cart"){
+  part(new THREE.BoxGeometry(2.4,.5,3.8),0x25b78b,0,.7,0);
+  part(new THREE.BoxGeometry(1.8,.65,1.9),0x2f5678,0,1.22,-.35);
+  for(const x of [-1.2,1.2])for(const z of [-1.15,1.2])part(new THREE.CylinderGeometry(.44,.44,.3,24),0x1d2730,x,.43,z,0,0,Math.PI/2);
+  part(new THREE.BoxGeometry(1.5,.2,.2),0xb3c5d3,0,.55,2);
+ }else if(kind==="tree"){
+  part(new THREE.CylinderGeometry(.18,.25,2,12),0x6d4b2b,0,1,0);
+  for(const [height,y,r] of [[2.7,2.8,1.25],[2.15,3.5,1],[1.6,4.1,.75]])part(new THREE.ConeGeometry(r,height,10),0x247a55,0,y,0);
+ }else return;
+ root.add(group);select(group);fit(group);notice(name+" skapad. Du kan redigera och exportera till GLB.");
+}
+
 // Public-only catalog: never request GitHub private repos from the browser.
 async function loadLibrary(){
  const catalog=await fetch("./models.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Katalogen saknas");return r.json()});
  const holder=$("library");holder.replaceChildren();
  for(const item of catalog.models){
   const button=document.createElement("button");button.className="library-item";button.textContent=item.name;button.onclick=async()=>{
-   if(item.kind==="primitive"){const obj=make(item.shape,item.name);obj.scale.set(...(item.scale||[1,1,1]));sync();return}
+   if(item.kind==="primitive"){const obj=make(item.shape,item.name);obj.scale.set(...(item.scale||[1,1,1]));sync();return}\n   if(item.kind==="preset"){addPreset(item.shape,item.name);return}
    if(item.kind!=="glb"||typeof item.path!=="string"||!item.path.startsWith("./models/"))return notice("Otillåten modellsökväg");
    try{notice("Hämtar "+item.name+" …");const gltf=await new GLTFLoader().loadAsync(new URL(item.path,location.href).href);gltf.scene.name=item.name;root.add(gltf.scene);select(gltf.scene);fit(gltf.scene);notice(item.name+" hämtad från GitHub.")}catch(e){notice("Kunde inte hämta modell: "+e.message)}
   };holder.append(button);
