@@ -15,6 +15,7 @@ on:
       - 'tests/render-missions.test.mjs'
       - 'tests/surface-classifier.test.mjs'
       - 'tests/material-lab-smoke.mjs'
+      - 'tests/volvo-s90-smoke.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 concurrency:
@@ -44,6 +45,10 @@ jobs:
           node --check workshop/studio/render-missions.mjs
           node --check workshop/studio/procedural-materials.mjs
           node --check workshop/studio/material-lab.mjs
+          node --check workshop/studio/volvo-s90-model.mjs
+          node --check workshop/studio/volvo-s90-garage.mjs
+          node --check tests/volvo-s90-smoke.mjs
+          python3 -m py_compile tools/volvo-s90-convert.py
           node --check workshop/studio/surface-classifier.mjs
           node --check tests/material-lab-smoke.mjs
           node --check tests/render-world-smoke.mjs
@@ -58,6 +63,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Test Volvo S90 Garage, GLB and mobile driving
+        run: node tests/volvo-s90-smoke.mjs
       - name: Test PBR Material Lab and real GLB embedded texture roundtrip
         run: node tests/material-lab-smoke.mjs
       - name: Test render-world environments, controls and preview restoration
@@ -87,4 +94,7 @@ jobs:
             render-world-mobile.png
             material-world-desktop.png
             material-lab-mobile.png
+            volvo-s90-showroom.png
+            volvo-s90-track.png
+            volvo-s90-mobile.png
           if-no-files-found: ignore
