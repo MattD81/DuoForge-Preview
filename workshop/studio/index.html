@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=4">
+<link rel="stylesheet" href="./studio.css?v=7">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -66,6 +66,9 @@
   <main class="viewport">
     <div id="viewportMessage" class="viewport-status" role="status">Redigeraren startar …</div>
     <canvas id="scene" aria-label="Interaktiv 3D-vy"></canvas>
+    <div class="render-launch">
+      <button id="openRenderWorld" class="render-primary" title="Öppna vald 3D-modell i en vackert renderad testvärld">🌍 Testa i renderad värld</button>
+    </div>
     <div class="play-topbar">
       <button id="togglePlay" class="accent" title="Starta eller avsluta spelläge">▶ Spela</button>
       <span id="playStatus" class="play-status">Byggläge</span>
@@ -86,6 +89,45 @@
       <div class="drive-pad" aria-label="Spelkontroller för mobil">
         <div class="drive-direction"><button data-drive="left" aria-label="Styr vänster">◀</button><button data-drive="right" aria-label="Styr höger">▶</button></div>
         <div class="drive-pedals"><button data-drive="interact" aria-label="Öppna dörr">E</button><button data-drive="brake" aria-label="Bromsa och backa">BROMS</button><button data-drive="gas" class="gas" aria-label="Gasa">GAS</button></div>
+      </div>
+    </div>
+    <div id="renderWorldOverlay" class="render-world-overlay" hidden>
+      <div class="render-world-top">
+        <div class="render-head"><strong>◈ Render World</strong><span id="previewAssetName"></span></div>
+        <label>Värld <select id="renderWorldSelect" aria-label="Välj renderad värld">
+          <option value="showroom">Showroom</option>
+          <option value="racetrack">Racerbana</option>
+          <option value="forest">Skog</option>
+          <option value="city">Stad</option>
+          <option value="night">Neon-natt</option>
+        </select></label>
+        <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
+          <option value="low">Låg</option><option value="medium" selected>Medium</option><option value="high">Hög · Bloom/AO</option>
+        </select></label>
+        <label>Kamera <select id="renderCameraSelect" aria-label="Välj kamerastyrning">
+          <option value="orbit">Orbit</option><option value="follow">Följkamera</option>
+          <option value="free">Fri kamera</option><option value="cinematic">Filmkamera</option>
+        </select></label>
+        <button id="renderScreenshot" title="Ladda ned renderad PNG-bild">📷 Bild</button>
+        <button id="renderCinematic" title="Växla filmkamera (C)">🎬 Film</button>
+        <button id="renderExit" class="render-exit" title="Återgå till 3D-editorn (Escape)">✕ Till verkstaden</button>
+      </div>
+      <div class="render-world-hud">
+        <div class="render-hud-heading"><span id="renderMissionKind">Objektvisning</span><span id="renderInputType">⌨️ Tangentbord · touch</span></div>
+        <div id="renderMissionDescription">Laddar världen …</div>
+        <div class="render-hud-stats">
+          <div><strong id="renderCheckpointCount">0/0</strong><small>Checkpoints</small></div>
+          <div><strong id="renderSpeed">0 km/h</strong><small>Hastighet</small></div>
+          <div><strong id="renderTime">0.0 s</strong><small>Tid</small></div>
+        </div>
+        <div id="renderMissionStatus">Testläge</div>
+        <button id="renderResetMission">↻ Starta om test</button>
+        <div id="renderCameraTip" class="render-camera-tip">Dra för att rotera och scrolla för zoom</div>
+      </div>
+      <span id="renderInteractHint" class="render-interact-hint"></span>
+      <div id="renderDrivingControls" class="render-drive" hidden>
+        <div class="render-direction"><button data-preview-drive="left" aria-label="Styr vänster">◀</button><button data-preview-drive="right" aria-label="Styr höger">▶</button></div>
+        <div class="render-pedals"><button data-preview-drive="interact" aria-label="Interagera">E</button><button data-preview-drive="brake" aria-label="Bromsa">BROMS</button><button data-preview-drive="gas" aria-label="Gasa">GAS</button></div>
       </div>
     </div>
     <div class="toolbar">
@@ -167,6 +209,27 @@
       <div class="row two"><button id="playFromPanel" class="accent">▶ Testkör i 3D-vyn</button></div>
       <p class="hint">W/A/S/D eller piltangenter. Gamepad: vänster styrspak och avtryckare. Mobil: skärmknappar. Pausa med P.</p>
     </section>
+    <section class="panel-section render-panel" id="renderWorldControls">
+      <div class="section-heading"><h2>🌍 Render World Preview</h2><span class="mini-pill">Gratis • 3 steg</span></div>
+      <p class="hint">Testa modellen i en renderad spelvärld. Testet använder en kopia så ditt original behålls.</p>
+      <label class="field-label" for="renderWorld">Värld</label>
+      <select id="renderWorld">
+        <option value="showroom">Showroom</option><option value="racetrack">Racerbana</option>
+        <option value="forest">Skog</option><option value="city">Stad</option><option value="night">Neon-natt</option>
+      </select>
+      <label class="field-label" for="renderQuality">Grafik</label>
+      <select id="renderQuality">
+        <option value="low">Låg • snabb</option><option value="medium" selected>Medium • balanserad</option>
+        <option value="high">Hög • bloom och AO</option>
+      </select>
+      <label class="field-label" for="renderCamera">Kamera</label>
+      <select id="renderCamera">
+        <option value="orbit">Orbit</option><option value="follow">Följkamera</option>
+        <option value="free">Fri kamera</option><option value="cinematic">Filmkamera</option>
+      </select>
+      <p class="hint">Steg 1: showroom, bana, skog och stad. Steg 2: PBR, skuggor, fog, HDR-liknande studioljus och högre grafikläge. Steg 3: kameratest, checkpoints, interaktiv dörr och bilder.</p>
+      <div class="row two"><button id="renderScreenshotPanel">🌄 Förhandsvisa</button></div>
+    </section>
     <section class="panel-section">
       <div class="section-heading"><h2>Scen & export</h2></div>
       <div class="row two"><button id="screenshot">Spara PNG-bild</button><button id="downloadProject">Projektfil (.json)</button></div>
@@ -183,5 +246,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=6"></script>
+<script type="module" src="./studio.mjs?v=7"></script>
 </body></html>
