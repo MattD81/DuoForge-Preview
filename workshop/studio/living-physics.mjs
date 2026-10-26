@@ -50,7 +50,10 @@ export function driveStep(state,control,seconds,config=VEHICLE_DEFAULTS){
  const steerAngleDegrees=steering*cfg.steeringDegrees*steeringLimit(speed);
  const steerAngle=steerAngleDegrees*Math.PI/180;
  const previousYaw=Number(state.yaw)||0;
- const yaw=previousYaw+Math.tan(steerAngle)*speed/cfg.wheelBase*dt;
+ // Three.js rotates +Z toward +X for positive Y. A driver's right
+ // is -X for +Z-forward vehicles and +X for -Z-forward vehicles, so
+ // steering-right MUST DECREASE world yaw for both model orientations.
+ const yaw=previousYaw-Math.tan(steerAngle)*speed/cfg.wheelBase*dt;
  const stepDistance=speed*dt;
  const midpointYaw=(previousYaw+yaw)/2;
  return {
