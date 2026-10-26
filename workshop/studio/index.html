@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=3">
+<link rel="stylesheet" href="./studio.css?v=4">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -33,6 +33,21 @@
       <div class="row two"><button id="undo" title="Ångra (Ctrl/Cmd+Z)" disabled>↶ Ångra</button><button id="redo" title="Gör om (Ctrl/Cmd+Shift+Z)" disabled>↷ Gör om</button></div>
       <div id="hierarchy" class="hierarchy" role="tree" aria-label="Scenens objekt"></div>
       <div class="row two"><button id="duplicate" disabled>Duplicera</button><button id="deleteObject" disabled>Ta bort</button></div>
+    </section>
+    <section class="panel-section world-panel" id="worldBuilderPanel">
+      <div class="section-heading"><h2>✦ Bygg en värld med text</h2><span class="mini-pill">0 AI-krediter</span></div>
+      <p class="hint">Beskriv hus, träd, vägar och fordon. DuoForge bygger med egna 3D-mallar helt lokalt i webbläsaren.</p>
+      <label class="field-label" for="worldPrompt">Beskriv din värld</label>
+      <textarea id="worldPrompt" rows="4" spellcheck="true">Skapa en by med 8 hus, 16 träd, 1 bil och en väg i dagsljus</textarea>
+      <div class="world-presets">
+        <button data-world-example="village">By</button>
+        <button data-world-example="night">Nattstad</button>
+        <button data-world-example="forest">Skog</button>
+        <button data-world-example="track">Racerbana</button>
+      </div>
+      <div id="worldPlan" class="world-plan" role="status">Analyserar text lokalt …</div>
+      <div class="row two"><button id="buildWorld" class="accent">✦ Bygg världen</button><button id="clearWorld">Ta bort genererat</button></div>
+      <p class="hint">Regelbaserad prototyp – inte en generativ AI-modell. Alla objekt går att redigera och exportera som GLB.</p>
     </section>
     <section class="panel-section">
       <div class="section-heading"><h2>Skapa 3D-objekt</h2></div>
@@ -167,5 +182,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=3"></script>
+<script type="module" src="./studio.mjs?v=4"></script>
 </body></html>
