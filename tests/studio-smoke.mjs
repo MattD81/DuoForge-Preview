@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {chromium} from "playwright";
 const browser=await chromium.launch({
  headless:true,
@@ -32,7 +33,7 @@ try{
  assert.match(glb.suggestedFilename(),/\.glb$/);
  console.log("PASS: GLB export downloads");
  const filePath=await glb.path();
- await page.locator("#importFile").setInputFiles(filePath);
+ await page.locator("#importFile").setInputFiles({name:"roundtrip.glb",mimeType:"model/gltf-binary",buffer:readFileSync(filePath)});
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="4");
  console.log("PASS: exported GLB can be re-imported and edited");
 
