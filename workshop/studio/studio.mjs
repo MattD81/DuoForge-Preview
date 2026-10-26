@@ -3,7 +3,7 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
-import {initLivingObjects} from "./living-objects.mjs";
+import {initLivingObjects} from "./living-objects.mjs?v=vortex-wheel-fix-1";
 import {initWorldBuilder} from "./world-builder.mjs";
 
 const $=id=>document.getElementById(id);
