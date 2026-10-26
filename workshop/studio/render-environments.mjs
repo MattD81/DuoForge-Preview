@@ -1,19 +1,22 @@
 import * as THREE from "three";
 import {createSurfaceLibrary} from "./procedural-materials.mjs";
+import {buildOceanScene} from "./ocean-scene.mjs";
+import {normalizeOceanSettings} from "./ocean-water.mjs";
 
-export const worldNames=["showroom","racetrack","forest","city","night"];
+export const worldNames=["showroom","racetrack","forest","city","night","ocean"];
 const colors={
  showroom:{background:0x111e31,fog:0x263b51,ground:0x465d68,sunColor:0xfff4e9,hemisphere:2.2,sun:2.7},
  racetrack:{background:0x86b8df,fog:0x9fc9e9,ground:0x487b49,sunColor:0xffedc9,hemisphere:2.0,sun:3.0},
  forest:{background:0x80acc1,fog:0x9bbfb6,ground:0x4f7145,sunColor:0xffe9c0,hemisphere:1.65,sun:2.45},
  city:{background:0x9fbdd9,fog:0xadc4d3,ground:0x535d62,sunColor:0xfff2d6,hemisphere:1.9,sun:2.6},
- night:{background:0x071223,fog:0x10233b,ground:0x1f283c,sunColor:0x88aef7,hemisphere:.65,sun:.8}
+ night:{background:0x071223,fog:0x10233b,ground:0x1f283c,sunColor:0x88aef7,hemisphere:.65,sun:.8},
+ ocean:{background:0x92bfd6,fog:0x9abed0,ground:0x09576c,sunColor:0xffefd1,hemisphere:1.85,sun:2.9}
 };
 function seeded(seed){let s=seed>>>0;return ()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};}
 export function getWorldTheme(kind){
  return colors[worldNames.includes(kind)?kind:"showroom"];
 }
-export function createEnvironment({world="showroom",quality="medium"}={}){
+export function createEnvironment({world="showroom",quality="medium",oceanSettings={}}={}){
  world=worldNames.includes(world)?world:"showroom";
  const theme=getWorldTheme(world),group=new THREE.Group();group.name="Procedural "+world+" (preview only)";
  const random=seeded(15799+worldNames.indexOf(world)*137);
@@ -76,9 +79,12 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   for(let i=-2;i<=2;i++)add(new THREE.BoxGeometry(.33,.23,.6),mat(0xdd6b4c,.6),x,.7,z+i*1.1);
  }
  const points=[],lights=[];
- let door=null;
- areaFloor();
- if(world==="showroom"){
+ let door=null,ocean=null;
+ if(world!=="ocean")areaFloor();
+ if(world==="ocean"){
+  ocean=buildOceanScene({quality,settings:oceanSettings});
+  group.add(ocean.group);
+ }else if(world==="showroom"){
   // Polished studio, angled softboxes, emissive ceiling rings and circular podium.
   add(new THREE.CylinderGeometry(9.5,9.5,.12,96),surface("brushed",{color:0x344d5c,repeat:[5,5],roughness:.22,metalness:.7}),0,-.08,0);
   add(new THREE.CylinderGeometry(5.8,5.8,.33,96),surface("brushed",{color:0x788c98,repeat:[3,3],roughness:.2,metalness:.7}),0,.06,0);
@@ -172,7 +178,7 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   }
  }
  // A procedural sky hemisphere; uses no external assets or paid rendering.
- const skyColorTop=new THREE.Color(world==="night"?0x08132b:world==="showroom"?0x102132:0x5e9dd9);
+ const skyColorTop=new THREE.Color(world==="night"?0x08132b:world==="showroom"?0x102132:world==="ocean"?0x4b93be:0x5e9dd9);
  const skyColorHorizon=new THREE.Color(theme.background);
  const sky=new THREE.Mesh(new THREE.SphereGeometry(470,28,14),
   new THREE.ShaderMaterial({
@@ -182,13 +188,33 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
    fragmentShader:`varying vec3 vPosition;uniform vec3 top;uniform vec3 bottom;void main(){float t=clamp(normalize(vPosition).y*.7+.44,0.,1.);gl_FragColor=vec4(mix(bottom,top,t),1.);}`
   }));
  sky.castShadow=false;sky.receiveShadow=false;sky.renderOrder=-100;group.add(sky);owned.push(sky);
- const fog=new THREE.FogExp2(theme.fog,world==="night"?.007:world==="showroom"?.012:world==="forest"?.006:.003);
+ const fog=new THREE.FogExp2(theme.fog,world==="night"?.007:world==="showroom"?.012:world==="forest"?.006:world==="ocean"?.0028:.003);
  const background=new THREE.Color(theme.background);
+ if(ocean){
+  const weather=normalizeOceanSettings(oceanSettings).weather;
+  const palette=weather==="storm"?["#36495b","#70889a","#748b9a"]:
+   weather==="sunset"?["#34537d","#f1aa89","#d8a28e"]:["#4b93be","#92bfd6","#9abed0"];
+  sky.material.uniforms.top.value.set(palette[0]);
+  sky.material.uniforms.bottom.value.set(palette[1]);fog.color.set(palette[2]);background.set(palette[1]);
+ }
  return {
-  group,door,world,background,fog,hemisphere:theme.hemisphere,
+  group,door,world,ocean,background,fog,hemisphere:theme.hemisphere,
   sun:theme.sun,sunColor:theme.sunColor,
   sunPosition:world==="night"?[4,9,-7]:[-15,24,16],
+  setOceanSettings(next){
+   if(!ocean)return null;
+   const settings=ocean.setSettings(normalizeOceanSettings(next));
+   const palette=settings.weather==="storm"?{top:"#36495b",horizon:"#70889a",fog:"#748b9a"}:
+    settings.weather==="sunset"?{top:"#34537d",horizon:"#f1aa89",fog:"#d8a28e"}:
+    {top:"#4b93be",horizon:"#92bfd6",fog:"#9abed0"};
+   sky.material.uniforms.top.value.set(palette.top);
+   sky.material.uniforms.bottom.value.set(palette.horizon);
+   fog.color.set(palette.fog);
+   background.set(palette.horizon);
+   return settings;
+  },
   update(time,dt){
+   ocean?.update(time);
    if(world==="showroom"){
     // Slow lighting motion demonstrates PBR surfaces without moving the model.
     for(let i=0;i<lights.length;i++)lights[i].intensity=9+2.2*Math.sin(time*.38+i);
