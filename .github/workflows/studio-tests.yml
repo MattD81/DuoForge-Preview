@@ -47,6 +47,7 @@ jobs:
           node --check workshop/studio/material-lab.mjs
           node --check workshop/studio/volvo-s90-model.mjs
           node --check workshop/studio/volvo-s90-garage.mjs
+          node --check workshop/studio/preview-batch.mjs
           node --check tests/volvo-s90-smoke.mjs
           python3 -m py_compile tools/volvo-s90-convert.py
           node --check workshop/studio/surface-classifier.mjs
