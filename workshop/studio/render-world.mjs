@@ -492,7 +492,7 @@ export function initRenderWorld(ctx){
    if(composer)composer.setSize(width,height);
   },
   setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
-  notify,filename:safeFilename
+  notify,filename
  });
  syncChoices();
  // Film/demo deep links start Render World and optionally open the director UI.
