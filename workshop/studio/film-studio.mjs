@@ -80,6 +80,9 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!isPreviewActive())return false;
   if(opened)return true;
   cacheCamera();opened=true;ui.hidden=false;
+  // Director must be able to compose custom keyframes even if Render World
+  // previously used Follow or Cinematic (where orbit was disabled).
+  orbit.enabled=true;
   const world=getWorld();
   $("filmShot").value=world==="ocean"?"flyover":"orbit";
   $("filmDuration").value=world==="ocean"?"14":"12";
@@ -113,7 +116,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  }
  function stopPlayback({keepFrame=false}={}){
   playing=false;
-  if(!recording)orbit.enabled=savedCamera?.orbitEnabled??true;
+  if(!recording)orbit.enabled=true;
   if(!keepFrame&&opened){
    elapsed=0;
    if(path.length)applyAt(0);
@@ -129,7 +132,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   recording=false;playing=false;
   if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
   captureTrack=null;restoreOutputSize();
-  orbit.enabled=savedCamera?.orbitEnabled??true;
+  orbit.enabled=true;
   displayState(cancel?"Inspelningen avbröts.":"Sparar videofil lokalt …");
  }
  function close(){
@@ -146,7 +149,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  function preview(){
   if(!opened&&!open())return;
   if(recording)return;
-  if(playing){playing=false;orbit.enabled=savedCamera?.orbitEnabled??true;
+  if(playing){playing=false;orbit.enabled=true;
    displayState("Förhandsvisning pausad.");return;}
   beginPlayback();
  }
@@ -208,7 +211,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    console.error("Film Studio capture",e);
    if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
    mediaRecorder=null;recording=false;playing=false;
-   restoreOutputSize();orbit.enabled=savedCamera?.orbitEnabled??true;
+   restoreOutputSize();orbit.enabled=true;
    displayState("Kunde inte starta video: "+e.message);
    notify("Videoinspelning stöds inte fullt ut på din enhet – prova 720p eller PNG.",5500);
   }
@@ -310,7 +313,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   readSettings();
   try{
    path=buildPath();
-   playing=false;orbit.enabled=false;
+   playing=false;orbit.enabled=true;
    elapsed=format.duration*(Number(event.target.value)/1000);
    applyAt(elapsed/format.duration);setWorldTime(elapsed,0);
    renderFrame();
