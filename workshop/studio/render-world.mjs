@@ -5,7 +5,8 @@ import * as THREE from "three";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
-import {createEnvironment,worldNames} from "./render-environments.mjs?v=surfaces-v1";
+import {createEnvironment,worldNames} from "./render-environments.mjs?v=ocean-1";
+import {normalizeOceanSettings} from "./ocean-water.mjs";
 import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
@@ -24,7 +25,9 @@ export function initRenderWorld(ctx){
  group.userData.previewOnly=true;scene.add(group);
  const controls={gas:false,brake:false,left:false,right:false,handbrake:false,interact:false};
  let active=false,model=null,anchor=null,wheelRig=null,simulation=null;
- let saved=null,environment=null,quality="medium",world="showroom",mode="orbit";
+ const query=new URLSearchParams(window.location.search);
+ let saved=null,environment=null,quality="medium",world=worldNames.includes(query.get("world"))?query.get("world"):"showroom",mode="orbit";
+ let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null;
@@ -74,7 +77,23 @@ export function initRenderWorld(ctx){
   if(saved.selection)transform.attach(saved.selection);
   saved=null;
  }
+ function syncOceanControls(){
+  const show=world==="ocean";
+  $("oceanPanelControls").hidden=!show;
+  $("oceanOverlayControls").hidden=!show;
+  for(const id of ["oceanHeight","oceanHeightLive"])$(id).value=oceanSettings.height;
+  for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).value=oceanSettings.speed;
+  for(const id of ["oceanWeather","oceanWeatherLive"])$(id).value=oceanSettings.weather;
+  $("oceanHeightValue").textContent=oceanSettings.height.toFixed(2).replace(".",",")+" m";
+  $("oceanSpeedValue").textContent=oceanSettings.speed.toFixed(2).replace(".",",")+"×";
+ }
+ function updateOceanSetting(key,value){
+  oceanSettings=normalizeOceanSettings({...oceanSettings,[key]:value});
+  if(active&&world==="ocean")environment?.setOceanSettings?.(oceanSettings);
+  syncOceanControls();
+ }
  function syncChoices(){
+  syncOceanControls();
   $("renderWorldSelect").value=world;$("renderQualitySelect").value=quality;
   $("renderCameraSelect").value=mode;
   $("renderWorld").value=world;$("renderQuality").value=quality;$("renderCamera").value=mode;
@@ -149,7 +168,7 @@ export function initRenderWorld(ctx){
   box=new THREE.Box3().setFromObject(anchor);
   center=box.getCenter(new THREE.Vector3());
   anchor.position.x-=center.x;anchor.position.z-=center.z;
-  const lift=world==="showroom"?.3:.018;
+  const lift=world==="showroom"?.3:world==="ocean"?.35:.018;
   anchor.position.y+=lift-box.min.y;
   anchor.updateMatrixWorld(true);
   const meta=obj.userData?.duoforgeLiving;
@@ -174,7 +193,7 @@ export function initRenderWorld(ctx){
  }
  function makeEnvironment(){
   if(environment){group.remove(environment.group);environment.dispose();environment=null;}
-  environment=createEnvironment({world,quality});
+  environment=createEnvironment({world,quality,oceanSettings});
   group.add(environment.group);
   scene.background=environment.background;
   scene.fog=environment.fog;
@@ -188,6 +207,7 @@ export function initRenderWorld(ctx){
   createMission();
   $("renderMissionDescription").textContent=world==="showroom"?
    "Inspektera material, ljus och detaljer. Byt kameravinkel eller spara en bild.":
+   world==="ocean"?"Se havets vågor, ljusreflektioner och flytande föremål. Ändra våghöjd, fart eller storm i realtid.":
    "Kör eller utforska, ta dig genom ringarna och testa interaktiva föremål.";
  }
  function createMission(){
@@ -195,7 +215,7 @@ export function initRenderWorld(ctx){
   mission=[];
   nextGate=0;completed=false;sessionTime=0;gameTime=0;
   const sign=wheelRig?.forwardSign||1;
-  if(world!=="showroom"){
+  if(world!=="showroom"&&world!=="ocean"){
    const positions=[12,25,40,55];
    const gold=new THREE.MeshStandardMaterial({color:0x49f3c4,emissive:0x30ad8c,emissiveIntensity:1.5,metalness:.28,roughness:.26,side:THREE.DoubleSide});
    for(const [i,z]of positions.entries()){
@@ -216,7 +236,7 @@ export function initRenderWorld(ctx){
   $("renderCheckpointCount").textContent=nextGate+"/"+mission.length;
   $("renderSpeed").textContent=Math.round(Math.abs(simulation?.state?.speed||0)*3.6)+" km/h";
   $("renderTime").textContent=gameTime.toFixed(1)+" s";
-  $("renderMissionStatus").textContent=completed?"Uppdrag slutfört!":mission.length?"Kör igenom de lysande ringarna":"Visa och granska modellen";
+  $("renderMissionStatus").textContent=completed?"Uppdrag slutfört!":mission.length?"Kör igenom de lysande ringarna":world==="ocean"?"🌊 Levande hav • GPU-vågor":"Visa och granska modellen";
  }
  function checkpointUpdate(){
   if(!mission.length||completed||!anchor)return;
@@ -441,6 +461,11 @@ export function initRenderWorld(ctx){
   ["renderCamera",chooseCamera],
   ["renderCameraSelect",chooseCamera]
  ])$(id).onchange=event=>{handler(event.target.value);event.target.blur();};
+ for(const id of ["oceanHeight","oceanHeightLive"])$(id).oninput=event=>updateOceanSetting("height",Number(event.target.value));
+ for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).oninput=event=>updateOceanSetting("speed",Number(event.target.value));
+ for(const id of ["oceanWeather","oceanWeatherLive"])$(id).onchange=event=>{updateOceanSetting("weather",event.target.value);event.target.blur()};
  syncChoices();
+ // Landing page deep-link: the Ocean demo opens directly in the existing studio.
+ if(world==="ocean"&&query.get("preview")==="1")requestAnimationFrame(()=>start());
  return {start,stop,update,isActive,resize,render};
 }
