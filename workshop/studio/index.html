@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=8">
+<link rel="stylesheet" href="./studio.css?v=9">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -33,6 +33,55 @@
       <div class="row two"><button id="undo" title="Ångra (Ctrl/Cmd+Z)" disabled>↶ Ångra</button><button id="redo" title="Gör om (Ctrl/Cmd+Shift+Z)" disabled>↷ Gör om</button></div>
       <div id="hierarchy" class="hierarchy" role="tree" aria-label="Scenens objekt"></div>
       <div class="row two"><button id="duplicate" disabled>Duplicera</button><button id="deleteObject" disabled>Ta bort</button></div>
+    </section>
+    <section class="panel-section s90-garage-panel" id="s90Garage">
+      <div class="section-heading"><h2>🚘 Volvo S90 Garage</h2><span class="mini-pill">STUDIO EDITION</span></div>
+      <p class="hint">Bygg en svensk lyxsedan i riktiga mått, med detaljerad kupé, fyra öppningsbara dörrar, LED-strålkastare, texturer och fungerande hjul.</p>
+      <div class="s90-statbar">
+        <span>4,97 m lång</span><span>2,94 m hjulbas</span><span>T8 Recharge-inspirerad</span>
+      </div>
+      <label class="field-label" for="s90Detail">Detaljnivå</label>
+      <select id="s90Detail" aria-label="Välj detaljnivå">
+        <option value="detailed" selected>Showroom – mer detaljer</option>
+        <option value="performance">Spel / mobil – lättare modell</option>
+      </select>
+      <div class="row two">
+        <div>
+          <label class="field-label" for="s90Paint">Karosslack</label>
+          <select id="s90Paint" aria-label="Volvo S90 karossfärg"></select>
+        </div>
+        <div>
+          <label class="field-label" for="s90Interior">Kupé</label>
+          <select id="s90Interior" aria-label="Välj interiör">
+            <option value="sand" selected>Blond läder</option>
+            <option value="black">Svart läder</option>
+            <option value="brown">Brunt läder</option>
+            <option value="blue">Blå läder</option>
+          </select>
+        </div>
+      </div>
+      <button id="s90Build" class="s90-build-primary">✦ Skapa Volvo S90 i 3D</button>
+      <div id="s90GarageSelected" class="s90-selected">Ingen S90 i scenen ännu</div>
+      <div class="row two">
+        <button id="s90UpdatePaint" disabled>🎨 Byt lack</button>
+        <button id="s90UpdateCabin" disabled>🪑 Byt kupé</button>
+        <button id="s90Doors" disabled>🚪 Öppna dörrar</button>
+        <button id="s90Lights" disabled>💡 Släck LED</button>
+      </div>
+      <label class="field-label" for="s90World">Testmiljö</label>
+      <select id="s90World">
+        <option value="showroom">Premium Showroom</option>
+        <option value="racetrack">Racerbana</option>
+        <option value="forest">Skogsväg</option>
+        <option value="city">Stad</option>
+        <option value="night">Neon-natt</option>
+      </select>
+      <button id="s90Preview" class="s90-preview" disabled>🌍 Testa S90 i Render World</button>
+      <div class="row two">
+        <button id="s90Export" disabled>⬇ GLB-export</button>
+        <button id="s90Original">📸 Originalmodell</button>
+      </div>
+      <p id="s90BuildStatus" class="s90-status" role="status">Riktig S90-silhuett byggd med procedurgenererad 3D, inte fabriks-CAD.</p>
     </section>
     <section class="panel-section world-panel" id="worldBuilderPanel">
       <div class="section-heading"><h2>✦ Bygg en värld med text</h2><span class="mini-pill">0 AI-krediter</span></div>
@@ -268,5 +317,26 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=8"></script>
+<script type="module" src="./studio.mjs?v=9"></script>
+<dialog id="s90OriginalDialog" class="s90-dialog">
+  <form method="dialog" class="s90-modal">
+    <div class="s90-modal-head">
+      <h2>Volvo S90 Recharge – fotorealistiska originalet</h2>
+      <button value="cancel" aria-label="Stäng">✕</button>
+    </div>
+    <p>Denna 3D Studio har en <strong>egen körbar S90-studiemodell</strong>. Vill du istället importera det mycket mer detaljerade originalet av <strong>Adam Wiese (lazercar)</strong> har skaparen gjort sin Volvo S90 Recharge tillgänglig under <strong>CC BY</strong>.</p>
+    <p>Originalet är ungefär 1,6 miljoner polygoner och levereras som en stor Blender-fil med texturer. Den ingår <strong>inte automatiskt</strong> i DuoForges GitHub-kod.</p>
+    <div class="s90-original-preview">
+      <iframe id="s90ArtistFrame" title="Adam Wiese – Volvo S90 Recharge fotorealistisk 3D-modell på Sketchfab"
+        loading="lazy" allow="fullscreen; xr-spatial-tracking"
+        referrerpolicy="no-referrer" data-src="https://sketchfab.com/models/9462b07c10244fd4a28d86846dc9e3a9/embed?autostart=0&amp;ui_infos=1&amp;ui_controls=1"></iframe>
+      <p class="hint">Originalet visas via skaparen på Sketchfab när du öppnar den här rutan. Om 3D-visaren blockeras kan du öppna den direkt på Sketchfab.</p>
+    </div>
+    <p><a href="https://sketchfab.com/3d-models/volvo-s90-recharge-free-9462b07c10244fd4a28d86846dc9e3a9" target="_blank" rel="noopener noreferrer">Se den autentiska fotorealistiska 3D-modellen på Sketchfab</a></p>
+    <p><a href="https://lazercar.gumroad.com/l/s90" target="_blank" rel="noopener noreferrer">Hämta originalmodellen gratis hos skaparen</a></p>
+    <p>För att använda den i DuoForge: hämta modellen, öppna den i Blender, exportera som <strong>glTF Binary (.glb)</strong> med texturerna och importera sedan GLB i 3D Studio. För spel krävs sannolikt en betydligt lättare modell.</p>
+    <p class="s90-attribution"><strong>Attribuering:</strong> Volvo S90 Recharge 3D by Adam Wiese (lazercar), CC BY, Sketchfab. Bilmärket Volvo är ett varumärke; denna Studio-prototyp är inte en officiell Volvo Cars-produkt.</p>
+    <button value="cancel" class="accent">Tillbaka till studion</button>
+  </form>
+</dialog>
 </body></html>

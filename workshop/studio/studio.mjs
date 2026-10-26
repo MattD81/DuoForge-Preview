@@ -7,6 +7,7 @@ import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=surfaces-v1";
 import {initMaterialLab} from "./material-lab.mjs";
+import {initVolvoGarage} from "./volvo-s90-garage.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -44,7 +45,7 @@ transform.addEventListener("dragging-changed",e=>{orbit.enabled=!e.value});
 transform.addEventListener("mouseDown",()=>{pushHistory();});
 transform.addEventListener("mouseUp",()=>{updateInspector();refreshTree();dirty();});
 transform.addEventListener("objectChange",()=>{updateInspector();updateStats();});
-let livingRuntime=null,renderWorld=null,materialLab=null;
+let livingRuntime=null,renderWorld=null,materialLab=null,volvoGarage=null;
 const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
@@ -122,6 +123,7 @@ function select(obj){
  $("duplicate").disabled=!obj;$("deleteObject").disabled=!obj;
  livingRuntime?.onSelectionChanged();
  materialLab?.selectionChanged();
+ volvoGarage?.selectionChanged();
 }
 function refreshTree(){
  const list=$("hierarchy");list.replaceChildren();
@@ -559,6 +561,7 @@ livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSel
 initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,dirty,fitScene,notify,select});
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
+volvoGarage=initVolvoGarage({root,getSelected:()=>selected,select,pushHistory,dirty,refreshTree,updateStats,fitScene,notify,getRenderWorld:()=>renderWorld});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
