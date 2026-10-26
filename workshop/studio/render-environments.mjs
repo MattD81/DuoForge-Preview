@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {createSurfaceLibrary} from "./procedural-materials.mjs";
 
 export const worldNames=["showroom","racetrack","forest","city","night"];
 const colors={
@@ -17,6 +18,8 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
  const theme=getWorldTheme(world),group=new THREE.Group();group.name="Procedural "+world+" (preview only)";
  const random=seeded(15799+worldNames.indexOf(world)*137);
  const materials=new Map(),owned=[];
+ const surfaces=createSurfaceLibrary(quality);
+ const surface=(type,options)=>surfaces.material(type,options);
  const mat=(color,roughness=.78,metalness=.03,emissive=0,emissiveIntensity=0)=>{
   const key=[color,roughness,metalness,emissive,emissiveIntensity].join("|");
   if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color,roughness,metalness,emissive,emissiveIntensity}));
@@ -30,10 +33,13 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   return mesh;
  }
  function areaFloor(color=theme.ground){
-  return add(new THREE.PlaneGeometry(500,500),mat(color,.94),0,-.025,0,-Math.PI/2);
+  const type=world==="showroom"?"brushed":world==="city"||world==="night"?"concrete":"grass";
+  return add(new THREE.PlaneGeometry(500,500),surface(type,{
+   color,repeat:[64,64],roughness:world==="showroom"?.34:.97,metalness:world==="showroom"?.38:0
+  }),0,-.025,0,-Math.PI/2);
  }
  function asphalt(z=0,length=150,width=11){
-  const road=add(new THREE.PlaneGeometry(width,length),mat(0x252c32,.94),0,.009,z,-Math.PI/2);
+  const road=add(new THREE.PlaneGeometry(width,length),surface("asphalt",{color:0x535b60,repeat:[width/3.2,length/3.2]}),0,.009,z,-Math.PI/2);
   road.receiveShadow=true;
   for(const x of [-width/2+.35,width/2-.35])add(new THREE.BoxGeometry(.14,.018,length),mat(0xe1e9e4,.66),x,.024,z);
   for(let zz=-length/2;zz<length/2;zz+=8){
@@ -42,16 +48,17 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   return road;
  }
  function tree(x,z,height=3.5){
-  add(new THREE.CylinderGeometry(.14,.2,height*.5,7),mat(0x63482d,.93),x,height*.25,z);
+  add(new THREE.CylinderGeometry(.14,.2,height*.5,7),surface("bark",{color:0x8b6042,repeat:[1,3]}),x,height*.25,z);
   for(let i=0;i<3;i++){
    add(new THREE.ConeGeometry(height*(.25-i*.042),height*.6,7),
-    mat(i===1?0x2f7854:0x275d40,.98),x,height*(.52+i*.17),z);
+    surface("grass",{color:i===1?0x5d884d:0x3d7449,repeat:[2,2]}),x,height*(.52+i*.17),z);
   }
  }
  function building(x,z,h,w,d,night=false){
-  const base=mat([0x9ea9b5,0xaab4bc,0x899cad,0xb3aca4][Math.floor(random()*4)],.72,.12);
+  const color=[0xa2adb8,0xbcb2ab,0x9baab8,0xbeb2a8][Math.floor(random()*4)];
+  const base=surface(random()>.38?"concrete":"brick",{color,repeat:[2.4,Math.max(2,h/5)]});
   add(new THREE.BoxGeometry(w,h,d),base,x,h/2,z);
-  const glass=mat(night?0xffd895:0x6facc6,.23,.43,night?0xe9ae59:0x000000,night?.8:0);
+  const glass=night?mat(0xffd895,.18,.14,0xe9ae59,.85):surface("glass",{color:0x608fa5,opacity:.8});
   const pitch=w>4?1.35:1;
   for(const side of [-1,1])for(let y=1.3;y<h-1;y+=1.85){
    for(let zz=-d/2+.8;zz<d/2-.5;zz+=1.25){
@@ -59,10 +66,10 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
     add(new THREE.BoxGeometry(.04,.8,.7),glass,x+side*(w/2+.028),y,z+zz);
    }
   }
-  add(new THREE.BoxGeometry(w+.2,.16,d+.2),mat(0x525c66,.92),x,h+.09,z);
+  add(new THREE.BoxGeometry(w+.2,.16,d+.2),surface("brushed",{color:0x839199,repeat:[2,1]}),x,h+.09,z);
  }
  function hill(x,z,scale,color){
-  add(new THREE.IcosahedronGeometry(scale,1),mat(color,.98),x,-scale*.46,z,0,random()*3);
+  add(new THREE.IcosahedronGeometry(scale,1),surface("stone",{color,repeat:[3,3]}),x,-scale*.46,z,0,random()*3);
  }
  function laneBarrier(x,z,len=6){
   add(new THREE.BoxGeometry(.3,.7,len),mat(0xb8c4c2,.66),x,.37,z);
@@ -73,8 +80,8 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
  areaFloor();
  if(world==="showroom"){
   // Polished studio, angled softboxes, emissive ceiling rings and circular podium.
-  add(new THREE.CylinderGeometry(9.5,9.5,.12,96),mat(0x182f3f,.32,.62),0,-.08,0);
-  add(new THREE.CylinderGeometry(5.8,5.8,.33,96),mat(0x4c6474,.24,.63),0,.06,0);
+  add(new THREE.CylinderGeometry(9.5,9.5,.12,96),surface("brushed",{color:0x344d5c,repeat:[5,5],roughness:.22,metalness:.7}),0,-.08,0);
+  add(new THREE.CylinderGeometry(5.8,5.8,.33,96),surface("brushed",{color:0x788c98,repeat:[3,3],roughness:.2,metalness:.7}),0,.06,0);
   add(new THREE.TorusGeometry(5.79,.07,10,120),mat(0x4df7cc,.18,.47,0x39ddb3,1.8),0,.26,0,Math.PI/2);
   for(const n of [0,1,2,3,4,5]){
    const angle=n*Math.PI/3;
@@ -84,23 +91,23 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
     Math.cos(angle)*8,6,Math.sin(angle)*8,0,-angle,0);
    lightBox.castShadow=false;
   }
-  for(const x of [-12,12])add(new THREE.BoxGeometry(.17,11,30),mat(0x1a3449,.4),x,5.5,0);
-  for(const z of [-13,13])add(new THREE.BoxGeometry(28,10,.18),mat(0x173047,.52),0,5,z);
+  for(const x of [-12,12])add(new THREE.BoxGeometry(.17,11,30),surface("concrete",{color:0x445b69,repeat:[1,3]}),x,5.5,0);
+  for(const z of [-13,13])add(new THREE.BoxGeometry(28,10,.18),surface("concrete",{color:0x3c576d,repeat:[4,3]}),0,5,z);
   // Vertical decorative panels.
   for(let x=-12;x<=12;x+=3)for(const z of [-12,12]){
-   add(new THREE.BoxGeometry(1.7,5,.045),mat(0x497c89,.18,.45,0x163c49,.45),x,3,z+(z>0?-.14:.14));
+   add(new THREE.BoxGeometry(1.7,5,.045),surface("brushed",{color:0x92b7bd,repeat:[1,2],roughness:.23,metalness:.5}),x,3,z+(z>0?-.14:.14));
   }
  }else if(world==="racetrack"){
   asphalt(0,190,13.5);
   for(let z=-82;z<84;z+=8){
    for(const x of [-7.3,7.3]){
-    add(new THREE.BoxGeometry(.8,.12,3),mat(Math.floor(z/8)%2?0xededed:0xda5d43,.7),x,.072,z);
+    add(new THREE.BoxGeometry(.8,.12,3),surface("concrete",{color:Math.floor(z/8)%2?0xd2d8d4:0xc87864,repeat:[1,1]}),x,.072,z);
    }
   }
   for(let z=-86;z<85;z+=23){
    for(const x of [-9.1,9.1]){
     const grass=mat(0x4f874e,.95);
-    add(new THREE.BoxGeometry(.5,.7,8),mat(0xa9babe,.77),x,.35,z);
+    add(new THREE.BoxGeometry(.5,.7,8),surface("concrete",{color:0xb8c5c4,repeat:[1,2]}),x,.35,z);
     if(quality!=="low")tree(x*1.7,z,2.2+random()*2.5);
    }
   }
@@ -123,7 +130,7 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   for(let i=0;i<32;i++){
    const x=(random()-.5)*110,z=(random()-.5)*180;
    if(Math.abs(x)>6)add(new THREE.IcosahedronGeometry(.5+random()*.8,0),
-    mat(0x68786f,.9),x,.2,z);
+    surface("stone",{color:0x929d8e}),x,.2,z);
   }
   for(let i=0;i<8;i++)hill((random()-.5)*240,(random()-.5)*240,24+random()*24,0x4a6745);
  }else if(world==="city"||world==="night"){
@@ -136,7 +143,7 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
   for(let z=-90;z<90;z+=12){
    for(const side of [-1,1]){
     const x=side*7.9;
-    add(new THREE.BoxGeometry(3.7,.12,10),mat(0x88939a,.88),x,.06,z);
+    add(new THREE.BoxGeometry(3.7,.12,10),surface("concrete",{color:0xadb0ab,repeat:[2,3]}),x,.06,z);
     const post=add(new THREE.CylinderGeometry(.095,.12,5.5,8),mat(0x798b93,.48,.54),side*6.4,2.75,z);
     if(night||quality==="high"){
      const lamp=new THREE.PointLight(night?0xffcf82:0xffffff,night?18:5,12,2);
@@ -145,9 +152,9 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
     }
    }
   }
-  const doorFrame=add(new THREE.BoxGeometry(2.3,2.85,.3),mat(0x4a5e68,.64),8.9,1.4,5);
+  const doorFrame=add(new THREE.BoxGeometry(2.3,2.85,.3),surface("stone",{color:0x84949b,repeat:[2,3]}),8.9,1.4,5);
   const hinge=new THREE.Group();hinge.position.set(7.9,.1,4.87);group.add(hinge);
-  const slab=add(new THREE.BoxGeometry(1.85,2.5,.15),mat(0x8d5f3b,.56),.92,1.27,0,0,0,0,hinge);
+  const slab=add(new THREE.BoxGeometry(1.85,2.5,.15),surface("wood",{color:0xa37e5c,repeat:[2,2]}),.92,1.27,0,0,0,0,hinge);
   const handle=add(new THREE.SphereGeometry(.1,10,6),mat(0xcad6d4,.24,.78),1.65,1.17,.13,0,0,0,hinge);
   hinge.name="Interaktiv dörr (E)";door=hinge;points.push(hinge);
   if(night){
@@ -196,6 +203,7 @@ export function createEnvironment({world="showroom",quality="medium"}={}){
    });
    for(const geo of geometries)geo.dispose();
    for(const m of materialsFound)m.dispose();
+   surfaces.dispose();
   }
  };
 }
