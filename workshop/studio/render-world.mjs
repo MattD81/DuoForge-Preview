@@ -5,7 +5,7 @@ import * as THREE from "three";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
-import {createEnvironment,worldNames} from "./render-environments.mjs";
+import {createEnvironment,worldNames} from "./render-environments.mjs?v=surfaces-v1";
 import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
