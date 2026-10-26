@@ -133,7 +133,7 @@ function refreshTree(){
   row.append(icon,name,eye);row.onclick=()=>select(node);
   row.ondblclick=()=>{select(node);fitScene(node)};
   list.append(row);
-  for(const child of node.children)if(child.isMesh||child.isGroup) add(child,depth+1);
+  for(const child of node.children)if(child.isMesh||child.isGroup||child.children.length) add(child,depth+1);
  }
  for(const child of root.children)add(child,0);
  $("objectCount").textContent=root.children.length;
