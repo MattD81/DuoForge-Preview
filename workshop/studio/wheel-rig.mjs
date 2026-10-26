@@ -103,9 +103,14 @@ export function createWheelRig(vehicle,{forwardSign}={}){
   forwardSign:orientation,
   count:rigs.length,
   partCount:analysis.partCount,
-  step({distance,steerInput=0,steerDegrees=28,wheelRadius=.42}){
+  step({distance,steerInput=0,steerDegrees=28,steerAngleDegrees=null,wheelRadius=.42}){
    if(disposed)return;
-   const steerAngle=THREE.MathUtils.degToRad(steerDegrees)*Math.max(-1,Math.min(1,steerInput))*orientation;
+   // Steering is measured in VEHICLE-LOCAL coordinates: turning right is
+   // positive Y for BOTH +Z and -Z noses. The −Z correction belongs to
+   // wheel rolling direction and vehicle travel only, not steering pivots.
+   const steeringDeg=Number.isFinite(steerAngleDegrees)?steerAngleDegrees:
+    steerDegrees*Math.max(-1,Math.min(1,steerInput));
+   const steerAngle=THREE.MathUtils.degToRad(steeringDeg);
    const roll=(Number(distance)||0)/Math.max(.05,wheelRadius)*orientation;
    for(const wheel of rigs){
     if(wheel.axle==="front")wheel.steer.rotation.y=steerAngle;
