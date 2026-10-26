@@ -37,10 +37,13 @@ export function initLivingObjects(ctx){
    const avgZ=items=>items.reduce((sum,w)=>sum+w.center.z,0)/items.length;
    const wheelBase=front.length&&rear.length?Math.abs(avgZ(front)-avgZ(rear)):null;
    const tireRadii=analysis.wheels.map(w=>{
-    const tire=w.parts.find(p=>p.preferTire)||w.parts[0];
-    if(!tire)return 0;
-    const size=tire.box.getSize(new THREE.Vector3());
-    return Math.max(size.y,size.z)/2;
+    // Imported Vortex wheels contain several concentric tyre/rim components.
+    // Use the outer sidewall rather than a tiny decorative tyre-emboss ring.
+    const candidates=w.parts.filter(p=>p.preferTire);
+    return Math.max(0,...(candidates.length?candidates:w.parts).map(p=>{
+     const size=p.box.getSize(new THREE.Vector3());
+     return Math.max(size.y,size.z)/2;
+    }));
    }).filter(radius=>radius>.05&&radius<3);
    const radius=tireRadii.length?tireRadii.reduce((a,b)=>a+b,0)/tireRadii.length:null;
    const dimensions={...previous};
