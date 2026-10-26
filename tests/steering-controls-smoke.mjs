@@ -35,6 +35,14 @@ try{
   const binary=await new GLTFExporter().parseAsync(model,{binary:true});
   return Array.from(new Uint8Array(binary));
  });
+ const importedTree=await page.evaluate(async raw=>{
+  const {GLTFLoader}=await import("three/addons/loaders/GLTFLoader.js");
+  const parsed=await new GLTFLoader().parseAsync(new Uint8Array(raw).buffer,"");
+  const nodes=[];
+  parsed.scene.traverse(node=>nodes.push({name:node.name,type:node.type,isMesh:!!node.isMesh,parent:node.parent?.name}));
+  return nodes.slice(0,22);
+ },bytes);
+ console.log("DEBUG GLB hierarchy",JSON.stringify(importedTree));
  await page.locator("#importFile").setInputFiles({
   name:"Vortex-GTR-steering-fixture.glb",mimeType:"model/gltf-binary",buffer:Buffer.from(bytes)
  });
