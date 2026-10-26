@@ -6,6 +6,7 @@ import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
 import {createEnvironment,worldNames} from "./render-environments.mjs";
+import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
 const KEY_ACTIONS={KeyW:"gas",ArrowUp:"gas",KeyS:"brake",ArrowDown:"brake",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",Space:"handbrake",KeyE:"interact"};
@@ -83,7 +84,7 @@ export function initRenderWorld(ctx){
   quality=["low","medium","high"].includes(value)?value:"medium";
   const isPhone=window.matchMedia("(max-width: 600px)").matches;
   if(quality==="high"&&isPhone)notify("Hög kvalitet kan vara tung på mobilen. Välj Medium om bilden hackar.",4000);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,quality==="low"?1:quality==="high"?1.6:1.35));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,quality==="low"?.8:quality==="high"?1.35:1));
   renderer.shadowMap.enabled=quality!=="low";
   sun.shadow.mapSize.set(quality==="high"?2048:quality==="medium"?1024:512,quality==="high"?2048:quality==="medium"?1024:512);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -221,10 +222,11 @@ export function initRenderWorld(ctx){
   if(!mission.length||completed||!anchor)return;
   const gate=mission[nextGate];
   if(!gate)return;
-  const d=gate.position.distanceTo(new THREE.Vector3(anchor.position.x,0,anchor.position.z));
-  if(d>3.4)return;
-  gate.visible=false;nextGate++;
-  if(nextGate===mission.length){completed=true;notify("Alla checkpoints klara! Bra kört.",4100);}
+  const result=checkpointProgress(nextGate,mission.length,
+   mission.map(item=>item.position),anchor.position.x,anchor.position.z);
+  if(!result.advanced)return;
+  gate.visible=false;nextGate=result.next;
+  if(result.completed){completed=true;notify("Alla checkpoints klara! Bra kört.",4100);}
   else{mission[nextGate].visible=true;notify("Checkpoint "+nextGate+" av "+mission.length,1500);}
   updateHUD();
  }
