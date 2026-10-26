@@ -4,6 +4,7 @@ import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
 import {initLivingObjects} from "./living-objects.mjs";
+import {initWorldBuilder} from "./world-builder.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -18,7 +19,8 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-scene.add(new THREE.HemisphereLight(0xffffff,0x344964,2.15));
+const skyLight=new THREE.HemisphereLight(0xffffff,0x344964,2.15);
+scene.add(skyLight);
 const sun=new THREE.DirectionalLight(0xffffff,2.55);
 sun.position.set(8,14,7);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);
@@ -549,6 +551,7 @@ window.addEventListener("keydown",event=>{
 // An editable starter kart makes the interface useful on its first visit.
 addPreset("cart","DuoForge Kart – startmodell");
 livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSelected:()=>selected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene});
+initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,dirty,fitScene,notify,select});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
