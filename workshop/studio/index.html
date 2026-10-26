@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=ocean-1">
+<link rel="stylesheet" href="./studio.css?v=film-studio-v1">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -119,7 +119,73 @@
         <button id="renderScreenshot" title="Ladda ned renderad PNG-bild">📷 Bild</button>
         <button id="renderRecord" title="Spela in ett lokalt videoklipp från 3D-vyn">🎥 Spela in</button>
         <button id="renderCinematic" title="Växla filmkamera (C)">🎬 Film</button>
+        <button id="filmOpen" class="film-open-button" title="Skapa film med kamerabanor och videoexport">🎞️ Film Studio</button>
         <button id="renderExit" class="render-exit" title="Återgå till 3D-editorn (Escape)">✕ Till verkstaden</button>
+      </div>
+      <div id="filmStudioOverlay" class="film-studio-overlay" hidden aria-label="DuoForge Film Studio panel">
+        <div class="film-heading">
+          <div><strong>🎞️ DuoForge Film Studio</strong><small>Filmisk 3D-regi • renderas lokalt</small></div>
+          <button id="filmClose" title="Stäng Film Studio">✕</button>
+        </div>
+        <div class="film-grid">
+          <label for="filmShot">Kamerarörelse
+            <select id="filmShot">
+              <option value="orbit">Orbit 360° – runt motivet</option>
+              <option value="dolly">Dolly in – närmare motivet</option>
+              <option value="crane">Crane – lyft kameran</option>
+              <option value="flyover">Flyover – filmisk flygning</option>
+              <option value="custom">Egen bana – nyckelbilder</option>
+            </select>
+          </label>
+          <label for="filmDuration">Längd
+            <select id="filmDuration">
+              <option value="6">6 sekunder</option>
+              <option value="8">8 sekunder</option>
+              <option value="12" selected>12 sekunder</option>
+              <option value="14">14 sekunder</option>
+              <option value="20">20 sekunder</option>
+              <option value="30">30 sekunder</option>
+            </select>
+          </label>
+          <label for="filmResolution">Filmupplösning
+            <select id="filmResolution">
+              <option value="720">HD · 1280 × 720</option>
+              <option value="1080" selected>Full HD · 1920 × 1080</option>
+            </select>
+          </label>
+          <label for="filmFps">Bildrutor / sekund
+            <select id="filmFps"><option value="24" selected>24 fps · film</option><option value="30">30 fps · jämnt</option></select>
+          </label>
+        </div>
+        <label class="film-fov" for="filmFov">Kameralins <span>35–85 mm-känsla</span>
+          <input id="filmFov" type="range" min="20" max="85" step="1" value="40">
+        </label>
+        <div class="film-keyframes">
+          <span>Egna kamerapunkter: <strong id="filmKeyframes">0</strong></span>
+          <div class="film-two"><button id="filmAddKeyframe" title="Spara kamerans nuvarande position och blickpunkt">＋ Lägg till kamera</button><button id="filmRemoveKeyframe" title="Ta bort senaste kamerapunkten">− Ångra punkt</button></div>
+          <small>Flytta kameran till en ny vinkel och lägg till minst två punkter för en egen sekvens.</small>
+        </div>
+        <label for="filmSeek" class="film-timeline-label">Tidslinje <span id="filmFrameCounter">0.0 / 12.0 s</span></label>
+        <input id="filmSeek" class="film-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Spola kamerasekvensen">
+        <div class="film-progress-track"><span id="filmProgress"></span></div>
+        <div class="film-main-buttons">
+          <button id="filmPlay">▶ Förhandsvisa</button>
+          <button id="filmRecord" class="film-record">🎞️ Rendera video</button>
+        </div>
+        <a id="filmDownload" class="film-download" download hidden>⬇ Hämta renderad film igen</a>
+        <div class="film-still-line">
+          <label for="filmPhotoResolution">Stillbild
+            <select id="filmPhotoResolution"><option value="1080">1080p PNG</option><option value="4k">4K PNG (3840×2160)</option></select>
+          </label>
+          <button id="filmStill">📸 Rendera stillbild</button>
+        </div>
+        <div class="film-project-row">
+          <button id="filmExportStoryboard" title="Spara filmens kamerabanor och inställningar">⬇ Storyboard JSON</button>
+          <label class="film-import-label" for="filmImportStoryboard">⬆ Läs storyboard</label>
+          <input id="filmImportStoryboard" type="file" accept=".json,application/json" hidden>
+        </div>
+        <div class="film-status" id="filmStatus" role="status">Film Studio redo.</div>
+        <p class="film-note">1080p och 24/30 fps är målvärden. Faktisk bildfrekvens och codec beror på webbläsarens GPU/videoencoder. Ingen AI, serverrendering eller filmstreaming behövs.</p>
       </div>
       <div class="render-world-hud">
         <div class="render-hud-heading"><span id="renderMissionKind">Objektvisning</span><span id="renderInputType">⌨️ Tangentbord · touch</span></div>
@@ -277,6 +343,8 @@
       </select>
       <p class="hint">Steg 1: showroom, bana, skog och stad. Steg 2: PBR, skuggor, fog, HDR-liknande studioljus och högre grafikläge. Steg 3: kameratest, checkpoints, interaktiv dörr och bilder.</p>
       <div class="row two"><button id="renderScreenshotPanel">🌄 Förhandsvisa</button></div>
+      <button id="filmOpenPanel" class="film-panel-launch">🎬 Film Studio – skapa 3D-film</button>
+      <p class="hint">Välj kamerabana, längd, objekt eller havsmiljö. Spela in 1080p WebM/MP4 där webbläsaren stöder det, eller spara en 4K-bild.</p>
     </section>
     <section class="panel-section">
       <div class="section-heading"><h2>Scen & export</h2></div>
@@ -294,5 +362,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=ocean-1"></script>
+<script type="module" src="./studio.mjs?v=film-studio-v1"></script>
 </body></html>
