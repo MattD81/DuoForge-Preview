@@ -7,6 +7,7 @@ A self-contained, browser-based 3D editor at `/workshop/studio/`. It works with 
 - Scene hierarchy with nested meshes/groups and object selection by click.
 - Transform gizmos (move, rotate, scale), world/local axes, grid snapping, orbit camera.
 - Inspector: object name, visible, transforms, PBR base color, roughness, metalness, opacity and wireframe.
+- Basic **real mesh vertex sculpting**: draw over a selected mesh to move vertices, change brush size/strength, recalculate surface normals, undo changes (maximum 250,000 vertices).
 - Primitive geometry, reusable procedural house/cart/tree presets from GitHub catalog.
 - GLB import **without guessing or modifying model axes**; manual rotation by gizmos and inspector.
 - GLB export, editable Three.js scene JSON export/import, PNG screenshots.
@@ -20,7 +21,7 @@ On PRs affecting this editor, the `studio-tests.yml` workflow checks JS syntax a
 
 ## Known limitations
 
-This is an interactive **modeling editor MVP**, not feature parity with Blender or Sites. No vertex sculpting, Boolean mesh cutting, UV painting, animation timeline, rigging, physically accurate vehicle simulation, cloud library or collaboration yet. Custom GLB files from private repositories aren't copied into this public repo automatically. Imported multi-material meshes may be unified when the inspector's material settings are edited. Texture editing and advanced model formats are not supported. The generated project JSON uses Three.js serialization and can become large for textured assets.
+This is an interactive **modeling editor MVP**, not feature parity with Blender or Sites. No advanced topology editing, Boolean mesh cutting, UV painting, animation timeline, rigging, physically accurate vehicle simulation, cloud library or collaboration yet. Custom GLB files from private repositories aren't copied into this public repo automatically. Imported multi-material meshes may be unified when the inspector's material settings are edited. Texture editing and advanced model formats are not supported. The generated project JSON uses Three.js serialization and can become large for textured assets.
 
 Controls: G move, R rotate, S scale, F focus, Delete remove, Ctrl/Cmd+Z undo, Shift+Ctrl/Cmd+Z redo. Drag gizmo handles to transform objects. On mobile use the onscreen buttons and touch orbit controls.
 
