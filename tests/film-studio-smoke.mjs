@@ -13,7 +13,19 @@ try{
  await page.goto("http://127.0.0.1:8080/",{waitUntil:"domcontentloaded"});
  assert.equal(await page.locator('a[href*="film=1"]').count(),1);
  await page.locator('a[href*="film=1"]').click();
- await page.waitForFunction(()=>document.body.classList.contains("film-studio-active"),{timeout:30000});
+ await page.waitForTimeout(1300);
+ console.log("DEBUG first film launch",JSON.stringify(await page.evaluate(()=>({
+  url:location.href,
+  body:document.body.className,
+  world:document.querySelector("#renderWorld")?.value,
+  previewPanel:document.querySelector("#renderWorldOverlay")?.hidden,
+  filmPanel:document.querySelector("#filmStudioOverlay")?.hidden,
+  filmButton:!!document.querySelector("#filmOpen"),
+  filmStatus:document.querySelector("#filmStatus")?.textContent,
+  toast:document.querySelector("#toast")?.textContent,
+  ready:document.readyState
+ }))),JSON.stringify(issues));
+ await page.waitForFunction(()=>document.body.classList.contains("film-studio-active"),{timeout:18000});
  assert.equal(await page.locator("#renderWorldOverlay").isVisible(),true);
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),true);
  assert.equal(await page.locator("#filmShot").inputValue(),"flyover");
