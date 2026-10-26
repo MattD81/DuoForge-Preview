@@ -143,6 +143,8 @@ export function initVolvoGarage({root,getSelected,select,pushHistory,dirty,refre
   getRenderWorld()?.start();
  }
  function openSource(){
+  const frame=$("s90ArtistFrame");
+  if(!frame.getAttribute("src"))frame.setAttribute("src",frame.dataset.src);
   $("s90OriginalDialog").showModal();
  }
  function exportGLB(){
