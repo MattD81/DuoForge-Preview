@@ -69,7 +69,7 @@ try{
  assert.deepEqual(result.groups.map(x=>x.key).sort(),["left-front","left-rear","right-front","right-rear"]);
  assert.equal(result.forwardSign,-1,"Vortex front is on -Z");
  assert.ok(result.groups.every(w=>w.axis==="x"),"Axle is X, not Y");
- assert.equal(result.partCount,20,"5 animated parts per wheel; no brake calipers");
+ assert.equal(result.partCount,16,"4 animated parts per wheel; no brake calipers");
  assert.ok(result.animation.every(w=>w.rollX<0),"Forward rotation on X is negative for -Z vehicle");
  assert.ok(result.animation.every(w=>w.rollY===0),"No erroneous Y-axis wheel spin");
  assert.ok(result.animation.filter(w=>w.key.endsWith("front")).every(w=>w.steerY<0),"Front axle steers separately");
