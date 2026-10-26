@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=8">
+<link rel="stylesheet" href="./studio.css?v=ocean-1">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -100,7 +100,15 @@
           <option value="forest">Skog</option>
           <option value="city">Stad</option>
           <option value="night">Neon-natt</option>
+          <option value="ocean">🌊 Hav / Ocean</option>
         </select></label>
+        <div class="ocean-inline-controls" id="oceanOverlayControls" hidden>
+          <label>Vågor <input id="oceanHeightLive" type="range" min=".05" max="1.8" step=".05" value=".58" aria-label="Ändra våghöjd i havsvärlden"></label>
+          <label>Hastighet <input id="oceanSpeedLive" type="range" min=".15" max="3" step=".05" value="1" aria-label="Ändra vågornas hastighet"></label>
+          <label>Väder <select id="oceanWeatherLive" aria-label="Ändra havsväder">
+            <option value="clear">Sol</option><option value="sunset">Solnedgång</option><option value="storm">Storm</option>
+          </select></label>
+        </div>
         <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
           <option value="low">Låg</option><option value="medium" selected>Medium</option><option value="high">Hög · Bloom/AO</option>
         </select></label>
@@ -237,8 +245,26 @@
       <label class="field-label" for="renderWorld">Värld</label>
       <select id="renderWorld">
         <option value="showroom">Showroom</option><option value="racetrack">Racerbana</option>
-        <option value="forest">Skog</option><option value="city">Stad</option><option value="night">Neon-natt</option>
+        <option value="forest">Skog</option><option value="city">Stad</option><option value="night">Neon-natt</option><option value="ocean">🌊 Hav – levande vågor</option>
       </select>
+      <div class="ocean-control-panel" id="oceanPanelControls" hidden>
+        <strong>🌊 Ocean Engine</strong>
+        <label class="range-line">Våghöjd
+          <input type="range" id="oceanHeight" min=".05" max="1.8" step=".05" value=".58" aria-label="Våghöjd">
+          <output id="oceanHeightValue">0,58 m</output>
+        </label>
+        <label class="range-line">Våghastighet
+          <input type="range" id="oceanSpeed" min=".15" max="3" step=".05" value="1" aria-label="Våghastighet">
+          <output id="oceanSpeedValue">1,00×</output>
+        </label>
+        <label class="field-label" for="oceanWeather">Hav och väder</label>
+        <select id="oceanWeather">
+          <option value="clear">☀️ Sol och blågrönt hav</option>
+          <option value="sunset">🌅 Solnedgång</option>
+          <option value="storm">⛈️ Storm och hög sjö</option>
+        </select>
+        <p class="hint">Vågorna renderas direkt på ditt grafikkort. Inga AI-anrop eller molnservrar.</p>
+      </div>
       <label class="field-label" for="renderQuality">Grafik</label>
       <select id="renderQuality">
         <option value="low">Låg • snabb</option><option value="medium" selected>Medium • balanserad</option>
@@ -268,5 +294,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=8"></script>
+<script type="module" src="./studio.mjs?v=ocean-1"></script>
 </body></html>
