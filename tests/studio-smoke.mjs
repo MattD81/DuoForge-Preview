@@ -34,7 +34,7 @@ try{
  await page.locator("#saveProject").click();
  await page.waitForFunction(()=>document.querySelector("#saveIndicator")?.textContent.includes("Sparad lokalt"));
  await page.locator("#openProject").click();
- assert.ok((await page.locator("#savedProjects").textContent()).includes("Min 3D-scen"));
+ await page.waitForFunction(()=>document.querySelector("#savedProjects")?.textContent.includes("Min 3D-scen"));
  console.log("PASS: local IndexedDB project save/list");
  await page.locator("#projectDialog button[value=cancel]").click();
  const [json]=await Promise.all([page.waitForEvent("download"),page.locator("#downloadProject").click()]);
