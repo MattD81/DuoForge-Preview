@@ -253,6 +253,7 @@ export function initLivingObjects(ctx){
   $("playStatus").textContent=runtime.paused?"Pausat":runtime.active?"Spelar":"Byggläge";
  }
  $("togglePlay").onclick=()=>runtime.active?stop():start();
+ $("playFromPanel").onclick=start;
  $("pausePlay").onclick=pause;
  $("exitPlay").onclick=stop;
  function update(dt){
