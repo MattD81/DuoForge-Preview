@@ -24,6 +24,6 @@ export function classifySurfaceName(name="",parent="",vehicle=false){
  if(/(?:concrete|cement|betong|foundation)/.test(n))return "concrete";
  if(/(?:plaster|stucco|facade|fasad|building|house|wall|vägg)/.test(n))return "plaster";
  if(/(?:wood|deck|plank|timber|oak|pinewood|panel wood|trä)/.test(n))return "wood";
- if(vehicle)return "paint";
+ if(vehicle===true)return "paint";
  return null;
 }
