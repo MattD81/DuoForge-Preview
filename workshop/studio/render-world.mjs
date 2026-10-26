@@ -25,9 +25,8 @@ export function initRenderWorld(ctx){
  let active=false,model=null,anchor=null,wheelRig=null,simulation=null;
  let saved=null,environment=null,quality="medium",world="showroom",mode="orbit";
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
- let currentGamepad=null,frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false,animatingDoor=null;
+ let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
- const replay={enabled:false,checkpoints:[]};
  const previewPane=$("renderWorldOverlay"),controlsPanel=$("renderWorldControls");
  const viewOptions=[{value:"orbit",label:"Orbit"},{value:"follow",label:"Följkamera"},{value:"free",label:"Fri kamera"},{value:"cinematic",label:"Film-kamera"}];
  function clearKeys(){Object.keys(controls).forEach(k=>controls[k]=false);Object.keys(freeMoving).forEach(k=>freeMoving[k]=false);}
@@ -300,7 +299,7 @@ export function initRenderWorld(ctx){
   if(!f&&!s&&!u)return;
   const dir=new THREE.Vector3();camera.getWorldDirection(dir);
   dir.y=0;dir.normalize();
-  const right=new THREE.Vector3().crossVectors(dir,new THREE.Vector3(0,1,0)).normalize();
+  const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),dir).normalize();
   const delta=dir.multiplyScalar(f).addScaledVector(right,s).add(new THREE.Vector3(0,u,0)).multiplyScalar(10*dt);
   camera.position.add(delta);orbit.target.add(delta);
  }
@@ -351,7 +350,6 @@ export function initRenderWorld(ctx){
   if(event.target instanceof HTMLElement&&event.target.closest("input,textarea,select"))return;
   if(pressed&&event.code==="Escape"){event.preventDefault();stop();return;}
   if(pressed&&event.code==="KeyC"){chooseCamera(mode==="cinematic"?"orbit":"cinematic");return;}
-  if(pressed&&event.code==="KeyF"&&!simulation?.kind==="vehicle"){}
   if(mode==="free"){
    const mapping={KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",
     KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",KeyQ:"down",KeyE:"up"};
