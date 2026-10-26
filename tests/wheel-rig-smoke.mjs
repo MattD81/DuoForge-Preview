@@ -20,6 +20,10 @@ try{
    "Right Front flared painted wheel arch","Right Front rounded external sidewall"
   ];
   const labels=names.map(name=>({name,include:!!classifyWheelName(name)}));
+  const underscoreNames=[
+   "Left_Front_sport_tire_305_profile","Right_Rear_centre_locking_alloy_hub",
+   "Left_Front_bright_yellow_performance_brake_caliper","Left_front_flared_wheel_arch"
+  ].map(name=>!!classifyWheelName(name));
   const model=new THREE.Group();model.name="Synthetic Vortex GTR";
   const original=new Map(),calipers=[];
   function mesh(name,x,y,z,w=.3){
@@ -74,9 +78,10 @@ try{
   const kartAxes=kartRig.wheels.map(w=>w.axis);
   kartRig.dispose();
   return {labels,groups,forwardSign:analysis.forwardSign,partCount:analysis.partCount,
-    rollBefore:spinBefore,animation,rightHeadingX,leftHeadingX,syncedAngle,calipersUntouched,exactRestore,kartAxes,cartCount:kartRig.count};
+    rollBefore:spinBefore,animation,rightHeadingX,leftHeadingX,syncedAngle,underscoreNames,calipersUntouched,exactRestore,kartAxes,cartCount:kartRig.count};
  });
  assert.deepEqual(result.labels.map(o=>o.include),[true,true,true,true,false,false,false,true]);
+ assert.deepEqual(result.underscoreNames,[true,true,false,false],"GLTFLoader underscore names classify correctly");
  assert.equal(result.groups.length,4);
  assert.deepEqual(result.groups.map(x=>x.key).sort(),["left-front","left-rear","right-front","right-rear"]);
  assert.equal(result.forwardSign,-1,"Vortex front is on -Z");
