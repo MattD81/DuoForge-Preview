@@ -4,7 +4,7 @@ import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
-import {initWorldBuilder} from "./world-builder.mjs";
+import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=surfaces-v1";
 import {initMaterialLab} from "./material-lab.mjs";
 
