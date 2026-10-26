@@ -56,9 +56,9 @@ try{
  assert.equal(water.clamp.height,1.8);assert.equal(water.clamp.speed,.15);assert.equal(water.clamp.weather,"clear");
  console.log("PASS: actual GPU wave mesh, layered animation, islands, dock, buoys and safe wave parameters");
 
- await page.locator("#oceanHeightLive").fill("1.15");
+ await page.locator("#oceanHeightLive").evaluate(el=>{el.value="1.15";el.dispatchEvent(new Event("input",{bubbles:true}))});
  await page.waitForFunction(()=>document.querySelector("#oceanHeight")?.value==="1.15");
- await page.locator("#oceanSpeedLive").fill("1.65");
+ await page.locator("#oceanSpeedLive").evaluate(el=>{el.value="1.65";el.dispatchEvent(new Event("input",{bubbles:true}))});
  await page.waitForFunction(()=>document.querySelector("#oceanSpeed")?.value==="1.65");
  await page.locator("#oceanWeatherLive").selectOption("storm");
  assert.equal(await page.locator("#oceanWeather").inputValue(),"storm");
@@ -90,7 +90,7 @@ try{
  await mobile.waitForFunction(()=>document.body.classList.contains("render-world-active"),{timeout:30000});
  assert.equal(await mobile.locator("#oceanOverlayControls").isVisible(),true);
  await mobile.locator("#oceanWeatherLive").selectOption("sunset");
- await mobile.locator("#oceanHeightLive").fill(".4");
+ await mobile.locator("#oceanHeightLive").evaluate(el=>{el.value=".4";el.dispatchEvent(new Event("input",{bubbles:true}))});
  await mobile.screenshot({path:"ocean-render-world-mobile.png"});
  console.log("PASS: touch-ready Ocean controls load on mobile");
  assert.deepEqual(issues,[],"No unexpected WebGL shader or JavaScript errors");
