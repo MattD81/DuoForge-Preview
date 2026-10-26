@@ -7,6 +7,7 @@ import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
 import {createEnvironment,worldNames} from "./render-environments.mjs?v=surfaces-v1";
 import {checkpointProgress} from "./render-missions.mjs";
+import {optimizeRenderPreview} from "./preview-batch.mjs";
 
 const $=id=>document.getElementById(id);
 const KEY_ACTIONS={KeyW:"gas",ArrowUp:"gas",KeyS:"brake",ArrowDown:"brake",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",Space:"handbrake",KeyE:"interact"};
@@ -26,6 +27,7 @@ export function initRenderWorld(ctx){
  let active=false,model=null,anchor=null,wheelRig=null,simulation=null;
  let saved=null,environment=null,quality="medium",world="showroom",mode="orbit";
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
+ let previewBatches=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null;
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
@@ -81,7 +83,9 @@ export function initRenderWorld(ctx){
   $("renderCameraTip").textContent=mode==="free"?"WASD flyttar kameran • dra för att rotera":mode==="follow"?"Följer objektet under test":mode==="cinematic"?"Automatisk filmkamera":"Dra eller zooma för att utforska";
  }
  async function applyQuality(value){
+  const previousQuality=quality;
   quality=["low","medium","high"].includes(value)?value:"medium";
+  if(active&&environment&&previousQuality!==quality)rebatch();
   const isPhone=window.matchMedia("(max-width: 600px)").matches;
   if(quality==="high"&&isPhone)notify("Hög kvalitet kan vara tung på mobilen. Välj Medium om bilden hackar.",4000);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,quality==="low"?.8:quality==="high"?1.35:1));
@@ -172,10 +176,16 @@ export function initRenderWorld(ctx){
   $("renderMissionKind").textContent=vehicle?"Fordonstest":"Objektvisning";
   return {vehicle,object:obj};
  }
+ function rebatch(){
+  previewBatches?.dispose();
+  previewBatches=optimizeRenderPreview({model,environment,wheelRig,quality});
+ }
  function makeEnvironment(){
+  previewBatches?.dispose();previewBatches=null;
   if(environment){group.remove(environment.group);environment.dispose();environment=null;}
   environment=createEnvironment({world,quality});
   group.add(environment.group);
+  rebatch();
   scene.background=environment.background;
   scene.fog=environment.fog;
   scene.environment=makePMREM()||null;
@@ -280,6 +290,7 @@ export function initRenderWorld(ctx){
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;
+  previewBatches?.dispose();previewBatches=null;
   if(environment){environment.dispose();environment=null;}
   group.clear();model=null;anchor=null;simulation=null;mission=[];doorOpen=false;
   document.body.classList.remove("render-world-active");
