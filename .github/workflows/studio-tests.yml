@@ -43,6 +43,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Verify Vortex steering on keyboard, gamepad and mobile
+        run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
@@ -51,8 +53,6 @@ jobs:
         run: node tests/world-builder-smoke.mjs
       - name: Verify Vortex wheel rig and non-destructive GLB wheel animation
         run: node tests/wheel-rig-smoke.mjs
-      - name: Verify Vortex steering on keyboard, gamepad and mobile
-        run: node tests/steering-controls-smoke.mjs
       - name: Upload screenshots if tests ran
         uses: actions/upload-artifact@v4
         if: always()
