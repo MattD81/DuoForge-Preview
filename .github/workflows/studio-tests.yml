@@ -11,6 +11,7 @@ on:
       - 'tests/world-planner.test.mjs'
       - 'tests/wheel-rig-smoke.mjs'
       - 'tests/steering-controls-smoke.mjs'
+      - 'tests/render-world-smoke.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 permissions:
@@ -32,6 +33,9 @@ jobs:
           node --check workshop/studio/world-planner.mjs
           node --check workshop/studio/world-builder.mjs
           node --check workshop/studio/wheel-rig.mjs
+          node --check workshop/studio/render-world.mjs
+          node --check workshop/studio/render-environments.mjs
+          node --check tests/render-world-smoke.mjs
           node --check tests/wheel-rig-smoke.mjs
           node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
@@ -53,6 +57,8 @@ jobs:
         run: node tests/world-builder-smoke.mjs
       - name: Verify Vortex wheel rig and non-destructive GLB wheel animation
         run: node tests/wheel-rig-smoke.mjs
+      - name: Test render-world environments, controls and preview restoration
+        run: node tests/render-world-smoke.mjs
       - name: Upload screenshots if tests ran
         uses: actions/upload-artifact@v4
         if: always()
@@ -64,4 +70,6 @@ jobs:
             living-desktop.png
             living-mobile.png
             world-builder-desktop.png
+            render-world-desktop.png
+            render-world-mobile.png
           if-no-files-found: ignore
