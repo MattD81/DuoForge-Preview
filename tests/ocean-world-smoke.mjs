@@ -12,8 +12,8 @@ try{
   if(message.type()==="error")issues.push("console: "+message.text());
  });
  await page.goto("http://127.0.0.1:8080/",{waitUntil:"domcontentloaded"});
- assert.equal(await page.locator('a[href*="world=ocean"]').count(),1,"Ocean button appears on main DuoForge Preview homepage");
- await page.locator('a[href*="world=ocean"]').click();
+ assert.equal(await page.locator('a[href*="world=ocean"]:not([href*="film=1"])').count(),1,"Ocean preview button remains available alongside Film Studio");
+ await page.locator('a[href*="world=ocean"]:not([href*="film=1"])').click();
  await page.waitForURL(/world=ocean/,{timeout:15000});
  await page.waitForFunction(()=>document.body.classList.contains("render-world-active"),{timeout:30000});
  assert.equal(await page.locator("#renderWorldSelect").inputValue(),"ocean");
