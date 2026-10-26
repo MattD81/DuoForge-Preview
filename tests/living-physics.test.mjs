@@ -12,9 +12,9 @@ test("forward throttle accelerates in the vehicle's +Z axis",()=>{
 test("steering changes heading, reversing changes direction",()=>{
  let state={...origin,speed:8};
  state=driveStep(state,{steer:1},.05);
- assert.ok(state.yaw>0&&state.x>0);
+ assert.ok(state.yaw<0&&state.x<0,"right steering moves +Z car toward -X");
  const reversing=driveStep({...origin,speed:-3},{steer:1},.05);
- assert.ok(reversing.yaw<0&&reversing.z<0);
+ assert.ok(reversing.yaw>0&&reversing.z<0,"reverse gear yaws opposite to forward");
 });
 test("brakes reduce speed and allow reverse at rest",()=>{
  const braking=driveStep({...origin,speed:8},{brake:1},.3);
@@ -43,14 +43,14 @@ test("simulation is deterministic for identical inputs",()=>{
  assert.deepEqual(run(),run());
 });
 
-test("Vortex GTR facing -Z steers right toward -X and left toward +X",()=>{
+test("Vortex GTR facing -Z steers right toward +X and left toward -X",()=>{
  const vortex={...origin,yaw:Math.PI,speed:8,steering:0};
  const right=driveStep(vortex,{steer:1},.05);
  const left=driveStep(vortex,{steer:-1},.05);
- assert.ok(right.x<0&&right.z<0,"D/right means driver's right (-X) on -Z car");
- assert.ok(left.x>0&&left.z<0,"A/left means driver's left (+X) on -Z car");
- assert.ok(right.yaw>Math.PI);
- assert.ok(left.yaw<Math.PI);
+ assert.ok(right.x>0&&right.z<0,"D/right means driver's right (+X) on -Z car");
+ assert.ok(left.x<0&&left.z<0,"A/left means driver's left (-X) on -Z car");
+ assert.ok(right.yaw<Math.PI);
+ assert.ok(left.yaw>Math.PI);
  assert.ok(right.steerAngleDegrees>0&&left.steerAngleDegrees<0);
 });
 test("steering wheels react while stationary but body does not rotate in place",()=>{
@@ -63,8 +63,8 @@ test("steering wheels react while stationary but body does not rotate in place",
 test("reverse gear turns opposite direction with the same steering input",()=>{
  const forward=driveStep({...origin,speed:5},{steer:1},.05);
  const reverse=driveStep({...origin,speed:-5},{steer:1},.05);
- assert.ok(forward.yaw>0);
- assert.ok(reverse.yaw<0);
+ assert.ok(forward.yaw<0);
+ assert.ok(reverse.yaw>0);
  assert.ok(forward.steerAngleDegrees>0&&reverse.steerAngleDegrees>0);
 });
 test("high-speed steering assist reduces front wheel angle",()=>{
