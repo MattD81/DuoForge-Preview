@@ -7,7 +7,7 @@ const FIXED_PART=/caliper|insignia|fender|wheel arch|mirror|steering wheel|intak
 const TIRE_PART=/\btire\b|\btyre\b|sidewall|wheel[_-]/i;
 
 export function classifyWheelName(name){
- const n=String(name||"");
+ const n=String(name||"").replace(/[_-]+/g," "); // GLTFLoader sanitizes spaces to underscores
  if(!WHEEL_PART.test(n)||FIXED_PART.test(n))return null;
  let side=null,axle=null;
  if(/\bleft\b/i.test(n))side="left";
@@ -18,6 +18,26 @@ export function classifyWheelName(name){
  else if(/\brear\b|[_-]rear[_-]/i.test(n))axle="rear";
  return {side,axle,preferTire:TIRE_PART.test(n)&&!/groove/i.test(n)};
 }
+// Some GLB exporters put the descriptive wheel name on an Object3D/Group
+// wrapper and leave the actual Mesh named just "Mesh". Walk ancestors, but
+// reject brake-caliper branches before collecting any animated parts.
+export function classifyWheelMesh(mesh,vehicle){
+ let node=mesh;
+ let merged=null;
+ while(node&&node!==vehicle){
+  if(FIXED_PART.test(String(node.name||"").replace(/[_-]+/g," ")))return null;
+  const part=classifyWheelName(node.name);
+  if(part){
+   merged={
+    side:merged?.side||part.side,
+    axle:merged?.axle||part.axle,
+    preferTire:Boolean(merged?.preferTire||part.preferTire)
+   };
+  }
+  node=node.parent;
+ }
+ return merged;
+}
 function wheelMeshData(vehicle){
  vehicle.updateMatrixWorld(true);
  const body=new THREE.Box3().setFromObject(vehicle);
@@ -25,7 +45,7 @@ function wheelMeshData(vehicle){
  const candidates=[];
  vehicle.traverse(obj=>{
   if(!obj.isMesh||obj.isSkinnedMesh||!obj.visible||!obj.geometry)return;
-  const label=classifyWheelName(obj.name);
+  const label=classifyWheelMesh(obj,vehicle);
   if(!label)return;
   const box=new THREE.Box3().setFromObject(obj);
   if(box.isEmpty())return;
@@ -103,9 +123,15 @@ export function createWheelRig(vehicle,{forwardSign}={}){
   forwardSign:orientation,
   count:rigs.length,
   partCount:analysis.partCount,
-  step({distance,steerInput=0,steerDegrees=28,wheelRadius=.42}){
+  step({distance,steerInput=0,steerDegrees=28,steerAngleDegrees=null,wheelRadius=.42}){
    if(disposed)return;
-   const steerAngle=THREE.MathUtils.degToRad(steerDegrees)*Math.max(-1,Math.min(1,steerInput))*orientation;
+   // Steering input is DRIVER-relative (+ means right). Three.js Y
+   // rotation has opposite handedness: negative Y points the nose to
+   // driver's right for BOTH +Z and -Z forward vehicles.
+   // forwardSign applies to rolling only, not steering.
+   const steeringDeg=Number.isFinite(steerAngleDegrees)?steerAngleDegrees:
+    steerDegrees*Math.max(-1,Math.min(1,steerInput));
+   const steerAngle=-THREE.MathUtils.degToRad(steeringDeg);
    const roll=(Number(distance)||0)/Math.max(.05,wheelRadius)*orientation;
    for(const wheel of rigs){
     if(wheel.axle==="front")wheel.steer.rotation.y=steerAngle;

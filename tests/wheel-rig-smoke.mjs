@@ -20,6 +20,10 @@ try{
    "Right Front flared painted wheel arch","Right Front rounded external sidewall"
   ];
   const labels=names.map(name=>({name,include:!!classifyWheelName(name)}));
+  const underscoreNames=[
+   "Left_Front_sport_tire_305_profile","Right_Rear_centre_locking_alloy_hub",
+   "Left_Front_bright_yellow_performance_brake_caliper","Left_front_flared_wheel_arch"
+  ].map(name=>!!classifyWheelName(name));
   const model=new THREE.Group();model.name="Synthetic Vortex GTR";
   const original=new Map(),calipers=[];
   function mesh(name,x,y,z,w=.3){
@@ -46,6 +50,18 @@ try{
   const spinBefore=rig.wheels.map(w=>w.spin.rotation.x);
   rig.step({distance:1.5,steerInput:.5,steerDegrees:28,wheelRadius:.4});
   const animation=rig.wheels.map(w=>({key:w.key,rollX:w.spin.rotation.x,rollY:w.spin.rotation.y,steerY:w.steer.rotation.y}));
+  // For a -Z-facing Vortex GTR, local +Y steering MUST turn the front
+  // wheel's -Z heading toward world +X (driver's right).
+  const rightFront=rig.wheels.find(w=>w.key==="right-front");
+  const rightHeadingX=new THREE.Vector3(0,0,-1).applyAxisAngle(
+   new THREE.Vector3(0,1,0),rightFront.steer.rotation.y
+  ).x;
+  rig.step({distance:0,steerInput:-.5,steerDegrees:28,wheelRadius:.4});
+  const leftHeadingX=new THREE.Vector3(0,0,-1).applyAxisAngle(
+   new THREE.Vector3(0,1,0),rightFront.steer.rotation.y
+  ).x;
+  rig.step({distance:0,steerInput:-1,steerAngleDegrees:8,steerDegrees:28,wheelRadius:.4});
+  const syncedAngle=rightFront.steer.rotation.y;
   const calipersUntouched=calipers.every((m,i)=>m.parent===caliperParents[i]&&m.rotation.x===0&&m.rotation.y===0);
   rig.dispose();
   let exactRestore=model.children.length===original.size;
@@ -62,9 +78,10 @@ try{
   const kartAxes=kartRig.wheels.map(w=>w.axis);
   kartRig.dispose();
   return {labels,groups,forwardSign:analysis.forwardSign,partCount:analysis.partCount,
-    rollBefore:spinBefore,animation,calipersUntouched,exactRestore,kartAxes,cartCount:kartRig.count};
+    rollBefore:spinBefore,animation,rightHeadingX,leftHeadingX,syncedAngle,underscoreNames,calipersUntouched,exactRestore,kartAxes,cartCount:kartRig.count};
  });
  assert.deepEqual(result.labels.map(o=>o.include),[true,true,true,true,false,false,false,true]);
+ assert.deepEqual(result.underscoreNames,[true,true,false,false],"GLTFLoader underscore names classify correctly");
  assert.equal(result.groups.length,4);
  assert.deepEqual(result.groups.map(x=>x.key).sort(),["left-front","left-rear","right-front","right-rear"]);
  assert.equal(result.forwardSign,-1,"Vortex front is on -Z");
@@ -72,7 +89,10 @@ try{
  assert.equal(result.partCount,16,"4 animated parts per wheel; no brake calipers");
  assert.ok(result.animation.every(w=>w.rollX<0),"Forward rotation on X is negative for -Z vehicle");
  assert.ok(result.animation.every(w=>w.rollY===0),"No erroneous Y-axis wheel spin");
- assert.ok(result.animation.filter(w=>w.key.endsWith("front")).every(w=>w.steerY<0),"Front axle steers separately");
+ assert.ok(result.animation.filter(w=>w.key.endsWith("front")).every(w=>w.steerY<0),"Right steer produces negative local Y on front axle");
+ assert.ok(result.rightHeadingX>0,"Right steer on -Z model physically points wheels toward +X");
+ assert.ok(result.leftHeadingX<0,"Left steer on -Z model physically points wheels toward -X");
+ assert.ok(Math.abs(result.syncedAngle+8*Math.PI/180)<1e-9,"Visual negative Y angle follows logical positive right-steer degrees");
  assert.ok(result.animation.filter(w=>w.key.endsWith("rear")).every(w=>w.steerY===0),"Rear axle doesn't steer");
  assert.equal(result.calipersUntouched,true,"Brake calipers remain stationary");
  assert.equal(result.exactRestore,true,"Original scene hierarchy/transforms are restored after driving");

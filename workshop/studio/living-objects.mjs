@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs";
-import {inspectWheels,createWheelRig} from "./wheel-rig.mjs";
+import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs?v=steering-fix-2";
+import {inspectWheels,createWheelRig} from "./wheel-rig.mjs?v=steering-fix-2";
 
 const $=id=>document.getElementById(id);
 const LIVING_KEY="duoforgeLiving";
@@ -8,7 +8,7 @@ const LIVING_KEY="duoforgeLiving";
 export function initLivingObjects(ctx){
  const {scene,root,camera,orbit,transform,canvas,getSelected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene}=ctx;
  const input={left:false,right:false,gas:false,brake:false,handbrake:false,interact:false};
- const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0};
+ const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0,vehicleRadius:.6,colliders:[],spawnIgnored:new Set()};
  let lastInteract=false,frameCount=0;
  function topLevel(node){
   let current=node;
@@ -32,7 +32,25 @@ export function initLivingObjects(ctx){
   if(type==="vehicle"){
    const previous=target.userData[LIVING_KEY]||{};
    const analysis=inspectWheels(target);
-   target.userData[LIVING_KEY]={...previous,...vehicleConfig(previous),type:"vehicle",forwardSign:previous.forwardSign===-1||previous.forwardSign===1?previous.forwardSign:analysis.forwardSign};
+   const front=analysis.wheels.filter(w=>w.axle==="front");
+   const rear=analysis.wheels.filter(w=>w.axle==="rear");
+   const avgZ=items=>items.reduce((sum,w)=>sum+w.center.z,0)/items.length;
+   const wheelBase=front.length&&rear.length?Math.abs(avgZ(front)-avgZ(rear)):null;
+   const tireRadii=analysis.wheels.map(w=>{
+    // Imported Vortex wheels contain several concentric tyre/rim components.
+    // Use the outer sidewall rather than a tiny decorative tyre-emboss ring.
+    const candidates=w.parts.filter(p=>p.preferTire);
+    return Math.max(0,...(candidates.length?candidates:w.parts).map(p=>{
+     const size=p.box.getSize(new THREE.Vector3());
+     return Math.max(size.y,size.z)/2;
+    }));
+   }).filter(radius=>radius>.05&&radius<3);
+   const radius=tireRadii.length?tireRadii.reduce((a,b)=>a+b,0)/tireRadii.length:null;
+   const dimensions={...previous};
+   // A freshly imported model gets values measured from its actual wheel positions.
+   if(!Number.isFinite(previous.wheelBase)&&wheelBase>.5&&wheelBase<12)dimensions.wheelBase=wheelBase;
+   if(!Number.isFinite(previous.wheelRadius)&&radius)dimensions.wheelRadius=radius;
+   target.userData[LIVING_KEY]={...previous,...vehicleConfig(dimensions),type:"vehicle",forwardSign:previous.forwardSign===-1||previous.forwardSign===1?previous.forwardSign:analysis.forwardSign};
    notify("Körbart fordon skapat. "+analysis.wheels.length+" hjulgrupper / "+analysis.partCount+" rörliga delar identifierade.");
   }else if(type==="door"){
    target.userData[LIVING_KEY]={type:"door",version:1,openAngle:90,interactionDistance:3};
@@ -131,7 +149,8 @@ export function initLivingObjects(ctx){
   const action=button.dataset.drive;
   button.addEventListener("pointerdown",event=>{
    if(!runtime.active)return;event.preventDefault();
-   button.setPointerCapture(event.pointerId);input[action]=true;button.classList.add("held");
+   try{button.setPointerCapture(event.pointerId)}catch{ /* Safari or synthetic touch may not permit capture */ }
+   input[action]=true;button.classList.add("held");
   });
   for(const name of ["pointerup","pointercancel","lostpointercapture"]){
    button.addEventListener(name,()=>{input[action]=false;button.classList.remove("held")});
@@ -186,13 +205,9 @@ export function initLivingObjects(ctx){
   const colliders=[];
   for(const obj of root.children){
    if(obj===runtime.vehicle||obj.userData?.livingCollider===false||!obj.visible)continue;
-   const b=new THREE.Box3().setFromObject(obj);
-   if(b.isEmpty()||b.max.y-b.min.y<.38)continue;
-   if(living(obj)?.type==="door"){
-    const d=runtime.doorSnapshots.find(x=>x.obj===obj);
-    if(d?.open)continue;
-   }
-   colliders.push(b);
+   const box=new THREE.Box3().setFromObject(obj);
+   if(box.isEmpty()||box.max.y-box.min.y<.38)continue;
+   colliders.push({object:obj,box,door:runtime.doorSnapshots.find(d=>d.obj===obj)||null});
   }
   return colliders;
  }
@@ -210,13 +225,23 @@ export function initLivingObjects(ctx){
   select(vehicle);
   const cameraState={position:camera.position.clone(),quaternion:camera.quaternion.clone(),target:orbit.target.clone(),enabled:orbit.enabled};
   runtime.vehicle=vehicle;
+  const modelBounds=new THREE.Box3().setFromObject(vehicle),span=modelBounds.getSize(new THREE.Vector3());
+  runtime.vehicleRadius=clamp(Math.min(span.x,span.z)*.27,.35,2.4);
   runtime.snapshot={position:vehicle.position.clone(),rotation:vehicle.rotation.clone(),camera:cameraState};
   runtime.wheelRig=createWheelRig(vehicle,{forwardSign:meta.forwardSign});
   runtime.forwardBias=runtime.wheelRig.forwardSign===-1?Math.PI:0;
-  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0};
+  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0,steering:0,steerAngleDegrees:0};
   runtime.elapsed=0;runtime.collisions=0;runtime.paused=false;
+  $("steeringDegreesHud").textContent="0°";
   runtime.prevTime=null;runtime.active=true;lastInteract=false;clearInput();
   snapshotDoors();
+  // Cache static collision boxes once instead of rebuilding the whole scene at
+  // every animation frame. Importing a GLB over the starter kart must not trap
+  // the new vehicle inside a collider before it has moved.
+  runtime.colliders=collectColliders();
+  runtime.spawnIgnored=new Set(runtime.colliders.filter(({box})=>
+   touchesBox(runtime.state.x,runtime.state.z,runtime.vehicleRadius,box)
+  ).map(({object})=>object));
   transform.detach();orbit.enabled=false;
   $("playMode").hidden=false;
   $("playToolbar").hidden=false;
@@ -235,6 +260,7 @@ export function initLivingObjects(ctx){
   orbit.target.copy(saved.camera.target);orbit.enabled=saved.camera.enabled;orbit.update();
   transform.attach(vehicle);
   runtime.wheelRig=null;runtime.doorSnapshots=[];runtime.vehicle=null;runtime.snapshot=null;runtime.forwardBias=0;
+  runtime.colliders=[];runtime.spawnIgnored.clear();
   $("playMode").hidden=true;$("playToolbar").hidden=true;document.body.classList.remove("living-play");
   $("nearbyDoor").textContent="";
   syncPlayUI();refreshTree();updateInspector();
@@ -265,17 +291,22 @@ export function initLivingObjects(ctx){
   };
   const vehicle=runtime.vehicle,config=vehicleConfig(living(vehicle));
   const prev=runtime.state,next=driveStep(prev,control,dt,config);
-  const bounds=new THREE.Box3().setFromObject(vehicle),span=bounds.getSize(new THREE.Vector3());
-  const radius=clamp(Math.min(span.x,span.z)*.27,.35,2.4);
-  const collided=collectColliders().some(b=>touchesBox(next.x,next.z,radius,b));
+  const collided=runtime.colliders.some(({object,box,door})=>{
+   if(runtime.spawnIgnored.has(object)){
+    if(touchesBox(prev.x,prev.z,runtime.vehicleRadius,box))return false;
+    runtime.spawnIgnored.delete(object);
+   }
+   if(door?.open)return false;
+   return touchesBox(next.x,next.z,runtime.vehicleRadius,box);
+  });
   if(collided){
-   runtime.state={...next,x:prev.x,z:prev.z,speed:0};
-   runtime.wheelRig?.step({distance:0,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
+   runtime.state={...next,x:prev.x,z:prev.z,yaw:prev.yaw,speed:0};
+   runtime.wheelRig?.step({distance:0,steerAngleDegrees:next.steerAngleDegrees,wheelRadius:config.wheelRadius});
    runtime.collisions++;
   }else{
    runtime.state=next;vehicle.position.set(next.x,vehicle.position.y,next.z);
    vehicle.rotation.y=next.yaw-runtime.forwardBias;
-   runtime.wheelRig?.step({distance:next.speed*dt,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
+   runtime.wheelRig?.step({distance:next.speed*dt,steerAngleDegrees:next.steerAngleDegrees,wheelRadius:config.wheelRadius});
   }
   const heading=new THREE.Vector3(Math.sin(runtime.state.yaw),0,Math.cos(runtime.state.yaw));
   const target=vehicle.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,1.2,0));
@@ -289,6 +320,8 @@ export function initLivingObjects(ctx){
   if(++frameCount%7===0){
    $("speedKmh").textContent=Math.round(Math.abs(runtime.state.speed)*3.6);
    $("distanceM").textContent=Math.round(runtime.state.distance);
+   const degrees=runtime.state.steerAngleDegrees||0;
+   $("steeringDegreesHud").textContent=(degrees>.5?"+":"")+Math.round(degrees)+"°";
    $("elapsedTime").textContent=runtime.elapsed.toFixed(1);
    $("collisionCount").textContent=runtime.collisions;
   }

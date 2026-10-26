@@ -10,6 +10,7 @@ on:
       - 'tests/world-builder-smoke.mjs'
       - 'tests/world-planner.test.mjs'
       - 'tests/wheel-rig-smoke.mjs'
+      - 'tests/steering-controls-smoke.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 permissions:
@@ -32,6 +33,7 @@ jobs:
           node --check workshop/studio/world-builder.mjs
           node --check workshop/studio/wheel-rig.mjs
           node --check tests/wheel-rig-smoke.mjs
+          node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs
@@ -41,6 +43,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Verify Vortex steering on keyboard, gamepad and mobile
+        run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
