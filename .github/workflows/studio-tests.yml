@@ -9,6 +9,7 @@ on:
       - 'tests/living-physics.test.mjs'
       - 'tests/world-builder-smoke.mjs'
       - 'tests/world-planner.test.mjs'
+      - 'tests/wheel-rig-smoke.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 permissions:
@@ -29,6 +30,8 @@ jobs:
           node --check workshop/studio/living-physics.mjs
           node --check workshop/studio/world-planner.mjs
           node --check workshop/studio/world-builder.mjs
+          node --check workshop/studio/wheel-rig.mjs
+          node --check tests/wheel-rig-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs
@@ -44,6 +47,8 @@ jobs:
         run: node tests/living-objects-smoke.mjs
       - name: Test free Swedish text-to-world generation in Chromium
         run: node tests/world-builder-smoke.mjs
+      - name: Verify Vortex wheel rig and non-destructive GLB wheel animation
+        run: node tests/wheel-rig-smoke.mjs
       - name: Upload screenshots if tests ran
         uses: actions/upload-artifact@v4
         if: always()
