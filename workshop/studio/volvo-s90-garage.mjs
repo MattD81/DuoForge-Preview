@@ -23,25 +23,35 @@ function selectedS90(getSelected,root){
 }
 function repaint(car,hex){
  const color=new THREE.Color(hex);
+ // Reuse one paint material across the body. This both looks consistent and
+ // enables GPU batching; cloning on every panel created hundreds of draw calls.
+ let shared=null;
  car.traverse(obj=>{
-  if(!obj.isMesh||!/^(?:Sculpted|S90|Long rear|Front bumper|Rear bumper|Door sill|Lower structural|Chrome sill)?/i.test(obj.name))return;
+  if(!obj.isMesh)return;
   const mat=obj.material;
-  if(!mat?.userData?.duoforgeSurface||mat.userData.duoforgeSurface!=="paint")return;
+  if(mat?.userData?.duoforgeSurface!=="paint")return;
   if(/caliper|charging|indicator|speaker|brake/i.test(obj.name))return;
-  const copy=mat.clone();copy.color.copy(color);
-  obj.material=copy;
+  if(!shared){shared=mat.clone();shared.color.copy(color);}
+  obj.material=shared;
  });
  car.userData.duoforgeS90.paint=hex;
 }
 function recabin(car,tone){
- const hex=interiors[tone]||interiors.black;
- const shade=new THREE.Color(hex);
+ const hex=interiors[tone]||interiors.black,shade=new THREE.Color(hex);
+ let leather=null,seams=null;
  car.traverse(obj=>{
   if(!obj.isMesh)return;
-  if(!/Seat cushion|Seat backrest|Headrest|Center leather stitched bolster|Outer side bolster|Back support side/i.test(obj.name))return;
-  const mat=obj.material;
-  if(!mat||!mat.color)return;
-  const copy=mat.clone();copy.color.copy(shade);obj.material=copy;
+  const isMain=/Seat cushion|Seat backrest|Headrest/i.test(obj.name);
+  const isSeam=/Center leather stitched bolster|Outer side bolster|Back support side/i.test(obj.name);
+  if(!isMain&&!isSeam)return;
+  const mat=obj.material;if(!mat?.color)return;
+  if(isMain){
+   if(!leather){leather=mat.clone();leather.color.copy(shade);}
+   obj.material=leather;
+  }else{
+   if(!seams){seams=mat.clone();seams.color.copy(shade).lerp(new THREE.Color(0xffffff),.17);}
+   obj.material=seams;
+  }
  });
  car.userData.duoforgeS90.interior=tone;
 }
