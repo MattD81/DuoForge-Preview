@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs";
+import {inspectWheels,createWheelRig} from "./wheel-rig.mjs";
 
 const $=id=>document.getElementById(id);
 const LIVING_KEY="duoforgeLiving";
-const wheelName=/wheel|tire|tyre|hjul|dack|däck/i;
+
 export function initLivingObjects(ctx){
  const {scene,root,camera,orbit,transform,canvas,getSelected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene}=ctx;
  const input={left:false,right:false,gas:false,brake:false,handbrake:false,interact:false};
- const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheels:[]};
+ const runtime={active:false,paused:false,vehicle:null,state:null,snapshot:null,prevTime:null,doorSnapshots:[],lastCamera:null,elapsed:0,collisions:0,wheelRig:null,forwardBias:0};
  let lastInteract=false,frameCount=0;
  function topLevel(node){
   let current=node;
@@ -29,10 +30,10 @@ export function initLivingObjects(ctx){
   if(!target)return notify("Välj först ett objekt eller en modell i objektträdet.");
   pushHistory();
   if(type==="vehicle"){
-   target.userData[LIVING_KEY]={type:"vehicle",...vehicleConfig(target.userData[LIVING_KEY]||{})};
-   const wheels=[];
-   target.traverse(node=>{if(node.isMesh&&wheelName.test(node.name))wheels.push(node.name)});
-   notify("Körbart fordon skapat. "+wheels.length+" namngivna hjul hittade.");
+   const previous=target.userData[LIVING_KEY]||{};
+   const analysis=inspectWheels(target);
+   target.userData[LIVING_KEY]={...previous,...vehicleConfig(previous),type:"vehicle",forwardSign:previous.forwardSign===-1||previous.forwardSign===1?previous.forwardSign:analysis.forwardSign};
+   notify("Körbart fordon skapat. "+analysis.wheels.length+" hjulgrupper / "+analysis.partCount+" rörliga delar identifierade.");
   }else if(type==="door"){
    target.userData[LIVING_KEY]={type:"door",version:1,openAngle:90,interactionDistance:3};
    notify("Interaktiv dörr skapad. Kör nära och tryck E för att öppna/stänga.");
@@ -56,9 +57,8 @@ export function initLivingObjects(ctx){
    const config=vehicleConfig(meta);
    for(const key of ["maxSpeed","acceleration","braking","steeringDegrees","wheelBase","wheelRadius"])
     $("vehicle"+key).value=config[key];
-   let wheels=0;
-   selected.traverse(obj=>{if(obj.isMesh&&wheelName.test(obj.name))wheels++});
-   $("wheelDetection").textContent=wheels+" namngivna hjul hittade. Saknas namn kan fordonet ändå köras, men hjulen animeras inte.";
+   const analysis=inspectWheels(selected);
+   $("wheelDetection").textContent=analysis.wheels.length+" hjulgrupper / "+analysis.partCount+" rörliga delar. Bromsok roterar inte. Framåt "+(meta.forwardSign===-1?"−Z":"+Z")+", rullaxel "+(analysis.wheels[0]?.axis?.toUpperCase()||"saknas")+".";
   }
  }
  let editingMeta=false;
@@ -200,14 +200,7 @@ export function initLivingObjects(ctx){
   const nearestX=clamp(x,box.min.x,box.max.x),nearestZ=clamp(z,box.min.z,box.max.z);
   return (x-nearestX)**2+(z-nearestZ)**2 < radius*radius;
  }
- function rememberWheels(vehicle){
-  runtime.wheels=[];
-  vehicle.traverse(obj=>{
-   if(obj.isMesh&&wheelName.test(obj.name)){
-    runtime.wheels.push({mesh:obj,rotation:obj.rotation.clone()});
-   }
-  });
- }
+
  function start(){
   if(runtime.active)return;
   const vehicle=currentVehicle();
@@ -218,10 +211,12 @@ export function initLivingObjects(ctx){
   const cameraState={position:camera.position.clone(),quaternion:camera.quaternion.clone(),target:orbit.target.clone(),enabled:orbit.enabled};
   runtime.vehicle=vehicle;
   runtime.snapshot={position:vehicle.position.clone(),rotation:vehicle.rotation.clone(),camera:cameraState};
-  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y,speed:0,distance:0};
+  runtime.wheelRig=createWheelRig(vehicle,{forwardSign:meta.forwardSign});
+  runtime.forwardBias=runtime.wheelRig.forwardSign===-1?Math.PI:0;
+  runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0};
   runtime.elapsed=0;runtime.collisions=0;runtime.paused=false;
   runtime.prevTime=null;runtime.active=true;lastInteract=false;clearInput();
-  snapshotDoors();rememberWheels(vehicle);
+  snapshotDoors();
   transform.detach();orbit.enabled=false;
   $("playMode").hidden=false;
   $("playToolbar").hidden=false;
@@ -234,12 +229,12 @@ export function initLivingObjects(ctx){
   runtime.active=false;runtime.paused=false;clearInput();
   const vehicle=runtime.vehicle,saved=runtime.snapshot;
   if(vehicle&&saved){vehicle.position.copy(saved.position);vehicle.rotation.copy(saved.rotation);}
-  for(const wheel of runtime.wheels)wheel.mesh.rotation.copy(wheel.rotation);
+  runtime.wheelRig?.dispose();
   for(const door of runtime.doorSnapshots)door.obj.rotation.copy(door.rotation);
   camera.position.copy(saved.camera.position);camera.quaternion.copy(saved.camera.quaternion);
   orbit.target.copy(saved.camera.target);orbit.enabled=saved.camera.enabled;orbit.update();
   transform.attach(vehicle);
-  runtime.wheels=[];runtime.doorSnapshots=[];runtime.vehicle=null;runtime.snapshot=null;
+  runtime.wheelRig=null;runtime.doorSnapshots=[];runtime.vehicle=null;runtime.snapshot=null;runtime.forwardBias=0;
   $("playMode").hidden=true;$("playToolbar").hidden=true;document.body.classList.remove("living-play");
   $("nearbyDoor").textContent="";
   syncPlayUI();refreshTree();updateInspector();
@@ -275,11 +270,12 @@ export function initLivingObjects(ctx){
   const collided=collectColliders().some(b=>touchesBox(next.x,next.z,radius,b));
   if(collided){
    runtime.state={...next,x:prev.x,z:prev.z,speed:0};
+   runtime.wheelRig?.step({distance:0,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
    runtime.collisions++;
   }else{
    runtime.state=next;vehicle.position.set(next.x,vehicle.position.y,next.z);
-   vehicle.rotation.y=next.yaw;
-   for(const wheel of runtime.wheels)wheel.mesh.rotation.y+=next.speed*dt/config.wheelRadius;
+   vehicle.rotation.y=next.yaw-runtime.forwardBias;
+   runtime.wheelRig?.step({distance:next.speed*dt,steerInput:control.steer,steerDegrees:config.steeringDegrees,wheelRadius:config.wheelRadius});
   }
   const heading=new THREE.Vector3(Math.sin(runtime.state.yaw),0,Math.cos(runtime.state.yaw));
   const target=vehicle.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,1.2,0));
@@ -303,11 +299,11 @@ export function initLivingObjects(ctx){
  function enableStarter(){
   const starter=root.children.find(obj=>obj.name==="DuoForge Kart – startmodell");
   if(starter&&!living(starter)){
-   starter.userData[LIVING_KEY]={type:"vehicle",...vehicleConfig()};
+   starter.userData[LIVING_KEY]={type:"vehicle",...vehicleConfig(),forwardSign:1};
+   let index=0;
    starter.traverse(node=>{
     if(node.isMesh&&node.geometry?.type==="CylinderGeometry"&&node.material?.color?.getHex()===0x151d27){
-     // Procedural kart tyres are cylinders aligned to the X axis; name only tyres.
-     node.name="wheel_"+runtime.wheels.length+"_"+node.id;
+     node.name="wheel_"+index+++"_tire";
     }
    });
   }
