@@ -55,6 +55,8 @@ try{
  assert.equal(plain.textured,0,"Undo restores original flat kart materials");
  console.log("PASS: Undo restores the original untextured model without destructive changes");
 
+ await page.locator("#hierarchy .tree-row").first().click();
+ await page.waitForFunction(()=>!document.querySelector("#autoSurface")?.disabled);
  await page.locator("#autoSurface").click();
  await page.waitForFunction(()=>document.querySelector("#surfaceStatus")?.textContent.includes("auto-texturerade"));
  assert.match(await page.locator("#surfaceStatus").textContent(),/Billack|Gummi/);
