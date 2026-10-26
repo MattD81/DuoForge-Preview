@@ -7,6 +7,7 @@ import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
 import {createEnvironment,worldNames} from "./render-environments.mjs?v=ocean-1";
 import {normalizeOceanSettings} from "./ocean-water.mjs";
+import {initFilmStudio} from "./film-studio.mjs";
 import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
@@ -30,7 +31,7 @@ export function initRenderWorld(ctx){
  let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
- let recording=null,recordTimer=null;
+ let recording=null,recordTimer=null,filmStudio=null;
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
  const previewPane=$("renderWorldOverlay"),controlsPanel=$("renderWorldControls");
  const viewOptions=[{value:"orbit",label:"Orbit"},{value:"follow",label:"Följkamera"},{value:"free",label:"Fri kamera"},{value:"cinematic",label:"Film-kamera"}];
@@ -266,6 +267,7 @@ export function initRenderWorld(ctx){
   if(active){
    // Replace only temporary preview environment, never the edited original.
    makeEnvironment();
+   filmStudio?.onWorldChanged();
   }
   syncChoices();
  }
@@ -297,6 +299,7 @@ export function initRenderWorld(ctx){
  }
  function stop(){
   if(!active)return;
+  filmStudio?.onPreviewExit();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;
@@ -308,6 +311,7 @@ export function initRenderWorld(ctx){
   notify("Tillbaka i 3D-verkstaden. Originalobjektet är oförändrat.");
  }
  function resize(){
+  if(filmStudio?.isRecording())return; // Keep full-HD recording dimensions stable.
   if(composer)composer.setSize(Math.max(canvas.clientWidth,1),Math.max(canvas.clientHeight,1));
  }
  function render(){
@@ -330,6 +334,11 @@ export function initRenderWorld(ctx){
  function update(dt){
   if(!active||!anchor||!simulation)return;
   const step=Math.min(dt,.06);
+  if(filmStudio?.isOpen()){
+   if(filmStudio.isPlaying())filmStudio.update(step);
+   else if(orbit.enabled)orbit.update();
+   return;
+  }
   sessionTime+=step;gameTime+=step;
   const pad=readPad();
   $("renderInputType").textContent=pad?"🎮 Gamepad":"⌨️ Tangentbord · touch";
@@ -464,8 +473,31 @@ export function initRenderWorld(ctx){
  for(const id of ["oceanHeight","oceanHeightLive"])$(id).oninput=event=>updateOceanSetting("height",Number(event.target.value));
  for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).oninput=event=>updateOceanSetting("speed",Number(event.target.value));
  for(const id of ["oceanWeather","oceanWeatherLive"])$(id).onchange=event=>{updateOceanSetting("weather",event.target.value);event.target.blur()};
+ filmStudio=initFilmStudio({
+  camera,orbit,canvas,renderer,scene,
+  getAnchor:()=>anchor,getWorld:()=>world,
+  isPreviewActive:()=>active,startPreview:()=>{if(!active)start();},
+  renderFrame:()=>{if(!render())renderer.render(scene,camera);},
+  setOutputSize:(w,h)=>{
+   renderer.setPixelRatio(1);renderer.setSize(w,h,false);
+   camera.aspect=w/h;camera.updateProjectionMatrix();
+   if(composer)composer.setSize(w,h);
+  },
+  restoreOutputSize:()=>{
+   const ratio=Math.min(window.devicePixelRatio||1,quality==="low"?.8:quality==="high"?1.35:1);
+   renderer.setPixelRatio(ratio);
+   const width=Math.max(canvas.clientWidth,1),height=Math.max(canvas.clientHeight,1);
+   renderer.setSize(width,height,false);
+   camera.aspect=width/height;camera.updateProjectionMatrix();
+   if(composer)composer.setSize(width,height);
+  },
+  setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
+  notify,filename:safeFilename
+ });
  syncChoices();
- // Landing page deep-link: the Ocean demo opens directly in the existing studio.
- if(world==="ocean"&&query.get("preview")==="1")requestAnimationFrame(()=>start());
+ // Film/demo deep links start Render World and optionally open the director UI.
+ if(query.get("preview")==="1"||query.get("film")==="1")requestAnimationFrame(()=>{
+  start();if(query.get("film")==="1"&&active)filmStudio?.open();
+ });
  return {start,stop,update,isActive,resize,render};
 }
