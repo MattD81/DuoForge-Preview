@@ -14,6 +14,9 @@ on:
       - 'tests/render-world-smoke.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
+concurrency:
+  group: studio-tests-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
