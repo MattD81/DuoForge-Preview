@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import {vehicleConfig,driveStep,clamp} from "./living-physics.mjs";
-import {inspectWheels,createWheelRig} from "./wheel-rig.mjs";
+import {inspectWheels,createWheelRig} from "./wheel-rig.mjs?v=steering-fix-2";
 
 const $=id=>document.getElementById(id);
 const LIVING_KEY="duoforgeLiving";
@@ -228,6 +228,7 @@ export function initLivingObjects(ctx){
   runtime.forwardBias=runtime.wheelRig.forwardSign===-1?Math.PI:0;
   runtime.state={x:vehicle.position.x,z:vehicle.position.z,yaw:vehicle.rotation.y+runtime.forwardBias,speed:0,distance:0,steering:0,steerAngleDegrees:0};
   runtime.elapsed=0;runtime.collisions=0;runtime.paused=false;
+  $("steeringDegreesHud").textContent="0°";
   runtime.prevTime=null;runtime.active=true;lastInteract=false;clearInput();
   snapshotDoors();
   // Cache static collision boxes once instead of rebuilding the whole scene at
@@ -315,6 +316,8 @@ export function initLivingObjects(ctx){
   if(++frameCount%7===0){
    $("speedKmh").textContent=Math.round(Math.abs(runtime.state.speed)*3.6);
    $("distanceM").textContent=Math.round(runtime.state.distance);
+   const degrees=runtime.state.steerAngleDegrees||0;
+   $("steeringDegreesHud").textContent=(degrees>.5?"+":"")+Math.round(degrees)+"°";
    $("elapsedTime").textContent=runtime.elapsed.toFixed(1);
    $("collisionCount").textContent=runtime.collisions;
   }
