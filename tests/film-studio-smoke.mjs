@@ -117,13 +117,36 @@ try{
  assert.equal(await page.locator("#objectCount").textContent(),"1");
  console.log("PASS: film mode and preview both close without modifying the original 3D model");
 
- const mobile=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+ const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,acceptDownloads:true});
  mobile.on("pageerror",e=>issues.push("mobile: "+e.message));
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/?world=ocean&film=1",{waitUntil:"domcontentloaded"});
  await mobile.waitForFunction(()=>document.body.classList.contains("film-studio-active"),{timeout:30000});
  assert.equal(await mobile.locator("#filmStudioOverlay").isVisible(),true);
  assert.equal(await mobile.locator("#filmRecord").isVisible(),true);
+ assert.equal(await mobile.locator("#filmResolution").inputValue(),"1080",
+  "High quality Full HD output must be the default on mobile");
+ const getScale=()=>mobile.evaluate(()=>{
+  const c=document.querySelector("#scene");return c.width/c.clientWidth;
+ });
+ assert.ok(Math.abs((await getScale())-1.5)<.06,
+  "Medium preview uses 1.5x device pixels instead of pixelated 1x on HiDPI");
+ await mobile.locator("#renderQualitySelect").selectOption("high");
+ await mobile.waitForFunction(()=>{
+  const c=document.querySelector("#scene");
+  return Math.abs(c.width/c.clientWidth-2)<.06;
+ },{timeout:12000});
+ console.log("PASS: Retina mobile High render quality uses 2x device pixels");
+ await mobile.locator("#renderQualitySelect").selectOption("medium");
+ await mobile.waitForFunction(()=>{
+  const c=document.querySelector("#scene");
+  return Math.abs(c.width/c.clientWidth-1.5)<.06;
+ },{timeout:12000});
  await mobile.screenshot({path:"film-studio-mobile.png"});
- console.log("PASS: Film Studio director panel is available on mobile without any server");
+ await mobile.locator("#filmClose").click();
+ await mobile.locator("#renderExit").click();
+ await mobile.waitForFunction(()=>!document.body.classList.contains("render-world-active"));
+ assert.ok(Math.abs((await getScale())-2)<.06,
+  "Closing Render World restores the original editor's HiDPI resolution");
+ console.log("PASS: Film Studio uses Full HD by default, High is sharp, and editor quality is restored");
  assert.deepEqual(issues,[],"No unexpected browser runtime errors");
 }finally{await browser.close()}
