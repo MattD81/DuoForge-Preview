@@ -35,7 +35,7 @@ export function initRenderWorld(ctx){
  let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let cinematicFx={dof:false,reflections:false,aperture:.001,maxblur:.009,focusScale:1};
- let dofPass=null,dofFocusCenter=null,hdrTexture=null,hdrIntensity=1,hdrVersion=0;
+ let dofPass=null,dofFocusCenter=null,hdrTexture=null,hdrRenderTarget=null,hdrIntensity=1,hdrVersion=0;
  let filmRest=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
@@ -97,12 +97,12 @@ export function initRenderWorld(ctx){
  // The HDR stays local in browser memory, never uploaded and never saved into GLB.
  function unloadHDRI(){
   hdrVersion++;
-  hdrTexture?.dispose?.();hdrTexture=null;hdrIntensity=1;
+  hdrRenderTarget?.dispose?.();hdrRenderTarget=null;hdrTexture=null;hdrIntensity=1;
   if(active){scene.environment=makePMREM()||null;scene.environmentIntensity=1;}
  }
  async function importHDRI(file){
   if(!active)throw Error("Öppna Render World först.");
-  if(!file||!/(\\.hdr)$/i.test(file.name)||file.size>20*1024*1024)
+  if(!file||!/(\.hdr)$/i.test(file.name)||file.size>20*1024*1024)
    throw Error("Välj en .hdr-fil under 20 MB.");
   const version=++hdrVersion,url=URL.createObjectURL(file);
   try{
@@ -114,7 +114,7 @@ export function initRenderWorld(ctx){
    try{
     const target=p.fromEquirectangular(texture);
     if(version!==hdrVersion||!active){target.texture.dispose();return;}
-    hdrTexture?.dispose?.();hdrTexture=target.texture;
+    hdrRenderTarget?.dispose?.();hdrRenderTarget=target;hdrTexture=target.texture;
     scene.environment=hdrTexture;scene.environmentIntensity=hdrIntensity;
    }finally{p.dispose();texture.dispose();}
   }finally{URL.revokeObjectURL(url);}
