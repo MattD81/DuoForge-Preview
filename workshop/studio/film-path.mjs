@@ -1,5 +1,5 @@
 // Pure math for cinematic camera moves. No Three.js, network, APIs or GPU required.
-export const SHOTS=Object.freeze(["orbit","dolly","crane","flyover","custom","broll"]);
+export const SHOTS=Object.freeze(["orbit","dolly","crane","flyover","custom","broll","edit"]);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const toPoint=(p,fallback=[0,0,0])=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)?p.slice():fallback.slice();
 const pointPlus=(a,b)=>a.map((x,i)=>x+b[i]);
