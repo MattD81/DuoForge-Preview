@@ -14,6 +14,9 @@ const $=id=>document.getElementById(id);
 const KEY_ACTIONS={KeyW:"gas",ArrowUp:"gas",KeyS:"brake",ArrowDown:"brake",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",Space:"handbrake",KeyE:"interact"};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const tempV=()=>new THREE.Vector3();
+// Medium/high previews used to cap Retina screens at 1x/1.35x, producing visible
+// pixelation on phones. Keep low mode cheap and allow user-selected HiDPI.
+const previewPixelRatio=quality=>Math.min(window.devicePixelRatio||1,quality==="high"?2:quality==="medium"?1.5:1);
 function downloadBlob(blob,name){
  const url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
@@ -53,6 +56,7 @@ export function initRenderWorld(ctx){
   return {
    background:scene.background,fog:scene.fog,environment:scene.environment,
    exposure:renderer.toneMappingExposure,toneMapping:renderer.toneMapping,
+   pixelRatio:renderer.getPixelRatio(),
    shadow:renderer.shadowMap.enabled,shadowMapSize:sun.shadow.mapSize.clone(),
    sunIntensity:sun.intensity,sunColor:sun.color.clone(),sunPos:sun.position.clone(),
    hemiIntensity:skyLight.intensity,hemiColor:skyLight.color.clone(),
@@ -67,6 +71,9 @@ export function initRenderWorld(ctx){
   if(!saved)return;
   scene.background=saved.background;scene.fog=saved.fog;scene.environment=saved.environment;
   renderer.toneMappingExposure=saved.exposure;renderer.toneMapping=saved.toneMapping;
+  // Restore the original editor sharpness after Render World is closed.
+  renderer.setPixelRatio(saved.pixelRatio);
+  renderer.setSize(Math.max(canvas.clientWidth,1),Math.max(canvas.clientHeight,1),false);
   renderer.shadowMap.enabled=saved.shadow;sun.shadow.mapSize.copy(saved.shadowMapSize);
   sun.intensity=saved.sunIntensity;sun.color.copy(saved.sunColor);sun.position.copy(saved.sunPos);
   skyLight.intensity=saved.hemiIntensity;skyLight.color.copy(saved.hemiColor);
@@ -104,7 +111,7 @@ export function initRenderWorld(ctx){
   quality=["low","medium","high"].includes(value)?value:"medium";
   const isPhone=window.matchMedia("(max-width: 600px)").matches;
   if(quality==="high"&&isPhone)notify("Hög kvalitet kan vara tung på mobilen. Välj Medium om bilden hackar.",4000);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,quality==="low"?.8:quality==="high"?1.35:1));
+  renderer.setPixelRatio(previewPixelRatio(quality));
   renderer.shadowMap.enabled=quality!=="low";
   sun.shadow.mapSize.set(quality==="high"?2048:quality==="medium"?1024:512,quality==="high"?2048:quality==="medium"?1024:512);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -114,12 +121,13 @@ export function initRenderWorld(ctx){
   if(quality==="high"){
    try{
     // High-only deferred post processing: avoids download/GPU overhead by default.
-    const [{EffectComposer},{RenderPass},{UnrealBloomPass},{OutputPass},{SSAOPass}]=await Promise.all([
+    const [{EffectComposer},{RenderPass},{UnrealBloomPass},{OutputPass},{SSAOPass},{SMAAPass}]=await Promise.all([
      import("three/addons/postprocessing/EffectComposer.js"),
      import("three/addons/postprocessing/RenderPass.js"),
      import("three/addons/postprocessing/UnrealBloomPass.js"),
      import("three/addons/postprocessing/OutputPass.js"),
-     import("three/addons/postprocessing/SSAOPass.js")
+     import("three/addons/postprocessing/SSAOPass.js"),
+     import("three/addons/postprocessing/SMAAPass.js")
     ]);
     if(!active||quality!=="high")return;
     const w=Math.max(canvas.clientWidth,1),h=Math.max(canvas.clientHeight,1);
@@ -130,6 +138,8 @@ export function initRenderWorld(ctx){
     composer.addPass(ao);
     const bloom=new UnrealBloomPass(new THREE.Vector2(w,h),.23,.35,.86);
     composer.addPass(bloom);
+    // Composer render targets do not inherit WebGL canvas MSAA: smooth their edges.
+    composer.addPass(new SMAAPass());
     composer.addPass(new OutputPass());
     composer.setSize(w,h);
    }catch(err){console.warn("Postprocessing unavailable",err);
@@ -481,15 +491,15 @@ export function initRenderWorld(ctx){
   setOutputSize:(w,h)=>{
    renderer.setPixelRatio(1);renderer.setSize(w,h,false);
    camera.aspect=w/h;camera.updateProjectionMatrix();
-   if(composer)composer.setSize(w,h);
+   if(composer){composer.setPixelRatio(1);composer.setSize(w,h);}
   },
   restoreOutputSize:()=>{
-   const ratio=Math.min(window.devicePixelRatio||1,quality==="low"?.8:quality==="high"?1.35:1);
+   const ratio=previewPixelRatio(quality);
    renderer.setPixelRatio(ratio);
    const width=Math.max(canvas.clientWidth,1),height=Math.max(canvas.clientHeight,1);
    renderer.setSize(width,height,false);
    camera.aspect=width/height;camera.updateProjectionMatrix();
-   if(composer)composer.setSize(width,height);
+   if(composer){composer.setPixelRatio(ratio);composer.setSize(width,height);}
   },
   setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
   notify,filename
