@@ -14,7 +14,7 @@ export function createPathTraceStills({getAnchor,getCamera,onStatus,filename}){
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
-  a.download=String(filename()||"DuoForge").replace(/[^\\p{L}\\p{N}_. -]/gu,"").replace(/\\s+/g,"-").slice(0,70)+"-pathtraced.png";
+  a.download=String(filename()||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").replace(/\s+/g,"-").slice(0,70)+"-pathtraced.png";
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
  }
