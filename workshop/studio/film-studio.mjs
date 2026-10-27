@@ -86,7 +86,8 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const world=getWorld();
   $("filmShot").value=world==="ocean"?"flyover":"orbit";
   $("filmDuration").value=world==="ocean"?"14":"12";
-  $("filmResolution").value=window.matchMedia("(max-width: 700px)").matches?"720":"1080";
+  // Full HD is the default on mobile too; 720p stays available for slower devices.
+  $("filmResolution").value="1080";
   $("filmFov").value="40";
   readSettings();elapsed=0;
   displayState("Filmläge redo: välj kamerarörelse och förhandsvisa, eller rendera en riktig videofil.");
