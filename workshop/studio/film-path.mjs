@@ -97,7 +97,7 @@ export const BROLL_SHOTS=Object.freeze([
  {id:"crane",label:"05 · Crane finale"}
 ]);
 export function createBrollSequence({focus=[0,1,0],size=4}={}){
- const c=toPoint(focus),e=clamp(Number(size)||4,1,32),r=Math.max(5,e*2.4);
+ const c=toPoint(focus),e=clamp(Number(size)||4,.15,256),r=Math.max(.65,e*2.4);
  const [x,y,z]=c,aim=(height=0)=>pointPlus(c,[0,height*e,0]);
  const f=frame;
  return [
