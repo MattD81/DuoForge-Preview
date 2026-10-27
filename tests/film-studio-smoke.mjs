@@ -132,6 +132,38 @@ try{
  assert.equal(brollData.look,"studio");
  assert.equal(brollData.finish,true);
  console.log("PASS: 5 B-roll editorial cuts, changeable PBR finish, light presets and saved look");
+ // New photorealistic effects are opt-in; the standard browser path still works.
+ assert.equal(await page.locator("#filmDof").isChecked(),false);
+ assert.equal(await page.locator("#filmSSR").isChecked(),false);
+ await page.locator("#filmDof").check();
+ await page.waitForFunction(()=>document.querySelector("#renderQualitySelect").value==="high",{timeout:20000});
+ await page.locator("#filmAperture").evaluate(el=>{el.value=".002";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.equal(await page.locator("#filmApertureValue").textContent(),"0.0020");
+ await page.locator("#filmFocusScale").evaluate(el=>{el.value="1.5";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.equal(await page.locator("#filmFocusValue").textContent(),"1.50×");
+ await page.locator("#filmDof").uncheck();
+ console.log("PASS: opt-in DOF auto-selects High, supports lens/focus controls and safe disable");
+ // SSR has its own GPU fallback; the toggle must work without touching original GLB.
+ await page.locator("#filmSSR").check();
+ await page.waitForTimeout(900);
+ await page.locator("#filmSSR").uncheck();
+ console.log("PASS: advanced reflections are opt-in and can be switched off");
+ const [opticsStory]=await Promise.all([
+  page.waitForEvent("download"),page.locator("#filmExportStoryboard").click()
+ ]);
+ const optics=JSON.parse(readFileSync(await opticsStory.path(),"utf8"));
+ assert.equal(optics.fx.dof,false);
+ assert.equal(optics.fx.reflections,false);
+ assert.ok(Math.abs(optics.fx.focusScale-1.5)<.01);
+ assert.ok(Math.abs(optics.fx.aperture-.002)<.0001);
+ assert.equal(await page.locator("#filmPathTrace").isVisible(),true);
+ // Cancel must remain responsive during optional module loading, even on software GPU.
+ await page.locator("#filmPathSamples").selectOption("4");
+ await page.locator("#filmPathTrace").click();
+ await page.waitForFunction(()=>!document.querySelector("#filmPathCancel").hidden,{timeout:5000});
+ await page.locator("#filmPathCancel").click();
+ await page.waitForFunction(()=>document.querySelector("#filmPathTrace").disabled===false,{timeout:35000});
+ console.log("PASS: optional progressive path traced PNG can be cancelled during import/render");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);
