@@ -529,7 +529,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!opened)return;
   readSettings();
   try{
-   buildPath();
+   if(!path.length&&!sequence.length&&!cutPaths.length)buildPath();
    playing=false;orbit.enabled=true;
    elapsed=format.duration*(Number(event.target.value)/1000);
    applyAt(elapsed/format.duration);setWorldTime(elapsed,0);
