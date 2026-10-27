@@ -108,6 +108,30 @@ try{
    console.log("PASS: unsupported software video encoder reports fallback");
   }
  }
+ // Real film-look UI must generate five individual camera takes, not repeat one shot.
+ await page.locator("#filmBroll").click();
+ assert.equal(await page.locator("#filmShot").inputValue(),"broll");
+ assert.equal(await page.locator("#filmDuration").inputValue(),"20");
+ assert.equal(await page.locator("#filmLook").inputValue(),"golden");
+ assert.equal(await page.locator("#filmFinish").isChecked(),true);
+ assert.match(await page.locator("#filmShotProgress").textContent(),/01 · Hero/);
+ await page.locator("#filmSeek").evaluate(el=>{el.value="520";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.match(await page.locator("#filmShotProgress").textContent(),/03 · Detail/);
+ await page.locator("#filmSeek").evaluate(el=>{el.value="950";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.match(await page.locator("#filmShotProgress").textContent(),/05 · Crane/);
+ await page.locator("#filmLook").selectOption("noir");
+ await page.locator("#filmFinish").uncheck();
+ await page.locator("#filmLook").selectOption("studio");
+ await page.locator("#filmFinish").check();
+ const [brollStoryboard]=await Promise.all([
+  page.waitForEvent("download"),
+  page.locator("#filmExportStoryboard").click()
+ ]);
+ const brollData=JSON.parse(readFileSync(await brollStoryboard.path(),"utf8"));
+ assert.equal(brollData.settings.shot,"broll");
+ assert.equal(brollData.look,"studio");
+ assert.equal(brollData.finish,true);
+ console.log("PASS: 5 B-roll editorial cuts, changeable PBR finish, light presets and saved look");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);

@@ -8,6 +8,7 @@ import {createWheelRig} from "./wheel-rig.mjs";
 import {createEnvironment,worldNames} from "./render-environments.mjs?v=ocean-1";
 import {normalizeOceanSettings} from "./ocean-water.mjs";
 import {initFilmStudio} from "./film-studio.mjs";
+import {createCinematicLighting} from "./cinematic-lighting.mjs";
 import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
@@ -35,6 +36,7 @@ export function initRenderWorld(ctx){
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
+ const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
  const previewPane=$("renderWorldOverlay"),controlsPanel=$("renderWorldControls");
  const viewOptions=[{value:"orbit",label:"Orbit"},{value:"follow",label:"Följkamera"},{value:"free",label:"Fri kamera"},{value:"cinematic",label:"Film-kamera"}];
@@ -108,6 +110,8 @@ export function initRenderWorld(ctx){
   $("renderCameraTip").textContent=mode==="free"?"WASD flyttar kameran • dra för att rotera":mode==="follow"?"Följer objektet under test":mode==="cinematic"?"Automatisk filmkamera":"Dra eller zooma för att utforska";
  }
  async function applyQuality(value){
+  const previousLook=cinemaLighting.settings();
+  cinemaLighting.clear();
   quality=["low","medium","high"].includes(value)?value:"medium";
   const isPhone=window.matchMedia("(max-width: 600px)").matches;
   if(quality==="high"&&isPhone)notify("Hög kvalitet kan vara tung på mobilen. Välj Medium om bilden hackar.",4000);
@@ -146,6 +150,7 @@ export function initRenderWorld(ctx){
     notify("Bloom/AO stöds inte på denna enhet – använder vanlig rendergrafik.",3900);}
   }
   syncChoices();
+  if(previousLook.look!=="off"&&active)cinemaLighting.apply(previousLook.look,previousLook.finish);
  }
  function chooseCamera(value){
   mode=viewOptions.some(x=>x.value===value)?value:"orbit";
@@ -203,6 +208,7 @@ export function initRenderWorld(ctx){
   return {vehicle,object:obj};
  }
  function makeEnvironment(){
+  cinemaLighting.clear(); // Camera/light rigs belong only to the temporary preview.
   if(environment){group.remove(environment.group);environment.dispose();environment=null;}
   environment=createEnvironment({world,quality,oceanSettings});
   group.add(environment.group);
@@ -310,6 +316,7 @@ export function initRenderWorld(ctx){
  function stop(){
   if(!active)return;
   filmStudio?.onPreviewExit();
+  cinemaLighting.clear();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;
@@ -502,7 +509,8 @@ export function initRenderWorld(ctx){
    if(composer){composer.setPixelRatio(ratio);composer.setSize(width,height);}
   },
   setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
-  notify,filename
+  notify,filename,
+  applyFilmLook:(look,finish)=>cinemaLighting.apply(look,finish)
  });
  syncChoices();
  // Film/demo deep links start Render World and optionally open the director UI.

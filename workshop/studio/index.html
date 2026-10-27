@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=film-studio-v1">
+<link rel="stylesheet" href="./studio.css?v=cinematic-broll-v2">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -127,9 +127,27 @@
           <div><strong>🎞️ DuoForge Film Studio</strong><small>Filmisk 3D-regi • renderas lokalt</small></div>
           <button id="filmClose" title="Stäng Film Studio">✕</button>
         </div>
+        <div class="film-broll-promo">
+          <button id="filmBroll" type="button">✨ Skapa filmisk B-roll · 5 vinklar</button>
+          <small>Importera först din GLB i verkstaden. Fem riktiga kameratagningar anpassas automatiskt till modellens storlek.</small>
+        </div>
+        <div class="film-look-controls">
+          <label for="filmLook">Ljus &amp; färg
+            <select id="filmLook">
+              <option value="golden">Golden hour · varma filmtoner</option>
+              <option value="studio">Premium studio · skarpa reflexer</option>
+              <option value="noir">Noir · dramatiskt ljus</option>
+              <option value="natural">Natural · mjukt dagsljus</option>
+              <option value="off">Utan extra filmljus</option>
+            </select>
+          </label>
+          <label class="film-finish-label"><input id="filmFinish" type="checkbox" checked>
+           PBR-finish på tillfällig GLB-kopia</label>
+        </div>
         <div class="film-grid">
           <label for="filmShot">Kamerarörelse
             <select id="filmShot">
+              <option value="broll">✨ B-roll · 5 filmvinklar</option>
               <option value="orbit">Orbit 360° – runt motivet</option>
               <option value="dolly">Dolly in – närmare motivet</option>
               <option value="crane">Crane – lyft kameran</option>
@@ -165,6 +183,7 @@
           <div class="film-two"><button id="filmAddKeyframe" title="Spara kamerans nuvarande position och blickpunkt">＋ Lägg till kamera</button><button id="filmRemoveKeyframe" title="Ta bort senaste kamerapunkten">− Ångra punkt</button></div>
           <small>Flytta kameran till en ny vinkel och lägg till minst två punkter för en egen sekvens.</small>
         </div>
+        <div id="filmShotProgress" class="film-shot-progress" role="status">Välj en kamerarörelse</div>
         <label for="filmSeek" class="film-timeline-label">Tidslinje <span id="filmFrameCounter">0.0 / 12.0 s</span></label>
         <input id="filmSeek" class="film-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Spola kamerasekvensen">
         <div class="film-progress-track"><span id="filmProgress"></span></div>
@@ -362,5 +381,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=film-studio-v1"></script>
+<script type="module" src="./studio.mjs?v=cinematic-broll-v2"></script>
 </body></html>

@@ -2,7 +2,7 @@
 // User keeps editable geometry; Render World supplies the transient preview scene.
 // MediaRecorder captures in *real time*; fps and duration depend on device speed.
 import * as THREE from "three";
-import {createShot,sampleCameraPath,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
+import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
 
 const $=id=>document.getElementById(id);
 const safe=(name)=>String(name||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").trim().replace(/\s+/g,"-").slice(0,70)||"DuoForge";
@@ -16,8 +16,8 @@ function saveBlob(blob,name){
 }
 export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,getWorld,
  isPreviewActive,startPreview,renderFrame,setOutputSize,restoreOutputSize,setWorldTime,
- notify,filename}){
- let opened=false,playing=false,recording=false,elapsed=0,path=[],savedCamera=null;
+ notify,filename,applyFilmLook=()=>{}}){
+ let opened=false,playing=false,recording=false,elapsed=0,path=[],sequence=[],savedCamera=null;
  let mediaRecorder=null,captureTrack=null,stream=null,recordChunks=[],recordEnd=null;
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
  let format=normalizeFilmSettings(),movieShot="orbit",pendingCleanup=false;
@@ -38,12 +38,18 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const middle=box.getCenter(new THREE.Vector3());
   return {
    focus:middle.toArray(),
-   size:clamp(Math.max(dims.x,dims.y,dims.z),2,20)
+   size:clamp(Math.max(dims.x,dims.y,dims.z),.15,256)
   };
  }
  function buildPath(){
   const options=worldFocus();
   movieShot=format.shot;
+  if(format.shot==="broll"){
+   path=[];
+   sequence=createBrollSequence(options);
+   return sequence;
+  }
+  sequence=[];
   path=createShot(format.shot,{world:getWorld(),focus:options.focus,size:options.size,custom:keyframes});
   return path;
  }
@@ -57,7 +63,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmPlay").disabled=recording;
   $("filmClose").disabled=recording;
   $("filmStill").disabled=recording;
-  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe"])
+  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll"])
    $(id).disabled=recording;
   $("filmKeyframes").textContent=String(keyframes.length);
  }
@@ -89,14 +95,20 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   // Full HD is the default on mobile too; 720p stays available for slower devices.
   $("filmResolution").value="1080";
   $("filmFov").value="40";
+  $("filmLook").value="golden";
+  $("filmFinish").checked=true;
+  applyFilmLook("golden",true);
   readSettings();elapsed=0;
   displayState("Filmläge redo: välj kamerarörelse och förhandsvisa, eller rendera en riktig videofil.");
   document.body.classList.add("film-studio-active");
   return true;
  }
  function applyAt(progress){
-  if(!path.length)buildPath();
-  const shot=sampleCameraPath(path,progress,{ease:format.shot!=="flyover"});
+  if(!path.length&&!sequence.length)buildPath();
+  const shot=format.shot==="broll"?
+   sampleBrollSequence(sequence,progress):
+   sampleCameraPath(path,progress,{ease:format.shot!=="flyover"});
+  $("filmShotProgress").textContent=shot.shotLabel||"En filmisk kamerarörelse";
   camera.position.fromArray(shot.position);
   orbit.target.fromArray(shot.target);
   camera.fov=format.fov;
@@ -120,7 +132,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!recording)orbit.enabled=true;
   if(!keepFrame&&opened){
    elapsed=0;
-   if(path.length)applyAt(0);
+   if(path.length||sequence.length)applyAt(0);
   }
   displayState("Förhandsvisning klar. Ändra filmrörelsen eller exportera.");
  }
@@ -141,6 +153,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(recording){notify("Stoppa inspelningen innan du lämnar Film Studio.",3000);return;}
   playing=false;
   restoreOutputSize();restoreCamera();
+  applyFilmLook("off",false);
   opened=false;ui.hidden=true;document.body.classList.remove("film-studio-active");
  }
  function onPreviewExit(){
@@ -250,6 +263,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const payload={
    format:"duoforge-film@1",world:getWorld(),created:new Date().toISOString(),
    settings:format,keyframes:normalizeKeyframes(keyframes),
+   look:$("filmLook").value,finish:$("filmFinish").checked,
    note:"Local rendering, approximate browser fps; requires 3D Studio scene."
   };
   saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
@@ -269,7 +283,10 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    $("filmFps").value=opts.fps;
    $("filmFov").value=opts.fov;
    keyframes=frames;
-   readSettings();
+   $("filmLook").value=["golden","studio","noir","natural","off"].includes(value.look)?value.look:"golden";
+   $("filmFinish").checked=value.finish!==false;
+   if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);
+   path=[];sequence=[];readSettings();
    displayState("Storyboard laddat: "+frames.length+" egna kameranyckelbilder.");
   }catch(e){notify("Kunde inte importera filmprojekt: "+e.message,4000);}
  }
@@ -290,12 +307,27 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  function onWorldChanged(){
   if(!opened)return;
   if(recording)finishRecorder({cancel:true});
-  playing=false;elapsed=0;path=[];
+  playing=false;elapsed=0;path=[];sequence=[];
   $("filmShot").value=getWorld()==="ocean"?"flyover":"orbit";
-  readSettings();displayState("Ny värld vald. Förhandsvisa en kamerarörelse.");
+  readSettings();
+  applyFilmLook($("filmLook").value,$("filmFinish").checked);
+  displayState("Ny värld vald. Förhandsvisa en kamerarörelse.");
  }
  $("filmOpen").onclick=open;
  $("filmOpenPanel").onclick=open;
+ $("filmBroll").onclick=()=>{
+  if(!opened&&!open())return;
+  $("filmShot").value="broll";
+  $("filmDuration").value="20";
+  $("filmLook").value="golden";
+  $("filmFinish").checked=true;
+  path=[];sequence=[];
+  applyFilmLook("golden",true);
+  readSettings();buildPath();applyAt(0);
+  displayState("✨ Fem olika B-roll-vinklar redo. Förhandsvisa eller rendera filmen.");
+ };
+ $("filmLook").onchange=()=>{if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);};
+ $("filmFinish").onchange=()=>{if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);};
  $("filmClose").onclick=close;
  $("filmPlay").onclick=preview;
  $("filmRecord").onclick=record;
@@ -304,7 +336,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  $("filmRemoveKeyframe").onclick=removeKeyframe;
  $("filmExportStoryboard").onclick=exportStoryboard;
  $("filmImportStoryboard").onchange=async e=>{await importStoryboard(e.target.files?.[0]);e.target.value="";};
- $("filmShot").onchange=e=>{path=[];elapsed=0;readSettings();displayState("Kamerarörelse: "+e.target.selectedOptions[0].textContent);e.target.blur();};
+ $("filmShot").onchange=e=>{path=[];sequence=[];elapsed=0;readSettings();displayState("Kamerarörelse: "+e.target.selectedOptions[0].textContent);e.target.blur();};
  for(const id of ["filmDuration","filmResolution","filmFps","filmFov"]){
   $(id).onchange=()=>{readSettings();displayState("Filminställningar uppdaterade.");};
  }
