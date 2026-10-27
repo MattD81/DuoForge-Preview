@@ -35,7 +35,7 @@ export function initRenderWorld(ctx){
  let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let cinematicFx={dof:false,reflections:false,aperture:.001,maxblur:.009,focusScale:1};
- let dofPass=null;
+ let dofPass=null,dofFocusCenter=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
  const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
@@ -123,7 +123,7 @@ export function initRenderWorld(ctx){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=quality==="high"?1.25:quality==="low"?1.06:1.16;
   renderer.shadowMap.needsUpdate=true;
-  composer?.dispose?.();composer=null;dofPass=null;
+  composer?.dispose?.();composer=null;dofPass=null;dofFocusCenter=null;
   if(quality==="high"){
    try{
     // High-only deferred post processing: avoids download/GPU overhead by default.
@@ -161,8 +161,9 @@ export function initRenderWorld(ctx){
      try{
       const {BokehPass}=await import("three/addons/postprocessing/BokehPass.js");
       if(!active||quality!=="high")return;
+      dofFocusCenter=anchor?new THREE.Box3().setFromObject(anchor).getCenter(new THREE.Vector3()):new THREE.Vector3();
       dofPass=new BokehPass(scene,camera,{
-       focus:Math.max(.1,camera.position.distanceTo(anchor?.position||new THREE.Vector3())),
+       focus:Math.max(.1,camera.position.distanceTo(dofFocusCenter)),
        aperture:cinematicFx.aperture,maxblur:cinematicFx.maxblur
       });
       composer.addPass(dofPass);
@@ -205,8 +206,8 @@ export function initRenderWorld(ctx){
  }
  function updateDofFocus(){
   if(!dofPass?.uniforms?.focus||!anchor)return;
-  const center=new THREE.Box3().setFromObject(anchor).getCenter(new THREE.Vector3());
-  dofPass.uniforms.focus.value=Math.max(.1,camera.position.distanceTo(center)*cinematicFx.focusScale);
+  if(!dofFocusCenter)return;
+  dofPass.uniforms.focus.value=Math.max(.1,camera.position.distanceTo(dofFocusCenter)*cinematicFx.focusScale);
  }
  function chooseCamera(value){
   mode=viewOptions.some(x=>x.value===value)?value:"orbit";
@@ -375,7 +376,7 @@ export function initRenderWorld(ctx){
   cinemaLighting.clear();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
-  composer?.dispose?.();composer=null;dofPass=null;
+  composer?.dispose?.();composer=null;dofPass=null;dofFocusCenter=null;
   if(environment){environment.dispose();environment=null;}
   group.clear();model=null;anchor=null;simulation=null;mission=[];doorOpen=false;
   document.body.classList.remove("render-world-active");
