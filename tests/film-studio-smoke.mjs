@@ -171,6 +171,16 @@ try{
  const traceStatus=await page.locator("#filmPathStatus").textContent();
  assert.match(traceStatus,/Avbryter|Path tracing|Ray tracing|färdig|stöds inte/);
  console.log("PASS: opt-in path traced stills recover or can be cancelled: "+traceStatus);
+ // Verify actual pinned WebGL path tracing library loads with the same Three.js
+ // instance as the editor; failing here means path tracing cannot run at all.
+ const pathModule=await page.evaluate(async()=>{
+  try{
+   const m=await import("https://esm.sh/three-gpu-pathtracer@0.0.24?bundle&external=three");
+   return {ok:typeof m.WebGLPathTracer==="function"&&typeof m.PhysicalCamera==="function"};
+  }catch(e){return {ok:false,message:String(e.message||e)};}
+ });
+ assert.ok(pathModule.ok,"Pinned WebGLPathTracer must actually load: "+(pathModule.message||"missing export"));
+ console.log("PASS: real WebGL path tracing engine modules load, without sending GLB files to any server");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);
