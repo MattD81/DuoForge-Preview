@@ -34,6 +34,8 @@ export function initRenderWorld(ctx){
  let saved=null,environment=null,quality="medium",world=worldNames.includes(query.get("world"))?query.get("world"):"showroom",mode="orbit";
  let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
+ let cinematicFx={dof:false,reflections:false,aperture:.001,maxblur:.009,focusScale:1};
+ let dofPass=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
  const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
@@ -121,7 +123,7 @@ export function initRenderWorld(ctx){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=quality==="high"?1.25:quality==="low"?1.06:1.16;
   renderer.shadowMap.needsUpdate=true;
-  composer?.dispose?.();composer=null;
+  composer?.dispose?.();composer=null;dofPass=null;
   if(quality==="high"){
    try{
     // High-only deferred post processing: avoids download/GPU overhead by default.
@@ -137,11 +139,35 @@ export function initRenderWorld(ctx){
     const w=Math.max(canvas.clientWidth,1),h=Math.max(canvas.clientHeight,1);
     composer=new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene,camera));
+    // Optional screen-space reflections; opt in due to high GPU cost.
+    if(cinematicFx.reflections){
+     try{
+      const {SSRPass}=await import("three/addons/postprocessing/SSRPass.js");
+      if(!active||quality!=="high")return;
+      const ssr=new SSRPass({renderer,scene,camera,width:w,height:h});
+      ssr.opacity=.5;ssr.maxDistance=15;ssr.thickness=.035;
+      ssr.resolutionScale=window.matchMedia("(max-width:700px)").matches?.35:.6;
+      ssr.blur=true;
+      composer.addPass(ssr);
+     }catch(err){console.warn("SSR unavailable",err);notify("SSR-reflektioner stöds inte här. Fortsätter med PBR-reflexer.",3600);}
+    }
     const ao=new SSAOPass(scene,camera,w,h);
     ao.kernelRadius=8;ao.minDistance=.001;ao.maxDistance=.22;
     composer.addPass(ao);
     const bloom=new UnrealBloomPass(new THREE.Vector2(w,h),.23,.35,.86);
     composer.addPass(bloom);
+    // Optional physically depth-based background defocus (BokehPass).
+    if(cinematicFx.dof){
+     try{
+      const {BokehPass}=await import("three/addons/postprocessing/BokehPass.js");
+      if(!active||quality!=="high")return;
+      dofPass=new BokehPass(scene,camera,{
+       focus:Math.max(.1,camera.position.distanceTo(anchor?.position||new THREE.Vector3())),
+       aperture:cinematicFx.aperture,maxblur:cinematicFx.maxblur
+      });
+      composer.addPass(dofPass);
+     }catch(err){console.warn("Depth of field unavailable",err);notify("Skärpedjup stöds inte på den här enheten.",3600);}
+    }
     // Composer render targets do not inherit WebGL canvas MSAA: smooth their edges.
     composer.addPass(new SMAAPass());
     composer.addPass(new OutputPass());
@@ -151,6 +177,24 @@ export function initRenderWorld(ctx){
   }
   syncChoices();
   if(previousLook.look!=="off"&&active)cinemaLighting.apply(previousLook.look,previousLook.finish);
+ }
+ async function setCinematicEffects(next={}){
+  cinematicFx={
+   dof:Boolean(next.dof),reflections:Boolean(next.reflections),
+   aperture:clamp(Number(next.aperture)||.001,.0001,.003),
+   maxblur:clamp(Number(next.maxblur)||.009,.002,.03),
+   focusScale:clamp(Number(next.focusScale)||1,.35,2.5)
+  };
+  if(!active)return;
+  if(cinematicFx.dof||cinematicFx.reflections){
+   if(quality!=="high")await applyQuality("high");
+   else await applyQuality(quality);
+  }else if(quality==="high")await applyQuality(quality);
+ }
+ function updateDofFocus(){
+  if(!dofPass?.uniforms?.focus||!anchor)return;
+  const center=new THREE.Box3().setFromObject(anchor).getCenter(new THREE.Vector3());
+  dofPass.uniforms.focus.value=Math.max(.1,camera.position.distanceTo(center)*cinematicFx.focusScale);
  }
  function chooseCamera(value){
   mode=viewOptions.some(x=>x.value===value)?value:"orbit";
@@ -319,7 +363,7 @@ export function initRenderWorld(ctx){
   cinemaLighting.clear();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
-  composer?.dispose?.();composer=null;
+  composer?.dispose?.();composer=null;dofPass=null;
   if(environment){environment.dispose();environment=null;}
   group.clear();model=null;anchor=null;simulation=null;mission=[];doorOpen=false;
   document.body.classList.remove("render-world-active");
@@ -333,6 +377,7 @@ export function initRenderWorld(ctx){
  }
  function render(){
   if(!active||!composer)return false;
+  updateDofFocus();
   composer.render();return true;
  }
  function isActive(){return active;}
@@ -510,7 +555,9 @@ export function initRenderWorld(ctx){
   },
   setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
   notify,filename,
-  applyFilmLook:(look,finish)=>cinemaLighting.apply(look,finish)
+  applyFilmLook:(look,finish)=>cinemaLighting.apply(look,finish),
+  setCinematicEffects,
+  getPreviewAnchor:()=>anchor
  });
  syncChoices();
  // Film/demo deep links start Render World and optionally open the director UI.
