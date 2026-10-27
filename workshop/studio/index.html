@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=cinematic-broll-v2">
+<link rel="stylesheet" href="./studio.css?v=cinema-optics-v1">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -184,6 +184,20 @@
           <small>Flytta kameran till en ny vinkel och lägg till minst två punkter för en egen sekvens.</small>
         </div>
         <div id="filmShotProgress" class="film-shot-progress" role="status">Välj en kamerarörelse</div>
+        <fieldset class="cinema-optics">
+          <legend>🔬 Cinema Optics · avancerad grafik</legend>
+          <label class="film-fx-check"><input type="checkbox" id="filmDof">
+            Riktigt skärpedjup (Bokeh/DOF)</label>
+          <label>Bländarstyrka <output id="filmApertureValue">0.0010</output>
+            <input id="filmAperture" type="range" min=".0001" max=".003" step=".0001" value=".001">
+          </label>
+          <label>Fokusavstånd <output id="filmFocusValue">1.00×</output>
+            <input id="filmFocusScale" type="range" min=".35" max="2.5" step=".05" value="1">
+          </label>
+          <label class="film-fx-check"><input type="checkbox" id="filmSSR">
+            Avancerade speglingar (SSR)</label>
+          <small>DOF och SSR kräver grafikläget Hög och extra GPU-kraft. Avstängda som standard på mobil.</small>
+        </fieldset>
         <label for="filmSeek" class="film-timeline-label">Tidslinje <span id="filmFrameCounter">0.0 / 12.0 s</span></label>
         <input id="filmSeek" class="film-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Spola kamerasekvensen">
         <div class="film-progress-track"><span id="filmProgress"></span></div>
@@ -197,6 +211,24 @@
             <select id="filmPhotoResolution"><option value="1080">1080p PNG</option><option value="4k">4K PNG (3840×2160)</option></select>
           </label>
           <button id="filmStill">📸 Rendera stillbild</button>
+        </div>
+        <div class="cinema-pathtrace">
+          <strong>✨ Ray tracing · stillbild (beta)</strong>
+          <small>Riktig ljusstrålesimulering och reflexer med flera samples. Endast statiska GLB-scener, inte realtidsfilm. GPU-arbete på din enhet.</small>
+          <div class="film-path-opts">
+            <label>Samples <select id="filmPathSamples">
+              <option value="4">4 · test</option><option value="8">8 · snabb</option>
+              <option value="16" selected>16 · balanserad</option><option value="32">32 · fin</option>
+              <option value="64">64 · tung</option>
+            </select></label>
+            <label>Objektiv <select id="filmPathAperture">
+              <option value="1.8">f/1.8</option><option value="2.8">f/2.8</option>
+              <option value="5.6" selected>f/5.6</option><option value="11">f/11</option>
+            </select></label>
+          </div>
+          <button id="filmPathTrace" type="button">🌟 Rendera Path Traced PNG</button>
+          <button id="filmPathCancel" type="button" hidden>■ Avbryt rendering</button>
+          <div id="filmPathStatus" role="status" aria-live="polite">Startar bara när du väljer det.</div>
         </div>
         <div class="film-project-row">
           <button id="filmExportStoryboard" title="Spara filmens kamerabanor och inställningar">⬇ Storyboard JSON</button>
@@ -381,5 +413,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=cinematic-broll-v2"></script>
+<script type="module" src="./studio.mjs?v=cinema-optics-v1"></script>
 </body></html>
