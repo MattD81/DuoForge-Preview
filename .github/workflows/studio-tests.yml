@@ -49,6 +49,7 @@ jobs:
           node --check workshop/studio/ocean-scene.mjs
           node --check workshop/studio/cinematic-lighting.mjs
           node --check workshop/studio/film-path.mjs
+          node --check workshop/studio/path-trace-stills.mjs
           node --check workshop/studio/film-studio.mjs
           node --check tests/film-studio-smoke.mjs
           node --check tests/ocean-world-smoke.mjs

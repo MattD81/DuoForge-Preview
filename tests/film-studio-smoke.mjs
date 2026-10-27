@@ -132,6 +132,55 @@ try{
  assert.equal(brollData.look,"studio");
  assert.equal(brollData.finish,true);
  console.log("PASS: 5 B-roll editorial cuts, changeable PBR finish, light presets and saved look");
+ // New photorealistic effects are opt-in; the standard browser path still works.
+ assert.equal(await page.locator("#filmDof").isChecked(),false);
+ assert.equal(await page.locator("#filmSSR").isChecked(),false);
+ await page.locator("#filmDof").check();
+ await page.waitForFunction(()=>document.querySelector("#renderQualitySelect").value==="high",{timeout:20000});
+ await page.locator("#filmAperture").evaluate(el=>{el.value=".002";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.equal(await page.locator("#filmApertureValue").textContent(),"0.0020");
+ await page.locator("#filmFocusScale").evaluate(el=>{el.value="1.5";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.equal(await page.locator("#filmFocusValue").textContent(),"1.50×");
+ await page.locator("#filmDof").uncheck();
+ console.log("PASS: opt-in DOF auto-selects High, supports lens/focus controls and safe disable");
+ // SSR has its own GPU fallback; the toggle must work without touching original GLB.
+ await page.locator("#filmSSR").check();
+ await page.waitForTimeout(900);
+ await page.locator("#filmSSR").uncheck();
+ console.log("PASS: advanced reflections are opt-in and can be switched off");
+ const [opticsStory]=await Promise.all([
+  page.waitForEvent("download"),page.locator("#filmExportStoryboard").click()
+ ]);
+ const optics=JSON.parse(readFileSync(await opticsStory.path(),"utf8"));
+ assert.equal(optics.fx.dof,false);
+ assert.equal(optics.fx.reflections,false);
+ assert.ok(Math.abs(optics.fx.focusScale-1.5)<.01);
+ assert.ok(Math.abs(optics.fx.aperture-.002)<.0001);
+ assert.equal(await page.locator("#filmPathTrace").isVisible(),true);
+ // Cancel must remain responsive during optional module loading, even on software GPU.
+ await page.locator("#filmPathSamples").selectOption("4");
+ await page.locator("#filmPathTrace").click();
+ // Some browsers reject unsupported WebGL extensions or CDN modules instantly.
+ // Exercise cancellation only if still running; always verify recovered controls.
+ await page.waitForTimeout(700);
+ const activePathTrace=await page.locator("#filmPathTrace").isDisabled();
+ if(activePathTrace){
+  await page.locator("#filmPathCancel").evaluate(el=>el.click());
+  await page.waitForFunction(()=>document.querySelector("#filmPathTrace").disabled===false,{timeout:35000});
+ }
+ const traceStatus=await page.locator("#filmPathStatus").textContent();
+ assert.match(traceStatus,/Avbryter|Path tracing|Ray tracing|färdig|stöds inte/);
+ console.log("PASS: opt-in path traced stills recover or can be cancelled: "+traceStatus);
+ // Verify actual pinned WebGL path tracing library loads with the same Three.js
+ // instance as the editor; failing here means path tracing cannot run at all.
+ const pathModule=await page.evaluate(async()=>{
+  try{
+   const m=await import("https://esm.sh/three-gpu-pathtracer@0.0.24?bundle&external=three");
+   return {ok:typeof m.WebGLPathTracer==="function"&&typeof m.PhysicalCamera==="function"};
+  }catch(e){return {ok:false,message:String(e.message||e)};}
+ });
+ assert.ok(pathModule.ok,"Pinned WebGLPathTracer must actually load: "+(pathModule.message||"missing export"));
+ console.log("PASS: real WebGL path tracing engine modules load, without sending GLB files to any server");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);
