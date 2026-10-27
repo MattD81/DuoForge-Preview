@@ -1,5 +1,5 @@
 // Pure math for cinematic camera moves. No Three.js, network, APIs or GPU required.
-export const SHOTS=Object.freeze(["orbit","dolly","crane","flyover","custom"]);
+export const SHOTS=Object.freeze(["orbit","dolly","crane","flyover","custom","broll"]);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const toPoint=(p,fallback=[0,0,0])=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)?p.slice():fallback.slice();
 const pointPlus=(a,b)=>a.map((x,i)=>x+b[i]);
@@ -85,6 +85,36 @@ export function createShot(name,{world="showroom",focus=[0,1,0],size=4,custom=[]
   ];
  }
  throw Error("Okänd kamerarörelse: "+String(name));
+}
+
+// Five genuinely distinct camera shots with editorial cuts (not one reused orbit).
+// Focal distance is based on the asset bounds, so small and large imported GLBs fit.
+export const BROLL_SHOTS=Object.freeze([
+ {id:"hero",label:"01 · Hero wide"},
+ {id:"low",label:"02 · Low-angle push"},
+ {id:"detail",label:"03 · Detail sweep"},
+ {id:"parallax",label:"04 · Side parallax"},
+ {id:"crane",label:"05 · Crane finale"}
+]);
+export function createBrollSequence({focus=[0,1,0],size=4}={}){
+ const c=toPoint(focus),e=clamp(Number(size)||4,1,32),r=Math.max(5,e*2.4);
+ const [x,y,z]=c,aim=(height=0)=>pointPlus(c,[0,height*e,0]);
+ const f=frame;
+ return [
+  [f([x+r*.84,y+r*.43,z+r*.88],aim(.06)),f([x+r*.34,y+r*.38,z+r*1.02],aim(.04)),f([x-r*.22,y+r*.35,z+r*1.05],aim(.02))],
+  [f([x-r*.86,y+r*.18,z+r*.76],aim(.09)),f([x-r*.63,y+r*.13,z+r*.68],aim(.1)),f([x-r*.48,y+r*.1,z+r*.49],aim(.1))],
+  [f([x+r*.46,y+r*.26,z+r*.72],aim(.3)),f([x+r*.11,y+r*.3,z+r*.65],aim(.3)),f([x-r*.27,y+r*.34,z+r*.68],aim(.3))],
+  [f([x-r*.98,y+r*.25,z-r*.22],aim(0)),f([x-r*.78,y+r*.29,z+r*.26],aim(.05)),f([x-r*.48,y+r*.33,z+r*.76],aim(.06))],
+  [f([x+r*.46,y+r*.38,z-r*.65],aim(.02)),f([x+r*.38,y+r*.75,z-r*.87],aim(0)),f([x+r*.29,y+r*1.13,z-r*1.3],aim(-.05))]
+ ].map((frames,i)=>({...BROLL_SHOTS[i],frames}));
+}
+export function sampleBrollSequence(sequence,progress){
+ if(!Array.isArray(sequence)||sequence.length!==5)throw Error("B-roll kräver fem filmvinklar.");
+ const t=clamp(Number(progress)||0,0,1);
+ const index=Math.min(4,Math.floor(t*5));
+ const local=index===4&&t===1?1:t*5-index;
+ const shot=sequence[index];
+ return {...sampleCameraPath(shot.frames,local),shotIndex:index,shotId:shot.id,shotLabel:shot.label};
 }
 export function normalizeFilmSettings(input={}){
  const quality=["720","1080"].includes(String(input.quality))?String(input.quality):"1080";
