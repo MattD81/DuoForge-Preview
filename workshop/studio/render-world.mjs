@@ -35,7 +35,8 @@ export function initRenderWorld(ctx){
  let oceanSettings=normalizeOceanSettings();
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let cinematicFx={dof:false,reflections:false,aperture:.001,maxblur:.009,focusScale:1};
- let dofPass=null,dofFocusCenter=null;
+ let dofPass=null,dofFocusCenter=null,hdrTexture=null,hdrRenderTarget=null,hdrIntensity=1,hdrVersion=0;
+ let filmRest=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
  const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
@@ -59,6 +60,7 @@ export function initRenderWorld(ctx){
  function capture(){
   return {
    background:scene.background,fog:scene.fog,environment:scene.environment,
+   envIntensity:scene.environmentIntensity,
    exposure:renderer.toneMappingExposure,toneMapping:renderer.toneMapping,
    pixelRatio:renderer.getPixelRatio(),
    shadow:renderer.shadowMap.enabled,shadowMapSize:sun.shadow.mapSize.clone(),
@@ -74,6 +76,7 @@ export function initRenderWorld(ctx){
  function restore(){
   if(!saved)return;
   scene.background=saved.background;scene.fog=saved.fog;scene.environment=saved.environment;
+  scene.environmentIntensity=saved.envIntensity;
   renderer.toneMappingExposure=saved.exposure;renderer.toneMapping=saved.toneMapping;
   // Restore the original editor sharpness after Render World is closed.
   renderer.setPixelRatio(saved.pixelRatio);
@@ -87,7 +90,53 @@ export function initRenderWorld(ctx){
   ground.visible=saved.groundVisible;
   transform.getHelper().visible=saved.helperVisible;
   if(saved.selection)transform.attach(saved.selection);
-  saved=null;
+  saved=null;filmRest=null;
+ }
+
+ // Reuse imported .hdr environment maps for real IBL material reflections.
+ // The HDR stays local in browser memory, never uploaded and never saved into GLB.
+ function unloadHDRI(){
+  hdrVersion++;
+  hdrRenderTarget?.dispose?.();hdrRenderTarget=null;hdrTexture=null;hdrIntensity=1;
+  if(active){scene.environment=makePMREM()||null;scene.environmentIntensity=1;}
+ }
+ async function importHDRI(file){
+  if(!active)throw Error("Öppna Render World först.");
+  if(!file||!/(\.hdr)$/i.test(file.name)||file.size>20*1024*1024)
+   throw Error("Välj en .hdr-fil under 20 MB.");
+  const version=++hdrVersion,url=URL.createObjectURL(file);
+  try{
+   const {RGBELoader}=await import("three/addons/loaders/RGBELoader.js");
+   const texture=await new RGBELoader().loadAsync(url);
+   if(version!==hdrVersion||!active){texture.dispose();return;}
+   texture.mapping=THREE.EquirectangularReflectionMapping;
+   const p=new THREE.PMREMGenerator(renderer);
+   try{
+    const target=p.fromEquirectangular(texture);
+    if(version!==hdrVersion||!active){target.texture.dispose();return;}
+    hdrRenderTarget?.dispose?.();hdrRenderTarget=target;hdrTexture=target.texture;
+    scene.environment=hdrTexture;scene.environmentIntensity=hdrIntensity;
+   }finally{p.dispose();texture.dispose();}
+  }finally{URL.revokeObjectURL(url);}
+ }
+ function setHDRIIntensity(x){
+  hdrIntensity=clamp(Number(x)||1,.2,3);
+  if(active)scene.environmentIntensity=hdrIntensity;
+ }
+ function setFilmPose(time=0,motion="still"){
+  if(!anchor)return;
+  if(!filmRest||filmRest.anchor!==anchor)filmRest={
+   anchor,position:anchor.position.clone(),rotation:anchor.rotation.clone()
+  };
+  anchor.position.copy(filmRest.position);
+  anchor.rotation.copy(filmRest.rotation);
+  const t=Math.max(0,Number(time)||0);
+  if(motion==="turn")anchor.rotation.y+=t*.34;
+  if(motion==="float")anchor.position.y+=Math.sin(t*1.4)*.12;
+  if(motion==="sway"){
+   anchor.rotation.z+=Math.sin(t*1.1)*.055;
+   anchor.rotation.x+=Math.cos(t*.8)*.035;
+  }
  }
  function syncOceanControls(){
   const show=world==="ocean";
@@ -271,7 +320,8 @@ export function initRenderWorld(ctx){
   group.add(environment.group);
   scene.background=environment.background;
   scene.fog=environment.fog;
-  scene.environment=makePMREM()||null;
+  scene.environment=hdrTexture||makePMREM()||null;
+  scene.environmentIntensity=hdrIntensity;
   skyLight.intensity=environment.hemisphere;
   sun.intensity=environment.sun;
   sun.color.set(environment.sunColor);
@@ -357,7 +407,7 @@ export function initRenderWorld(ctx){
  function start(){
   if(active)return;
   if(!objectToPreview()){notify("Importera eller skapa ett objekt innan du öppnar Render World.",3700);return;}
-  saved=capture();active=true;clearKeys();
+  saved=capture();active=true;filmRest=null;clearKeys();
   root.visible=false;grid.visible=false;axes.visible=false;ground.visible=false;
   transform.detach();transform.getHelper().visible=false;
   group.clear();doorOpen=false;interactionHeld=false;
@@ -373,7 +423,7 @@ export function initRenderWorld(ctx){
  function stop(){
   if(!active)return;
   filmStudio?.onPreviewExit();
-  cinemaLighting.clear();
+  unloadHDRI();cinemaLighting.clear();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;dofPass=null;dofFocusCenter=null;
@@ -569,6 +619,7 @@ export function initRenderWorld(ctx){
   setWorldTime:(time,dt)=>{sessionTime=time;environment?.update?.(time,dt);},
   notify,filename,
   applyFilmLook:(look,finish)=>cinemaLighting.apply(look,finish),
+  setFilmPose,importHDRI,setHDRIIntensity,unloadHDRI,
   setCinematicEffects,
   getPreviewAnchor:()=>anchor
  });

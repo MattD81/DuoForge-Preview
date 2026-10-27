@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=cinema-optics-v1">
+<link rel="stylesheet" href="./studio.css?v=cinema-production-v2">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -148,6 +148,7 @@
           <label for="filmShot">Kamerarörelse
             <select id="filmShot">
               <option value="broll">✨ B-roll · 5 filmvinklar</option>
+              <option value="edit">✂️ Filmredigerare · flera scener</option>
               <option value="orbit">Orbit 360° – runt motivet</option>
               <option value="dolly">Dolly in – närmare motivet</option>
               <option value="crane">Crane – lyft kameran</option>
@@ -178,6 +179,42 @@
         <label class="film-fov" for="filmFov">Kameralins <span>35–85 mm-känsla</span>
           <input id="filmFov" type="range" min="20" max="85" step="1" value="40">
         </label>
+        <details class="film-production-panel" id="filmMovieEditor">
+          <summary>✂️ Filmredigerare · scener, animation och klippning</summary>
+          <p class="film-note">Sätt ihop flera tagningar i en film. Varje scen får egen kamera, längd, ljussättning och rörelse på GLB-kopian. Klippen växlar med raka klipp.</p>
+          <div class="film-production-grid">
+            <label>Kamera<select id="filmCutShot">
+              <option value="orbit">Orbit</option><option value="dolly">Dolly</option><option value="crane">Crane</option><option value="flyover">Flyover</option>
+            </select></label>
+            <label>Ljus<select id="filmCutLook">
+              <option value="golden">Golden hour</option><option value="studio">Studio</option><option value="noir">Noir</option><option value="natural">Dagsljus</option><option value="off">Av</option>
+            </select></label>
+            <label>Objektanimation<select id="filmCutMotion">
+              <option value="still">Stillastående</option><option value="turn">Roterar</option><option value="float">Svävar</option><option value="sway">Gungar</option>
+            </select></label>
+            <label>Scenlängd<select id="filmCutSeconds">
+              <option value="2">2 sek</option><option value="4" selected>4 sek</option><option value="6">6 sek</option><option value="8">8 sek</option>
+            </select></label>
+          </div>
+          <div class="film-two"><button type="button" id="filmAddCut">＋ Lägg till scen</button><button type="button" id="filmRemoveCut">− Ta bort sista</button></div>
+          <strong id="filmCutTotal">0 scener · 0 sekunder</strong>
+          <div id="filmCutList" aria-label="Filmens scenlista"></div>
+          <div class="film-import-audio">
+            <label for="filmAudioFile">🎵 Musik eller ljudspår (förhandslyssning)</label>
+            <input type="file" id="filmAudioFile" accept="audio/*,.mp3,.wav,.ogg,.m4a">
+            <audio controls id="filmAudioPlayer" preload="metadata" hidden></audio>
+            <small id="filmAudioStatus">Ljudet spelas lokalt. Det mixas ännu inte in i exporterad video.</small>
+          </div>
+        </details>
+        <details class="film-production-panel" id="filmEnvironmentPanel">
+          <summary>🌅 HDRI-miljö · verkliga ljusreflexer</summary>
+          <label for="filmHdriFile">Ladda en HDRI-fil (.hdr), max 20 MB</label>
+          <input type="file" id="filmHdriFile" accept=".hdr,image/vnd.radiance">
+          <label for="filmHdriIntensity">Reflexstyrka
+            <input id="filmHdriIntensity" type="range" min=".2" max="3" value="1" step=".1">
+          </label>
+          <small id="filmHdriStatus">Importera egen miljökarta lokalt. Originalmodellen påverkas inte.</small>
+        </details>
         <div class="film-keyframes">
           <span>Egna kamerapunkter: <strong id="filmKeyframes">0</strong></span>
           <div class="film-two"><button id="filmAddKeyframe" title="Spara kamerans nuvarande position och blickpunkt">＋ Lägg till kamera</button><button id="filmRemoveKeyframe" title="Ta bort senaste kamerapunkten">− Ångra punkt</button></div>
@@ -212,20 +249,42 @@
           </label>
           <button id="filmStill">📸 Rendera stillbild</button>
         </div>
+        <details class="film-production-panel film-export-panel" id="filmFrameQueue">
+          <summary>🎞️ Cinema Renderer 2.0 · bildruta för bildruta</summary>
+          <p class="film-note">Exakt tid per bildruta, oberoende av hur lång tid grafikkortet behöver. Renderar PNG-sekvenser lokalt i små ZIP-delar som kan sättas ihop till film. Detta använder WebGL/PBR – inte path tracing per bildruta.</p>
+          <div class="film-production-grid">
+            <label>Upplösning<select id="filmFrameResolution">
+              <option value="720" selected>720p · snabbt</option>
+              <option value="1080">1080p · Full HD</option>
+              <option value="4k">4K · 8 bildrutor/del</option>
+            </select></label>
+            <label>Starta på bildruta<input id="filmFrameStart" type="number" min="0" step="1" value="0"></label>
+            <label>Bildrutor/del (max 48)<input id="filmFrameCount" type="number" min="1" max="48" step="1" value="24"></label>
+          </div>
+          <button type="button" id="filmFrameRender">🎞️ Rendera PNG-sekvens till ZIP</button>
+          <button type="button" id="filmFrameCancel" hidden>■ Avbryt (spara färdiga rutor)</button>
+          <div id="filmFrameStatus" role="status" aria-live="polite">Välj renderingskvalitet och tryck Rendera. Nästa del föreslås automatiskt.</div>
+        </details>
         <div class="cinema-pathtrace">
           <strong>✨ Ray tracing · stillbild (beta)</strong>
           <small>Riktig ljusstrålesimulering och reflexer med flera samples. Endast statiska GLB-scener, inte realtidsfilm. GPU-arbete på din enhet.</small>
           <div class="film-path-opts">
+            <label>Upplösning <select id="filmPathResolution">
+              <option value="540">960×540 · prov</option>
+              <option value="720" selected>1280×720 · HD</option>
+              <option value="1080">1920×1080 · Full HD (krävande)</option>
+            </select></label>
             <label>Samples <select id="filmPathSamples">
               <option value="4">4 · test</option><option value="8">8 · snabb</option>
               <option value="16" selected>16 · balanserad</option><option value="32">32 · fin</option>
-              <option value="64">64 · tung</option>
+              <option value="64">64 · tung</option><option value="128">128 · mycket tung</option>
             </select></label>
             <label>Objektiv <select id="filmPathAperture">
               <option value="1.8">f/1.8</option><option value="2.8">f/2.8</option>
               <option value="5.6" selected>f/5.6</option><option value="11">f/11</option>
             </select></label>
           </div>
+          <label class="film-fx-check"><input type="checkbox" id="filmPathDenoise" checked> Brusreducering · kantbevarande filter</label>
           <button id="filmPathTrace" type="button">🌟 Rendera Path Traced PNG</button>
           <button id="filmPathCancel" type="button" hidden>■ Avbryt rendering</button>
           <div id="filmPathStatus" role="status" aria-live="polite">Startar bara när du väljer det.</div>
@@ -413,5 +472,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=cinema-optics-v1"></script>
+<script type="module" src="./studio.mjs?v=cinema-production-v2"></script>
 </body></html>

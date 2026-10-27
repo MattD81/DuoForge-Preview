@@ -181,6 +181,41 @@ try{
  });
  assert.ok(pathModule.ok,"Pinned WebGLPathTracer must actually load: "+(pathModule.message||"missing export"));
  console.log("PASS: real WebGL path tracing engine modules load, without sending GLB files to any server");
+
+ // Cinema production: real multi-scene editing, pose tracks and offline time-based PNG frames.
+ await page.locator("#filmMovieEditor summary").click();
+ await page.locator("#filmCutShot").selectOption("orbit");
+ await page.locator("#filmCutMotion").selectOption("turn");
+ await page.locator("#filmAddCut").click();
+ await page.locator("#filmCutShot").selectOption("crane");
+ await page.locator("#filmCutLook").selectOption("noir");
+ await page.locator("#filmCutMotion").selectOption("sway");
+ await page.locator("#filmAddCut").click();
+ assert.equal(await page.locator("#filmShot").inputValue(),"edit");
+ assert.match(await page.locator("#filmCutTotal").textContent(),/2 scener · 8 sekunder/);
+ await page.locator("#filmSeek").evaluate(el=>{el.value="700";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ assert.match(await page.locator("#filmShotProgress").textContent(),/2 \/ 2/);
+ const [cinemaProject]=await Promise.all([
+  page.waitForEvent("download"),page.locator("#filmExportStoryboard").click()
+ ]);
+ const movieProject=JSON.parse(readFileSync(await cinemaProject.path(),"utf8"));
+ assert.equal(movieProject.cuts.length,2);
+ assert.equal(movieProject.cuts[1].motion,"sway");
+ console.log("PASS: editable film clips switch camera, GLB animation and cinematic look deterministically");
+ await page.locator("#filmFrameQueue summary").click();
+ await page.locator("#filmFrameResolution").selectOption("720");
+ await page.locator("#filmFrameCount").fill("1");
+ const [batch]=await Promise.all([
+  page.waitForEvent("download",{timeout:45000}),
+  page.locator("#filmFrameRender").click()
+ ]);
+ const frameZip=readFileSync(await batch.path());
+ assert.equal(frameZip.readUInt32LE(0),0x04034b50);
+ assert.ok(frameZip.includes(Buffer.from("frame_000000.png")));
+ assert.ok(frameZip.includes(Buffer.from("manifest.json")));
+ assert.ok(frameZip.includes(Buffer.from("duoforge-frames@1")));
+ assert.equal(await page.locator("#filmFrameStart").inputValue(),"1");
+ console.log("PASS: offline renderer exports actual frame-exact PNG ZIP with manifest and resume index");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);
