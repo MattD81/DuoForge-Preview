@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {createShot,sampleCameraPath,normalizeFilmSettings,normalizeKeyframes,normalizedDuration} from "../workshop/studio/film-path.mjs";
+import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,BROLL_SHOTS,normalizeFilmSettings,normalizeKeyframes,normalizedDuration} from "../workshop/studio/film-path.mjs";
 
 test("all four cinema paths create real, changing camera motion",()=>{
  for(const shot of ["orbit","dolly","crane","flyover"]){
@@ -43,4 +43,33 @@ test("ocean flyover covers enough distance to reveal waves and floating raft",()
  const middle=sampleCameraPath(keys,.5,{ease:false});
  assert.ok(middle.position[1]>0);
  assert.ok(middle.position[2]>0);
+});
+
+test("five GLB-aware B-roll shots are physically separate and switch exactly every 20 percent",()=>{
+ const shots=createBrollSequence({focus:[12,3,-5],size:5});
+ assert.deepEqual(shots.map(s=>s.id),BROLL_SHOTS.map(s=>s.id));
+ assert.equal(shots.length,5);
+ assert.equal(new Set(shots.map(s=>JSON.stringify(s.frames[0].position))).size,5);
+ for(let i=0;i<5;i++){
+  const a=sampleBrollSequence(shots,(i+.1)/5);
+  const b=sampleBrollSequence(shots,(i+.8)/5);
+  assert.equal(a.shotIndex,i);
+  assert.equal(a.shotLabel,shots[i].label);
+  assert.notDeepEqual(a.position,b.position,"Each take must actually move the camera");
+  assert.ok([...a.position,...a.target,...b.position,...b.target].every(Number.isFinite));
+ }
+ assert.equal(sampleBrollSequence(shots,1).shotIndex,4);
+ assert.equal(normalizeFilmSettings({shot:"broll",duration:20}).shot,"broll");
+ assert.throws(()=>sampleBrollSequence(shots.slice(0,4),.3),/fem/);
+});
+test("B-roll camera distance adapts to imported GLB scale without exceeding safe limits",()=>{
+ const small=createBrollSequence({focus:[0,0,0],size:.2});
+ const large=createBrollSequence({focus:[0,0,0],size:1000});
+ for(const set of [small,large]){
+  assert.equal(set.length,5);
+  for(const shot of set)for(const frame of shot.frames)
+   assert.ok([...frame.position,...frame.target].every(Number.isFinite));
+ }
+ const norm=p=>Math.hypot(...p);
+ assert.ok(norm(large[0].frames[0].position)>norm(small[0].frames[0].position)*5);
 });
