@@ -3,6 +3,7 @@
 // MediaRecorder captures in *real time*; fps and duration depend on device speed.
 import * as THREE from "three";
 import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
+import {createPathTraceStills} from "./path-trace-stills.mjs";
 
 const $=id=>document.getElementById(id);
 const safe=(name)=>String(name||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").trim().replace(/\s+/g,"-").slice(0,70)||"DuoForge";
@@ -16,12 +17,26 @@ function saveBlob(blob,name){
 }
 export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,getWorld,
  isPreviewActive,startPreview,renderFrame,setOutputSize,restoreOutputSize,setWorldTime,
- notify,filename,applyFilmLook=()=>{}}){
+ notify,filename,applyFilmLook=()=>{},setCinematicEffects=()=>{},getPreviewAnchor=()=>null}){
  let opened=false,playing=false,recording=false,elapsed=0,path=[],sequence=[],savedCamera=null;
  let mediaRecorder=null,captureTrack=null,stream=null,recordChunks=[],recordEnd=null;
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
  let format=normalizeFilmSettings(),movieShot="orbit",pendingCleanup=false;
  const ui=$("filmStudioOverlay"),status=$("filmStatus"),progress=$("filmProgress"),seek=$("filmSeek");
+ const pathTrace=createPathTraceStills({
+  getAnchor:getPreviewAnchor,getCamera:()=>camera,onStatus:message=>{status.textContent=message;},filename
+ });
+ const fxSettings=()=>({
+  dof:$("filmDof").checked,
+  reflections:$("filmSSR").checked,
+  aperture:Number($("filmAperture").value),
+  maxblur:.009,focusScale:Number($("filmFocusScale").value)
+ });
+ function updateFx(){
+  $("filmApertureValue").textContent=Number($("filmAperture").value).toFixed(4);
+  $("filmFocusValue").textContent=Number($("filmFocusScale").value).toFixed(2)+"×";
+  if(opened)setCinematicEffects(fxSettings());
+ }
  function readSettings(){
   format=normalizeFilmSettings({
    quality:$("filmResolution").value,fps:Number($("filmFps").value),
@@ -63,7 +78,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmPlay").disabled=recording;
   $("filmClose").disabled=recording;
   $("filmStill").disabled=recording;
-  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll"])
+  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll","filmDof","filmSSR","filmAperture","filmFocusScale"])
    $(id).disabled=recording;
   $("filmKeyframes").textContent=String(keyframes.length);
  }
@@ -98,6 +113,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmLook").value="golden";
   $("filmFinish").checked=true;
   applyFilmLook("golden",true);
+  updateFx();
   readSettings();elapsed=0;
   displayState("Filmläge redo: välj kamerarörelse och förhandsvisa, eller rendera en riktig videofil.");
   document.body.classList.add("film-studio-active");
@@ -152,6 +168,8 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!opened)return;
   if(recording){notify("Stoppa inspelningen innan du lämnar Film Studio.",3000);return;}
   playing=false;
+  pathTrace.stop();
+  setCinematicEffects({dof:false,reflections:false});
   restoreOutputSize();restoreCamera();
   applyFilmLook("off",false);
   opened=false;ui.hidden=true;document.body.classList.remove("film-studio-active");
@@ -264,6 +282,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    format:"duoforge-film@1",world:getWorld(),created:new Date().toISOString(),
    settings:format,keyframes:normalizeKeyframes(keyframes),
    look:$("filmLook").value,finish:$("filmFinish").checked,
+   fx:fxSettings(),
    note:"Local rendering, approximate browser fps; requires 3D Studio scene."
   };
   saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
@@ -286,6 +305,13 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    $("filmLook").value=["golden","studio","noir","natural","off"].includes(value.look)?value.look:"golden";
    $("filmFinish").checked=value.finish!==false;
    if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);
+   if(value.fx){
+    $("filmDof").checked=Boolean(value.fx.dof);
+    $("filmSSR").checked=Boolean(value.fx.reflections);
+    $("filmAperture").value=String(clamp(Number(value.fx.aperture)||.001,.0001,.003));
+    $("filmFocusScale").value=String(clamp(Number(value.fx.focusScale)||1,.35,2.5));
+   }
+   updateFx();
    path=[];sequence=[];readSettings();
    displayState("Storyboard laddat: "+frames.length+" egna kameranyckelbilder.");
   }catch(e){notify("Kunde inte importera filmprojekt: "+e.message,4000);}
@@ -328,6 +354,8 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  };
  $("filmLook").onchange=()=>{if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);};
  $("filmFinish").onchange=()=>{if(opened)applyFilmLook($("filmLook").value,$("filmFinish").checked);};
+ for(const id of ["filmDof","filmSSR"])$(id).onchange=updateFx;
+ for(const id of ["filmAperture","filmFocusScale"])$(id).oninput=updateFx;
  $("filmClose").onclick=close;
  $("filmPlay").onclick=preview;
  $("filmRecord").onclick=record;
