@@ -2,6 +2,7 @@
 // Stable WebGL release 0.0.24 supports Three.js r180. Never used in gameplay/real-time
 // Film Studio video. All work stays on the user's device (no paid GPU or API).
 import * as THREE from "three";
+import {denoisePixels} from "./cinema-denoise.mjs";
 const MODULE_URL="https://esm.sh/three-gpu-pathtracer@0.0.24?bundle&external=three";
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
@@ -40,7 +41,11 @@ export function createPathTraceStills({getAnchor,getCamera,onStatus,filename}){
     throw Error("Path tracing-modulen saknar WebGLPathTracer eller PhysicalCamera.");
    const mainCamera=getCamera();
    const isPhone=matchMedia("(max-width:700px)").matches;
-   const width=isPhone?640:960,height=isPhone?360:540;
+   const scale=String($("filmPathResolution").value);
+   // 1080p path tracing is too memory-intensive on many mobile GPUs.
+   const target=isPhone&&scale==="1080"?"720":scale;
+   const width=target==="1080"?1920:target==="720"?1280:960;
+   const height=target==="1080"?1080:target==="720"?720:540;
    const limit=isPhone?100000:250000;
    let triangles=0;
    anchor.traverse(obj=>{
@@ -96,11 +101,11 @@ export function createPathTraceStills({getAnchor,getCamera,onStatus,filename}){
    tracer.bounces=4;
    tracer.tiles.set(2,2);
    tracer.setScene(workScene,camera);
-   const samples=clamp(Number($("filmPathSamples").value)||16,4,64);
+   const samples=clamp(Number($("filmPathSamples").value)||16,4,128);
    status("Ray tracing: bygger upp "+samples+" samples …");
    // Slow GPUs remain responsive and cancellable; cap wall time and memory.
    const start=performance.now();let frames=0,last=-1;
-   while(!cancelled&&tracer.samples<samples&&performance.now()-start<90000&&frames<samples*50){
+   while(!cancelled&&tracer.samples<samples&&performance.now()-start<120000&&frames<samples*50){
     tracer.renderSample();
     await nextFrame();
     frames++;
@@ -111,7 +116,21 @@ export function createPathTraceStills({getAnchor,getCamera,onStatus,filename}){
    }
    if(cancelled)return;
    if(tracer.samples<Math.max(3,Math.min(samples,4)))throw Error("Grafikkortet hann inte rendera bilden.");
-   const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+   let output=canvas;
+   if($("filmPathDenoise").checked){
+    try{
+     status("Kantbevarande brusreducering …");
+     const copy=document.createElement("canvas");
+     copy.width=width;copy.height=height;
+     const ctx=copy.getContext("2d",{willReadFrequently:true});
+     ctx.drawImage(canvas,0,0);
+     const image=ctx.getImageData(0,0,width,height);
+     image.data.set(denoisePixels(image.data,width,height));
+     ctx.putImageData(image,0,0);
+     output=copy;
+    }catch(err){console.warn("Denoising unavailable",err);}
+   }
+   const blob=await new Promise(resolve=>output.toBlob(resolve,"image/png"));
    if(!blob?.size)throw Error("Kunde inte skapa path traced PNG.");
    download(blob);
    status("✅ Path traced PNG färdig ("+width+"×"+height+", "+Math.floor(tracer.samples)+" samples).");
