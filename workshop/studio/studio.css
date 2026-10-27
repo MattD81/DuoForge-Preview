@@ -262,3 +262,21 @@
 .film-finish-label input{accent-color:#b38bf4}
 .film-shot-progress{font-size:11px;color:#f3d0ff;font-weight:700;padding:8px 9px;background:#2a2443;border-left:3px solid #ca92ee;border-radius:5px;margin:10px 0}
 @media(max-width:580px){.film-broll-promo{padding:7px}.film-broll-promo button{padding:9px 5px;font-size:11px}.film-look-controls{padding:7px}}
+
+/* Cinema Optics: opt-in depth-of-field, screen-space reflections and local path tracing */
+.cinema-optics,.cinema-pathtrace{border:1px solid #64618d;border-radius:11px;padding:11px;margin:12px 0;background:linear-gradient(145deg,#131f36,#22223d);min-width:0}
+.cinema-optics legend{padding:0 5px;color:#dbc6ff;font-size:11px;font-weight:800}
+.cinema-optics>label:not(.film-fx-check){display:block;margin:9px 0;font-size:10px;color:#d1dfef}
+.cinema-optics>label output{float:right;color:#d8bfff;font-variant-numeric:tabular-nums}
+.cinema-optics input[type="range"]{display:block;width:100%;margin-top:7px}
+.film-fx-check{display:flex;align-items:center;gap:7px;font-size:11px;color:#e4eafa;cursor:pointer;margin:8px 0}
+.film-fx-check input{accent-color:#b393f8}
+.cinema-optics small,.cinema-pathtrace small{display:block;color:#a8bed5;line-height:1.5;font-size:10px}
+.cinema-pathtrace>strong{display:block;color:#c9f5e7;font-size:12px;margin-bottom:7px}
+.film-path-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.film-path-opts label{display:flex;flex-direction:column;gap:5px;font-size:10px;color:#b8dbe2}
+.film-path-opts select{max-width:100%;padding:7px;border-radius:7px;color:#eef7fa;border:1px solid #516780;background:#102337}
+#filmPathTrace{width:100%;font-weight:800;background:linear-gradient(105deg,#2c7e86,#805caf);border:1px solid #8cd7ca;color:white;padding:10px}
+#filmPathCancel{width:100%;margin-top:6px;background:#55314c;color:#fff;border:1px solid #a96585}
+#filmPathStatus{background:#0b2533;color:#b5e8e5;font-size:10px;line-height:1.5;margin-top:9px;padding:9px;border:1px solid #33636f;border-radius:7px}
+@media(max-width:580px){.cinema-optics,.cinema-pathtrace{padding:8px;margin:9px 0}.film-path-opts{gap:5px}}
