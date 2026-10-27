@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
 import {createPathTraceStills} from "./path-trace-stills.mjs";
+import {normalizeCuts,movieDuration,locateCut,frameBatch,FrameZip} from "./cinema-production.mjs";
 
 const $=id=>document.getElementById(id);
 const safe=(name)=>String(name||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").trim().replace(/\s+/g,"-").slice(0,70)||"DuoForge";
@@ -17,11 +18,14 @@ function saveBlob(blob,name){
 }
 export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,getWorld,
  isPreviewActive,startPreview,renderFrame,setOutputSize,restoreOutputSize,setWorldTime,
- notify,filename,applyFilmLook=()=>{},setCinematicEffects=()=>{},getPreviewAnchor=()=>null}){
+ notify,filename,applyFilmLook=()=>{},setCinematicEffects=()=>{},getPreviewAnchor=()=>null,
+ setFilmPose=()=>{},importHDRI=async()=>{},setHDRIIntensity=()=>{}}){
  let opened=false,playing=false,recording=false,elapsed=0,path=[],sequence=[],savedCamera=null;
  let mediaRecorder=null,captureTrack=null,stream=null,recordChunks=[],recordEnd=null;
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
  let format=normalizeFilmSettings(),movieShot="orbit",pendingCleanup=false;
+ let cuts=[],cutPaths=[],activeCut=-1,frameExporting=false,frameAborted=false;
+ let soundURL=null;
  const ui=$("filmStudioOverlay"),status=$("filmStatus"),progress=$("filmProgress"),seek=$("filmSeek");
  const pathTrace=createPathTraceStills({
   getAnchor:getPreviewAnchor,getCamera:()=>camera,onStatus:message=>{status.textContent=message;},filename
@@ -43,6 +47,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    fov:Number($("filmFov").value),duration:Number($("filmDuration").value),
    shot:$("filmShot").value
   });
+  if(format.shot==="edit"&&cuts.length)format={...format,duration:movieDuration(cuts)};
   return format;
  }
  function worldFocus(){
@@ -60,11 +65,18 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const options=worldFocus();
   movieShot=format.shot;
   if(format.shot==="broll"){
-   path=[];
+   path=[];cutPaths=[];
    sequence=createBrollSequence(options);
    return sequence;
   }
-  sequence=[];
+  if(format.shot==="edit"){
+   if(!cuts.length)throw Error("Lägg till minst en scen i filmredigeraren.");
+   path=[];sequence=[];
+   cutPaths=cuts.map(c=>createShot(c.shot,{world:getWorld(),...options}));
+   activeCut=-1;
+   return cutPaths;
+  }
+  sequence=[];cutPaths=[];
   path=createShot(format.shot,{world:getWorld(),focus:options.focus,size:options.size,custom:keyframes});
   return path;
  }
@@ -75,10 +87,12 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   seek.value=String(Math.round(clamp(elapsed/format.duration,0,1)*1000));
   $("filmPlay").textContent=playing&&!recording?"⏸ Pausa film":"▶ Förhandsvisa";
   $("filmRecord").textContent=recording?"■ Stoppa inspelning":"🎞️ Rendera video";
-  $("filmPlay").disabled=recording;
-  $("filmClose").disabled=recording;
-  $("filmStill").disabled=recording;
-  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll","filmDof","filmSSR","filmAperture","filmFocusScale"])
+  const busy=recording||frameExporting;
+  $("filmPlay").disabled=busy;
+  $("filmClose").disabled=busy;
+  $("filmStill").disabled=busy;
+  $("filmRecord").disabled=frameExporting;
+  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll","filmDof","filmSSR","filmAperture","filmFocusScale","filmAddCut","filmRemoveCut","filmFrameStart","filmFrameCount","filmFrameResolution","filmAudioFile","filmHdriFile","filmHdriIntensity"])
    $(id).disabled=recording;
   $("filmKeyframes").textContent=String(keyframes.length);
  }
@@ -120,10 +134,23 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   return true;
  }
  function applyAt(progress){
-  if(!path.length&&!sequence.length)buildPath();
-  const shot=format.shot==="broll"?
-   sampleBrollSequence(sequence,progress):
-   sampleCameraPath(path,progress,{ease:format.shot!=="flyover"});
+  if(!path.length&&!sequence.length&&!cutPaths.length)buildPath();
+  let shot;
+  if(format.shot==="edit"){
+   const location=locateCut(cuts,clamp(progress,0,1)*format.duration);
+   if(activeCut!==location.index){
+    activeCut=location.index;
+    applyFilmLook(location.cut.look,$("filmFinish").checked);
+   }
+   shot=sampleCameraPath(cutPaths[location.index],location.progress);
+   shot.shotLabel=(location.index+1)+" / "+cuts.length+" · "+location.cut.name;
+   setFilmPose(location.localTime,location.cut.motion);
+  }else{
+   setFilmPose(0,"still");
+   shot=format.shot==="broll"?
+    sampleBrollSequence(sequence,progress):
+    sampleCameraPath(path,progress,{ease:format.shot!=="flyover"});
+  }
   $("filmShotProgress").textContent=shot.shotLabel||"En filmisk kamerarörelse";
   camera.position.fromArray(shot.position);
   orbit.target.fromArray(shot.target);
@@ -148,7 +175,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!recording)orbit.enabled=true;
   if(!keepFrame&&opened){
    elapsed=0;
-   if(path.length||sequence.length)applyAt(0);
+   if(path.length||sequence.length||cutPaths.length)applyAt(0);
   }
   displayState("Förhandsvisning klar. Ändra filmrörelsen eller exportera.");
  }
@@ -166,10 +193,15 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  }
  function close(){
   if(!opened)return;
-  if(recording){notify("Stoppa inspelningen innan du lämnar Film Studio.",3000);return;}
+  if(recording||frameExporting){notify("Stoppa exporten innan du lämnar Film Studio.",3000);return;}
   playing=false;
   pathTrace.stop();
+  setFilmPose(0,"still");
   setCinematicEffects({dof:false,reflections:false});
+  if(soundURL){URL.revokeObjectURL(soundURL);soundURL=null;}
+  $("filmAudioPlayer").pause();
+  $("filmAudioPlayer").removeAttribute("src");
+  $("filmAudioPlayer").hidden=true;
   restoreOutputSize();restoreCamera();
   applyFilmLook("off",false);
   opened=false;ui.hidden=true;document.body.classList.remove("film-studio-active");
@@ -180,7 +212,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  }
  function preview(){
   if(!opened&&!open())return;
-  if(recording)return;
+  if(recording||frameExporting)return;
   if(playing){playing=false;orbit.enabled=true;
    displayState("Förhandsvisning pausad.");return;}
   beginPlayback();
@@ -190,6 +222,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   return mimeChoices.find(type=>MediaRecorder.isTypeSupported(type))||"";
  }
  function record(){
+  if(frameExporting)return;
   if(recording){finishRecorder();return;}
   if(!opened&&!open())return;
   if(!canvas.captureStream||typeof MediaRecorder==="undefined"){
@@ -250,7 +283,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  }
  async function still(){
   if(!opened&&!open())return;
-  if(recording)return;
+  if(recording||frameExporting)return;
   readSettings();
   const beforePlaying=playing;playing=false;
   const big=$("filmPhotoResolution").value==="4k";
@@ -282,7 +315,8 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    format:"duoforge-film@1",world:getWorld(),created:new Date().toISOString(),
    settings:format,keyframes:normalizeKeyframes(keyframes),
    look:$("filmLook").value,finish:$("filmFinish").checked,
-   fx:fxSettings(),
+   fx:fxSettings(),cuts:normalizeCuts(cuts),
+   soundtrack:$("filmAudioPlayer").dataset.name||null,
    note:"Local rendering, approximate browser fps; requires 3D Studio scene."
   };
   saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
@@ -312,7 +346,9 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
     $("filmFocusScale").value=String(clamp(Number(value.fx.focusScale)||1,.35,2.5));
    }
    updateFx();
-   path=[];sequence=[];readSettings();
+   cuts=normalizeCuts(value.cuts||[]);
+   renderCutList();
+   path=[];sequence=[];cutPaths=[];activeCut=-1;readSettings();
    displayState("Storyboard laddat: "+frames.length+" egna kameranyckelbilder.");
   }catch(e){notify("Kunde inte importera filmprojekt: "+e.message,4000);}
  }
@@ -333,12 +369,131 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  function onWorldChanged(){
   if(!opened)return;
   if(recording)finishRecorder({cancel:true});
-  playing=false;elapsed=0;path=[];sequence=[];
+  playing=false;elapsed=0;path=[];sequence=[];cutPaths=[];activeCut=-1;
   $("filmShot").value=getWorld()==="ocean"?"flyover":"orbit";
   readSettings();
   applyFilmLook($("filmLook").value,$("filmFinish").checked);
   displayState("Ny värld vald. Förhandsvisa en kamerarörelse.");
  }
+
+ function renderCutList(){
+  const list=$("filmCutList");list.replaceChildren();
+  for(const [index,cut] of cuts.entries()){
+   const row=document.createElement("div");row.className="film-cut-row";
+   const label=document.createElement("span");
+   label.textContent=(index+1)+". "+cut.name+" · "+cut.duration+"s · "+cut.shot+" · "+cut.motion+" · "+cut.look;
+   row.append(label);
+   for(const [text,changePos] of [["↑",-1],["↓",1]]){
+    const btn=document.createElement("button");btn.type="button";btn.textContent=text;btn.title="Flytta scen";
+    btn.onclick=()=>{
+     const to=index+changePos;if(to<0||to>=cuts.length||frameExporting||recording)return;
+     [cuts[index],cuts[to]]=[cuts[to],cuts[index]];onCutsChanged();
+    };row.append(btn);
+   }
+   const remove=document.createElement("button");remove.textContent="✕";remove.title="Radera scen";remove.type="button";
+   remove.onclick=()=>{if(frameExporting||recording)return;cuts.splice(index,1);onCutsChanged();};
+   row.append(remove);list.append(row);
+  }
+  $("filmCutTotal").textContent=cuts.length+" scener · "+movieDuration(cuts)+" sekunder";
+ }
+ function onCutsChanged(){
+  cuts=normalizeCuts(cuts);renderCutList();path=[];sequence=[];cutPaths=[];activeCut=-1;
+  if(cuts.length){
+   $("filmShot").value="edit";elapsed=0;readSettings();
+   try{buildPath();applyAt(0);}catch(e){displayState(e.message);}
+  }else{
+   $("filmShot").value="orbit";readSettings();
+   setFilmPose(0,"still");
+  }
+  displayState("Filmredigerare: "+cuts.length+" scener. Lägg till och flytta tagningar.");
+ }
+ async function frameSequence(){
+  if(frameExporting||recording)return;
+  if(!opened&&!open())return;
+  readSettings();
+  try{buildPath();}catch(e){notify(e.message,3500);return;}
+  const resolution=$("filmFrameResolution").value;
+  const [width,height]=resolution==="4k"?[3840,2160]:resolution==="1080"?[1920,1080]:[1280,720];
+  const countLimit=resolution==="4k"?8:48;
+  const plan=frameBatch({duration:format.duration,fps:format.fps,
+   start:Number($("filmFrameStart").value),count:Number($("filmFrameCount").value),maxFrames:countLimit});
+  frameExporting=true;frameAborted=false;playing=false;orbit.enabled=false;
+  displayState("Förbereder exakt "+format.fps+" fps som PNG-bildsekvens.");
+  $("filmFrameCancel").hidden=false;
+  const prev={pos:camera.position.clone(),rotation:camera.quaternion.clone(),
+   target:orbit.target.clone(),fov:camera.fov,orbit:orbit.enabled,elapsed};
+  const zip=new FrameZip();let done=0;
+  try{
+   setOutputSize(width,height);
+   for(const f of plan.frames){
+    if(frameAborted)break;
+    elapsed=f.time;applyAt(clamp(elapsed/format.duration,0,1));
+    setWorldTime(elapsed,0);renderFrame();
+    const png=await new Promise((resolve,reject)=>{
+     canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-bildruta kunde inte exporteras.")),"image/png");
+    });
+    await zip.add("frame_"+String(f.number).padStart(6,"0")+".png",png);
+    done++;
+    $("filmFrameStatus").textContent="Renderat "+done+"/"+plan.frames.length+" bildrutor · "+
+     (f.time).toFixed(2)+" s film · "+width+"×"+height;
+    // Yield to UI between every frame. Actual render time never changes film timing.
+    await new Promise(r=>requestAnimationFrame(r));
+   }
+   const resume=plan.first+done<plan.total?plan.first+done:null;
+   if(done){
+    const manifest={format:"duoforge-frames@1",fps:format.fps,width,height,
+     duration:format.duration,start:plan.first,end:plan.first+done,total:plan.total,
+     next:resume,cuts:normalizeCuts(cuts),look:$("filmLook").value,
+     note:"Frame exact PNG sequence. Assemble with FFmpeg. Soundtrack not embedded."};
+    await zip.add("manifest.json",new Blob([JSON.stringify(manifest,null,2)],{type:"application/json"}));
+    saveBlob(zip.finish(),safe(filename())+"-frames-"+plan.first+"-"+(plan.first+done-1)+".zip");
+   }
+   if(resume!==null)$("filmFrameStart").value=String(resume);
+   $("filmFrameStatus").textContent=done?
+    (frameAborted?"Avbruten · ":"Klar · ")+done+" PNG sparade. "+
+    (resume===null?"Alla bildrutor exporterade.":"Nästa del börjar vid bild "+resume+"."):
+    "Inga bildrutor exporterades.";
+  }catch(e){
+   console.warn("Offline film render",e);
+   $("filmFrameStatus").textContent="Exporten misslyckades: "+e.message;
+  }finally{
+   restoreOutputSize();
+   camera.position.copy(prev.pos);camera.quaternion.copy(prev.rotation);
+   camera.fov=prev.fov;camera.updateProjectionMatrix();
+   orbit.target.copy(prev.target);orbit.enabled=prev.orbit;
+   orbit.update();elapsed=prev.elapsed;setFilmPose(0,"still");
+   frameExporting=false;$("filmFrameCancel").hidden=true;displayState("Bildsekvensexport klar.");
+  }
+ }
+ $("filmAddCut").onclick=()=>{
+  if(recording||frameExporting||cuts.length>=12)return;
+  cuts.push({name:"Scen "+(cuts.length+1),shot:$("filmCutShot").value,
+   look:$("filmCutLook").value,motion:$("filmCutMotion").value,duration:Number($("filmCutSeconds").value)});
+  onCutsChanged();
+ };
+ $("filmRemoveCut").onclick=()=>{if(!recording&&!frameExporting){cuts.pop();onCutsChanged();}};
+ $("filmFrameRender").onclick=frameSequence;
+ $("filmFrameCancel").onclick=()=>{frameAborted=true;};
+ $("filmAudioFile").onchange=e=>{
+  const file=e.target.files?.[0];e.target.value="";
+  if(!file||file.size>30*1024*1024){notify("Välj en ljudfil på högst 30 MB.");return;}
+  if(soundURL)URL.revokeObjectURL(soundURL);
+  soundURL=URL.createObjectURL(file);
+  const player=$("filmAudioPlayer");player.src=soundURL;player.dataset.name=file.name;
+  player.hidden=false;
+  $("filmAudioStatus").textContent="Ljudspår inläst: "+file.name+". Kan förhandslyssnas. Bildsekvens-ZIP innehåller inte ljud.";
+ };
+ $("filmHdriFile").onchange=async e=>{
+  const file=e.target.files?.[0];e.target.value="";if(!file)return;
+  $("filmHdriStatus").textContent="Laddar HDRI-miljö …";
+  try{
+   await importHDRI(file);
+   setHDRIIntensity(Number($("filmHdriIntensity").value));
+   $("filmHdriStatus").textContent="✅ HDRI-ljus från "+file.name+" används i förhandsvisningen.";
+  }catch(err){$("filmHdriStatus").textContent="HDRI kunde inte laddas: "+err.message;}
+ };
+ $("filmHdriIntensity").oninput=()=>setHDRIIntensity(Number($("filmHdriIntensity").value));
+
  $("filmOpen").onclick=open;
  $("filmOpenPanel").onclick=open;
  $("filmBroll").onclick=()=>{
@@ -347,7 +502,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmDuration").value="20";
   $("filmLook").value="golden";
   $("filmFinish").checked=true;
-  path=[];sequence=[];
+  path=[];sequence=[];cutPaths=[];activeCut=-1;
   applyFilmLook("golden",true);
   readSettings();buildPath();applyAt(0);
   displayState("✨ Fem olika B-roll-vinklar redo. Förhandsvisa eller rendera filmen.");
@@ -364,7 +519,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  $("filmRemoveKeyframe").onclick=removeKeyframe;
  $("filmExportStoryboard").onclick=exportStoryboard;
  $("filmImportStoryboard").onchange=async e=>{await importStoryboard(e.target.files?.[0]);e.target.value="";};
- $("filmShot").onchange=e=>{path=[];sequence=[];elapsed=0;readSettings();displayState("Kamerarörelse: "+e.target.selectedOptions[0].textContent);e.target.blur();};
+ $("filmShot").onchange=e=>{path=[];sequence=[];cutPaths=[];activeCut=-1;elapsed=0;setFilmPose(0,"still");readSettings();displayState("Kamerarörelse: "+e.target.selectedOptions[0].textContent);e.target.blur();};
  for(const id of ["filmDuration","filmResolution","filmFps","filmFov"]){
   $(id).onchange=()=>{readSettings();displayState("Filminställningar uppdaterade.");};
  }
@@ -373,7 +528,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!opened)return;
   readSettings();
   try{
-   path=buildPath();
+   buildPath();
    playing=false;orbit.enabled=true;
    elapsed=format.duration*(Number(event.target.value)/1000);
    applyAt(elapsed/format.duration);setWorldTime(elapsed,0);
