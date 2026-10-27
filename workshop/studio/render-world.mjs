@@ -179,6 +179,7 @@ export function initRenderWorld(ctx){
   if(previousLook.look!=="off"&&active)cinemaLighting.apply(previousLook.look,previousLook.finish);
  }
  async function setCinematicEffects(next={}){
+  const previous=cinematicFx;
   cinematicFx={
    dof:Boolean(next.dof),reflections:Boolean(next.reflections),
    aperture:clamp(Number(next.aperture)||.001,.0001,.003),
@@ -186,10 +187,21 @@ export function initRenderWorld(ctx){
    focusScale:clamp(Number(next.focusScale)||1,.35,2.5)
   };
   if(!active)return;
+  // Focus and aperture sliders should never rebuild all GPU post FX passes.
+  if(quality==="high"&&previous.dof===cinematicFx.dof&&
+     previous.reflections===cinematicFx.reflections){
+   if(dofPass?.uniforms){
+    if(dofPass.uniforms.aperture)dofPass.uniforms.aperture.value=cinematicFx.aperture;
+    if(dofPass.uniforms.maxblur)dofPass.uniforms.maxblur.value=cinematicFx.maxblur;
+    updateDofFocus();
+   }
+   return;
+  }
   if(cinematicFx.dof||cinematicFx.reflections){
-   if(quality!=="high")await applyQuality("high");
-   else await applyQuality(quality);
-  }else if(quality==="high")await applyQuality(quality);
+   await applyQuality("high");
+  }else if(quality==="high"){
+   await applyQuality("high");
+  }
  }
  function updateDofFocus(){
   if(!dofPass?.uniforms?.focus||!anchor)return;
