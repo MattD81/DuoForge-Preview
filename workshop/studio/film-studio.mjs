@@ -417,11 +417,12 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const countLimit=resolution==="4k"?8:48;
   const plan=frameBatch({duration:format.duration,fps:format.fps,
    start:Number($("filmFrameStart").value),count:Number($("filmFrameCount").value),maxFrames:countLimit});
-  frameExporting=true;frameAborted=false;playing=false;orbit.enabled=false;
+  frameExporting=true;frameAborted=false;playing=false;
   displayState("Förbereder exakt "+format.fps+" fps som PNG-bildsekvens.");
   $("filmFrameCancel").hidden=false;
   const prev={pos:camera.position.clone(),rotation:camera.quaternion.clone(),
    target:orbit.target.clone(),fov:camera.fov,orbit:orbit.enabled,elapsed};
+  orbit.enabled=false;
   const zip=new FrameZip();let done=0;
   try{
    setOutputSize(width,height);
