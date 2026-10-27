@@ -38,7 +38,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const middle=box.getCenter(new THREE.Vector3());
   return {
    focus:middle.toArray(),
-   size:clamp(Math.max(dims.x,dims.y,dims.z),2,20)
+   size:clamp(Math.max(dims.x,dims.y,dims.z),.15,256)
   };
  }
  function buildPath(){
@@ -63,7 +63,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmPlay").disabled=recording;
   $("filmClose").disabled=recording;
   $("filmStill").disabled=recording;
-  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe"])
+  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll"])
    $(id).disabled=recording;
   $("filmKeyframes").textContent=String(keyframes.length);
  }
@@ -132,7 +132,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   if(!recording)orbit.enabled=true;
   if(!keepFrame&&opened){
    elapsed=0;
-   if(path.length)applyAt(0);
+   if(path.length||sequence.length)applyAt(0);
   }
   displayState("Förhandsvisning klar. Ändra filmrörelsen eller exportera.");
  }
