@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
 import {createPathTraceStills} from "./path-trace-stills.mjs";
+import {createPathFilm} from "./cinema-path-film.mjs";
 import {normalizeCuts,movieDuration,locateCut,frameBatch,FrameZip} from "./cinema-production.mjs";
 
 const $=id=>document.getElementById(id);
@@ -19,7 +20,7 @@ function saveBlob(blob,name){
 export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,getWorld,
  isPreviewActive,startPreview,renderFrame,setOutputSize,restoreOutputSize,setWorldTime,
  notify,filename,applyFilmLook=()=>{},setCinematicEffects=()=>{},getPreviewAnchor=()=>null,
- setFilmPose=()=>{},importHDRI=async()=>{},setHDRIIntensity=()=>{}}){
+ setFilmPose=()=>{},importHDRI=async()=>{},setHDRIIntensity=()=>{},getRigDirector=()=>null}){
  let opened=false,playing=false,recording=false,elapsed=0,path=[],sequence=[],savedCamera=null;
  let mediaRecorder=null,captureTrack=null,stream=null,recordChunks=[],recordEnd=null;
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
@@ -29,6 +30,13 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  const ui=$("filmStudioOverlay"),status=$("filmStatus"),progress=$("filmProgress"),seek=$("filmSeek");
  const pathTrace=createPathTraceStills({
   getAnchor:getPreviewAnchor,getCamera:()=>camera,onStatus:message=>{status.textContent=message;},filename
+ });
+ const pathMovie=createPathFilm({
+  getAnchor:getPreviewAnchor,getCamera:()=>camera,
+  poseAt:t=>{
+   elapsed=t;applyAt(clamp(t/format.duration,0,1));
+   setWorldTime(t,0);
+  },onStatus:message=>{status.textContent=message;},filename
  });
  const fxSettings=()=>({
   dof:$("filmDof").checked,
@@ -129,6 +137,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   applyFilmLook("golden",true);
   updateFx();
   readSettings();elapsed=0;
+  refreshRigPanel();
   displayState("Filmläge redo: välj kamerarörelse och förhandsvisa, eller rendera en riktig videofil.");
   document.body.classList.add("film-studio-active");
   return true;
@@ -151,6 +160,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
     sampleBrollSequence(sequence,progress):
     sampleCameraPath(path,progress,{ease:format.shot!=="flyover"});
   }
+  getRigDirector()?.sample(elapsed);
   $("filmShotProgress").textContent=shot.shotLabel||"En filmisk kamerarörelse";
   camera.position.fromArray(shot.position);
   orbit.target.fromArray(shot.target);
@@ -203,6 +213,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   playing=false;
   pathTrace.stop();
   setFilmPose(0,"still");
+  pathMovie.stop();
   setCinematicEffects({dof:false,reflections:false});
   if(soundURL){URL.revokeObjectURL(soundURL);soundURL=null;}
   $("filmAudioPlayer").pause();
@@ -404,8 +415,68 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmShot").value=getWorld()==="ocean"?"flyover":"orbit";
   readSettings();
   applyFilmLook($("filmLook").value,$("filmFinish").checked);
+  refreshRigPanel();
   displayState("Ny värld vald. Förhandsvisa en kamerarörelse.");
  }
+
+
+ function refreshRigPanel(){
+  const rig=getRigDirector();
+  const clip=$("filmRigClip"),bone=$("filmRigBone");
+  clip.replaceChildren(new Option("Ingen animation",""));
+  bone.replaceChildren(new Option("Välj led",""));
+  for(const name of rig?.clips||[])clip.add(new Option(name.name+" · "+name.duration.toFixed(1)+"s",name.name));
+  for(const name of rig?.bones||[])bone.add(new Option(name,name));
+  $("filmRigStatus").textContent=rig?.hasSkin?
+   "✅ "+rig.bones.length+" leder · "+rig.clips.length+" GLB-animationsklipp. Klippen visas på filmens tidslinje.":
+   "Modellen saknar skelett. Importera en riggad GLB; automatisk viktmålning finns inte här.";
+ }
+ function poseRig(){
+  const rig=getRigDirector(),bone=$("filmRigBone").value;
+  if(!rig||!bone)return;
+  const values=["filmRigX","filmRigY","filmRigZ"].map(id=>
+   Number($(id).value)*Math.PI/180);
+  if(rig.pose(bone,values)){
+   rig.sample(elapsed);
+   renderFrame();
+   $("filmRigStatus").textContent="Led "+bone+" justerad. Original-GLB är oförändrad.";
+  }
+ }
+ $("filmRigClip").onchange=()=>{
+  const rig=getRigDirector();if(!rig)return;
+  rig.start($("filmRigClip").value);
+  rig.sample(elapsed);renderFrame();
+  $("filmRigStatus").textContent=rig.active()?"Spelar skinnat GLB-klipp: "+rig.active():"Ingen skeletal animation vald.";
+ };
+ $("filmRigBone").onchange=()=>{
+  for(const id of ["filmRigX","filmRigY","filmRigZ"])$(id).value="0";
+ };
+ for(const id of ["filmRigX","filmRigY","filmRigZ"])$(id).oninput=poseRig;
+ $("filmRigReset").onclick=()=>{
+  const rig=getRigDirector();if(!rig)return;
+  rig.release();rig.start($("filmRigClip").value);
+  for(const id of ["filmRigX","filmRigY","filmRigZ"])$(id).value="0";
+  rig.sample(elapsed);renderFrame();$("filmRigStatus").textContent="Posen är återställd.";
+ };
+ $("filmTraceMovie").onclick=async()=>{
+  if(recording||frameExporting)return;
+  if(!opened&&!open())return;
+  readSettings();
+  try{buildPath();}catch(e){notify(e.message,4000);return;}
+  frameExporting=true;playing=false;
+  const saved={pos:camera.position.clone(),quat:camera.quaternion.clone(),
+   target:orbit.target.clone(),enabled:orbit.enabled,elapsed};
+  orbit.enabled=false;
+  try{await pathMovie.run({duration:format.duration,fps:format.fps});}
+  finally{
+   camera.position.copy(saved.pos);camera.quaternion.copy(saved.quat);
+   orbit.target.copy(saved.target);orbit.enabled=saved.enabled;
+   orbit.update();elapsed=saved.elapsed;
+   setFilmPose(0,"still");getRigDirector()?.sample(elapsed);
+   frameExporting=false;
+  }
+ };
+ $("filmTraceCancel").onclick=()=>pathMovie.stop();
 
  function renderCutList(){
   const list=$("filmCutList");list.replaceChildren();
