@@ -19,6 +19,8 @@ on:
       - 'tests/research-3d.test.mjs'
       - 'tests/research-stack.test.mjs'
       - 'tests/research-stack-smoke.mjs'
+      - 'tests/fusion-engine.test.mjs'
+      - 'tests/fusion-lab-smoke.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
       - 'tests/sites-cinema-bridge-smoke.mjs'
       - 'tests/film-studio-smoke.mjs'
@@ -53,6 +55,10 @@ jobs:
           node --check workshop/studio/research-ui.mjs
           node --check workshop/studio/research-performance.mjs
           node --check workshop/studio/research-stack-core.mjs
+          node --check workshop/studio/fusion-engine.mjs
+          node --check workshop/studio/fusion-lab.mjs
+          node --check tests/fusion-engine.test.mjs
+          node --check tests/fusion-lab-smoke.mjs
           node --check workshop/studio/research-stack-ui.mjs
           node --check workshop/studio/gaussian-preview.mjs
           node --check tests/research-stack.test.mjs
@@ -101,7 +107,7 @@ jobs:
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
           node --test tests/sites-cinema-bridge.test.mjs
-          node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs tests/research-stack.test.mjs
+          node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs tests/research-stack.test.mjs tests/fusion-engine.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
         timeout-minutes: 3
@@ -127,6 +133,8 @@ jobs:
         run: node tests/studio-smoke.mjs
       - name: Test free research stack in browser and mobile
         run: node tests/research-stack-smoke.mjs
+      - name: Test Fusion Lab camera planning and adaptive preview
+        run: node tests/fusion-lab-smoke.mjs
       - name: Test Character Forge volumetric GLB and image silhouettes
         run: node tests/character-forge-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
