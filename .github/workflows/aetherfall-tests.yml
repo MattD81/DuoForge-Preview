@@ -27,6 +27,8 @@ jobs:
           node --check games/aetherfall/world.mjs
           node --check games/aetherfall/logic.mjs
           node --check workshop/studio/fusion-engine.mjs
+          node --check games/aetherfall/fusion-engine.mjs
+          cmp workshop/studio/fusion-engine.mjs games/aetherfall/fusion-engine.mjs
           node --check tests/aetherfall-smoke.mjs
           node --test games/aetherfall/logic.test.mjs
           node --test tests/fusion-engine.test.mjs
