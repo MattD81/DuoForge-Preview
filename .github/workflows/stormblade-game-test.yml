@@ -1,0 +1,45 @@
+name: Test STORMBLADE — DuoForge GPU Deluxe 3D
+on:
+  pull_request:
+    paths:
+      - 'games/stormblade-duel/**'
+      - 'workshop/studio/gpu-deluxe.mjs'
+      - 'tests/gpu-deluxe.test.mjs'
+      - 'tests/stormblade-duel-smoke.mjs'
+      - '.github/workflows/stormblade-game-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stormblade-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check scripts and run adaptive GPU unit tests
+        run: |
+          node --check games/stormblade-duel/game.mjs
+          node --check games/stormblade-duel/world.mjs
+          node --check workshop/studio/gpu-deluxe.mjs
+          node --test tests/gpu-deluxe.test.mjs
+      - name: Install lightweight browser for actual WebGL smoke test
+        timeout-minutes: 4
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing DuoForge Preview locally
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/stormblade-server.log 2>&1 &
+      - name: Play STORMBLADE on desktop and mobile emulator
+        run: node tests/stormblade-duel-smoke.mjs
+      - name: Save visual screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stormblade-demo-screenshots
+          path: |
+            stormblade-desktop.png
+            stormblade-mobile.png
+          if-no-files-found: ignore
