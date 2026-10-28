@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {newMatch,stepMatch,makeAI,getPosePhase} from './combat.mjs';
 import {createFighter,updateFighterPose} from './fighter.mjs';
-import {loadDetailedFighter,updateFacialRig} from './fighter-loader.mjs';
+import {loadDetailedFighter,loadAraFighter,updateFacialRig} from './fighter-loader.mjs';
 import {createArena} from './arena.mjs';
 import {createEffects,makeAudio} from './fx.mjs';
 const $=id=>document.getElementById(id), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -11,21 +11,27 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFi
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,.1,120);
 const arena=createArena(scene),rigs=[createFighter({index:0}),createFighter({index:1})];rigs.forEach(r=>scene.add(r.root));
-// Progressive HD asset loading: preserve the existing animated fighters as a safe fallback.
+// Premium MakeHuman GLB -> V3 -> V2 -> original procedural: no broken players.
 const detailedModelStatus=[{status:'loading'},{status:'loading'}];
 for(let i=0;i<2;i++){
-  const fighter=i===0?'kael':'vex';
-  const v3='./models/'+fighter+'_skinned_v3.glb';
-  const v2='./models/'+fighter+'.glb';
-  loadDetailedFighter(v3,i).catch(err=>{console.warn('V3 unavailable, loading V2:',err);return loadDetailedFighter(v2,i);}).then(detailed=>{
-    const previous=rigs[i];
-    if(!previous?.root || !detailed?.root)return;
-    // Both versions use the same pose API; existing combat, HUD, input and camera remain untouched.
-    scene.remove(previous.root);rigs[i]=detailed;scene.add(detailed.root);
+  const name=i===0?'kael':'vex';
+  (async()=>{
+    let detailed;
+    try{detailed=await loadAraFighter('./models/'+name+'_ara.glb',i);}
+    catch(araError){
+      console.warn('MakeHuman unavailable; keeping V3:',araError);
+      try{detailed=await loadDetailedFighter('./models/'+name+'_skinned_v3.glb',i);}
+      catch(v3Error){
+        console.warn('V3 unavailable; keeping V2:',v3Error);
+        detailed=await loadDetailedFighter('./models/'+name+'.glb',i);
+      }
+    }
+    if(!detailed?.root||!rigs[i]?.root)return;
+    scene.remove(rigs[i].root);rigs[i]=detailed;scene.add(detailed.root);
     detailedModelStatus[i]={status:'ready',...detailed.modelStats};
-  }).catch(error=>{
+  })().catch(error=>{
     detailedModelStatus[i]={status:'fallback',reason:String(error?.message||error).slice(0,140)};
-    console.warn('HD fighter unavailable; using original procedural fighter:',error);
+    console.warn('Original procedural fighter retained:',error);
   });
 }
 

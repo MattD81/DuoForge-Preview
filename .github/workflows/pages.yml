@@ -92,6 +92,48 @@ jobs:
               assert len(doc.get('animations',[]))>=6
               print(f'{name} V3 validated: {len(data)} bytes, 21 skinned joints, 8 facial shapes, 6 clips')
           PY
+      # Premium anatomically realistic CC0 MakeHuman meshes (CPU only, no paid services).
+      # Previous V3/V2 fighters remain available when this optional build fails.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/cache@v4
+        id: rift-ara-cache
+        with:
+          path: |
+            games/rift-champions/models/kael_ara.glb
+            games/rift-champions/models/vex_ara.glb
+          key: ara-premium-654a5d81-${{ hashFiles('games/rift-champions/character-forge/*.params.json') }}
+      - name: Generate high-detail MakeHuman fighters (optional)
+        if: steps.rift-ara-cache.outputs.cache-hit != 'true'
+        id: ara
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/olatunde85/3d-gen.git /tmp/duoforge-ara
+          cd /tmp/duoforge-ara
+          git checkout --detach 654a5d81fc828aba31d006e3fac3ed1eed5c857c
+          npm ci --no-audit --no-fund
+          npm run setup-assets
+          mkdir -p /tmp/duoforge-exports
+          npm run export -- --params "$GITHUB_WORKSPACE/games/rift-champions/character-forge/kael.params.json" --formats glb --out /tmp/duoforge-exports
+          npm run export -- --params "$GITHUB_WORKSPACE/games/rift-champions/character-forge/vex.params.json" --formats glb --out /tmp/duoforge-exports
+          mkdir -p "$GITHUB_WORKSPACE/games/rift-champions/models"
+          for p in kael vex; do
+            f="/tmp/duoforge-exports/"$p"_ara.glb"
+            test -s "$f"
+            python3 -c 'import sys,struct,json; d=open(sys.argv[1],"rb").read(); magic,ver,size=struct.unpack_from("<4sII",d); assert magic==b"glTF" and ver==2 and size==len(d); n=struct.unpack_from("<I",d,12)[0]; j=json.loads(d[20:20+n]); assert j.get("meshes") and j.get("skins") and len(j["skins"][0]["joints"])>=40 and j.get("animations"); print(sys.argv[1],len(d),"bones",len(j["skins"][0]["joints"]),"clips",len(j["animations"]))' "$f"
+            cp "$f" "$GITHUB_WORKSPACE/games/rift-champions/models/"$p"_ara.glb"
+          done
+      - name: MakeHuman model build outcome
+        if: always()
+        run: |
+          if [ -s games/rift-champions/models/kael_ara.glb ] && [ -s games/rift-champions/models/vex_ara.glb ]; then
+            echo "HD MakeHuman: two models generated."
+          else
+            echo "HD MakeHuman unavailable: game will use its verified V3/V2 fallback."
+          fi
       - uses: actions/configure-pages@v5
         with:
           enablement: true
