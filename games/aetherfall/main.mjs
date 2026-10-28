@@ -4,7 +4,7 @@ import {buildWorld,animateWorld} from "./world.mjs";
 import {
  sceneDNA,planDetailBudget,projectedImportance,
  createTemporalBudgetGovernor,createCinemaPlan,cameraAt,FUSION_VERSION
-} from "../../workshop/studio/fusion-engine.mjs";
+} from "./fusion-engine.mjs";
 
 const $=id=>document.getElementById(id),canvas=$("stage"),mini=$("minimap");
 const iconMessage={
