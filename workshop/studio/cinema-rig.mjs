@@ -6,7 +6,9 @@ import {clone as cloneSkeleton} from "three/addons/utils/SkeletonUtils.js";
 const CLIPS=new WeakMap();
 export function registerRigClips(root,clips){
  if(root&&Array.isArray(clips)){
-  const valid=clips.filter(c=>c?.isAnimationClip);
+  // Three.AnimationClip does not expose isAnimationClip in every Three release.
+  const valid=clips.filter(c=>c instanceof THREE.AnimationClip||
+   (c&&typeof c.name==="string"&&Array.isArray(c.tracks)&&Number.isFinite(c.duration)));
   CLIPS.set(root,valid);
   root.userData.duoforgeClipNames=valid.map(c=>c.name);
  }
