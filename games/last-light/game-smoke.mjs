@@ -20,6 +20,28 @@ try{
  assert.equal(await page.locator("#intro").isVisible(),true);
  assert.equal(await page.locator("#scene").isVisible(),true);
  assert.match(await page.locator(".performance").textContent(),/WebGL/);
+ assert.equal(await page.locator("#game").getAttribute("data-islands"),"8","Eight real 3D terrain islands are generated");
+ assert.ok(Number(await page.locator("#game").getAttribute("data-forest"))>=180,"Organic forests are instanced");
+ assert.ok(Number(await page.locator("#game").getAttribute("data-granite"))>=100,"Granite rocks are instanced");
+ assert.equal(await page.locator("#game").getAttribute("data-terrain-quality"),"low","Headless software GPU uses low-power terrain LOD");
+ assert.match(await page.locator("#quality").textContent(),/MOBIL/);
+ const geometry=await page.evaluate(async()=>{
+  const {ISLAND_SITES}=await import("./coastal-terrain.mjs");
+  const {buildIslandGeometry}=await import("./coastal-world.mjs");
+  const geo=buildIslandGeometry(ISLAND_SITES[0],"high");
+  const sample={
+   vertices:geo.attributes.position.count,
+   colorEntries:geo.attributes.color.count,
+   triangles:geo.index.count/3,
+   normals:geo.attributes.normal.count,
+   bound:Number.isFinite(geo.boundingSphere.radius)
+  };
+  geo.dispose();
+  return sample;
+ });
+ assert.ok(geometry.vertices>1000&&geometry.triangles>1800&&geometry.bound);
+ assert.equal(geometry.colorEntries,geometry.vertices);
+ assert.equal(geometry.normals,geometry.vertices);
  await page.screenshot({path:"last-light-intro-desktop.png"});
  await page.locator("#start").click();
  assert.equal(await page.locator("#intro").isVisible(),false);
@@ -55,6 +77,9 @@ try{
  await mobile.locator("#view").click();
  await mobile.screenshot({path:"last-light-mobile.png"});
  assert.equal(await mobile.locator("#scene").isVisible(),true);
+ assert.equal(await mobile.locator("#game").getAttribute("data-islands"),"8");
+ assert.equal(await mobile.locator("#game").getAttribute("data-terrain-quality"),"low");
+ assert.ok(await mobile.locator("#quality").isVisible());
  assert.deepEqual(errors,[],"Desktop and mobile should not have runtime or WebGL shader errors");
  console.log("PASS: original 3D ocean/atmosphere scene, mobile controls, real GLB export and cinematic camera");
 }finally{await browser.close()}
