@@ -17,6 +17,17 @@ try{
  assert.equal((await page.evaluate(()=>window.__stormblade.state())).ocean,"Ocean Cinema V5");
  assert.equal((await page.evaluate(()=>window.__stormblade.state())).characterModel,"procedural");
  assert.equal(await page.locator("#models").isVisible(),true);
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).filmLook,"off");
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).playDirector.enabled,true);
+ assert.equal(await page.locator("#cinema").isVisible(),true);
+ await page.locator("#cinema").click();
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).filmLook,"noir");
+ await page.locator("#cinema").click();
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).filmLook,"natural");
+ await page.locator("#cinema").click();
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).filmLook,"golden");
+ await page.locator("#cinema").click();
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).filmLook,"off");
  console.log("PASS: Stormblade renders the same Ocean Cinema V5 as 3D Studio, with V3 rig upgrade available");
  const first=await page.evaluate(()=>window.__stormblade.state());
  await page.screenshot({path:"stormblade-desktop.png"});
@@ -57,6 +68,7 @@ try{
  assert.equal(await mobile.locator('[data-action="attack"]').isVisible(),true);
  assert.equal((await mobile.evaluate(()=>window.__stormblade.state())).ocean,"Ocean Cinema V5");
  assert.equal(await mobile.locator("#models").isVisible(),true);
+ assert.equal(await mobile.locator("#cinema").isVisible(),true);
  const box=await mobile.locator("#models").boundingBox();
  assert.ok(box&&box.x>=0&&box.x+box.width<=390,
    "V3-lägesknappen ska ligga inom mobilskärmen");
