@@ -106,7 +106,7 @@
           <label>Vågor <input id="oceanHeightLive" type="range" min=".05" max="1.8" step=".05" value=".58" aria-label="Ändra våghöjd i havsvärlden"></label>
           <label>Hastighet <input id="oceanSpeedLive" type="range" min=".15" max="3" step=".05" value="1" aria-label="Ändra vågornas hastighet"></label>
           <label>Väder <select id="oceanWeatherLive" aria-label="Ändra havsväder">
-            <option value="clear">Sol</option><option value="sunset">Solnedgång</option><option value="storm">Storm</option>
+            <option value="clear">Sol</option><option value="sunset">Solnedgång</option><option value="storm">Storm</option><option value="storm-sunset">⛈️🌅 Storm i solnedgång</option>
           </select></label>
         </div>
         <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
@@ -475,6 +475,7 @@
           <option value="clear">☀️ Sol och blågrönt hav</option>
           <option value="sunset">🌅 Solnedgång</option>
           <option value="storm">⛈️ Storm och hög sjö</option>
+          <option value="storm-sunset">🌅⛈️ Storm i solnedgång · filmiskt</option>
         </select>
         <p class="hint">Vågorna renderas direkt på ditt grafikkort. Inga AI-anrop eller molnservrar.</p>
       </div>
@@ -509,5 +510,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=cinema-rig-film-v3"></script>
+<script type="module" src="./studio.mjs?v=cinematic-ocean-v4"></script>
 </body></html>
