@@ -5,9 +5,42 @@ import {MISSIONS} from "./gameplay.mjs";
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rand=(()=>{let s=740331;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}})();
+
+// Shared spectral ocean geometry/physics, with an affordable fragment lighting
+// path for mobile/software GPUs (no dozens of noise evaluations per pixel).
+function useLowPowerSeaShader(ocean){
+ const material=ocean.mesh.material;
+ material.fragmentShader=[
+  "precision highp float;",
+  "uniform float uHeight,uStorm,uTime,uSpeed,uHaze,uDetail,uRoughness,uWhitecaps;",
+  "uniform vec3 uDeep,uShallow,uSky,uSun,uSunDir;",
+  "varying vec3 vWorld,vNormalWater;varying float vWave;",
+  "void main(){",
+  " vec3 N=normalize(vNormalWater),V=normalize(cameraPosition-vWorld);",
+  " float ndv=clamp(dot(N,V),.0,1.);",
+  " float fresnel=.0204+.9796*pow(1.-ndv,5.);",
+  " vec3 R=reflect(-V,N);float atmosphere=smoothstep(-.2,.75,R.y);",
+  " vec3 sky=mix(uSky,uSky*.42+vec3(.019,.03,.05),atmosphere);",
+  " vec3 water=mix(mix(uDeep,uShallow,.24),sky,clamp(fresnel*.9+.12,0.,.88));",
+  " vec3 H=normalize(V+normalize(uSunDir));",
+  " water+=uSun*pow(max(dot(N,H),0.),58.)*.17;",
+  " float crest=clamp(vWave/max(.05,uHeight*uStorm),-1.,1.);",
+  " float foam=smoothstep(.72,.96,crest)*uWhitecaps*.17;",
+  " water=mix(water,vec3(.38,.53,.58),foam);",
+  " float haze=1.-exp(-distance(vWorld,cameraPosition)*uHaze);",
+  " water=mix(water,uSky,haze*.5);",
+  " gl_FragColor=vec4(max(water,vec3(0.)),1.);",
+  " #include <tonemapping_fragment>",
+  " #include <colorspace_fragment>",
+  "}"
+ ].join("\n");
+ material.needsUpdate=true;
+}
+
 export function createWorld({scene,quality="medium"}){
  const world=new THREE.Group();world.name="LAST LIGHT – dynamic world";scene.add(world);
  const ocean=createOceanSurface({quality,settings:{height:.93,speed:1.07,weather:"storm-sunset",whitecaps:.21,sunElevation:7}});
+ if(quality==="low")useLowPowerSeaShader(ocean);
  world.add(ocean.mesh);
  const state={weather:"storm-sunset",elevation:7};
  const atmosphere=atmosphereState(state.weather,state.elevation);
