@@ -3,13 +3,14 @@
 // Deterministic and local; not an FFT hydrodynamic simulation or full raytracing.
 import * as THREE from "three";
 import {spectralHeight,spectralSlope,spectralGLSL,slopeGLSL,isStorm} from "./ocean-spectrum.mjs";
-export const OCEAN_DEFAULTS=Object.freeze({height:.58,speed:1,weather:"clear"});
+export const OCEAN_DEFAULTS=Object.freeze({height:.58,speed:1,weather:"clear",whitecaps:.12});
 export const OCEAN_WEATHER=Object.freeze(["clear","sunset","storm","storm-sunset"]);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function normalizeOceanSettings(value={}){
  return {height:clamp(Number.isFinite(Number(value.height))?Number(value.height):.58,.05,1.8),
  speed:clamp(Number.isFinite(Number(value.speed))?Number(value.speed):1,.15,3),
- weather:OCEAN_WEATHER.includes(value.weather)?value.weather:"clear"};
+ weather:OCEAN_WEATHER.includes(value.weather)?value.weather:"clear",
+ whitecaps:clamp(Number.isFinite(Number(value.whitecaps))?Number(value.whitecaps):.12,0,1)};
 }
 export function oceanHeight(x,z,time,settings=OCEAN_DEFAULTS){
  const s=normalizeOceanSettings(settings);
@@ -34,7 +35,7 @@ const vertex=[
 ].join("\n");
 const fragment=[
  "precision highp float;",
- "uniform float uHeight,uStorm,uTime,uSpeed,uHaze,uDetail,uRoughness;",
+ "uniform float uHeight,uStorm,uTime,uSpeed,uHaze,uDetail,uRoughness,uWhitecaps;",
  "uniform vec3 uDeep,uShallow,uSky,uSun,uSunDir;",
  "varying vec3 vWorld,vNormalWater;varying float vWave;",
  "const float PI=3.141592653589793;",
@@ -68,7 +69,7 @@ const fragment=[
  " float fresnel=.0204+.9796*pow(1.-ndv,5.);",
  " float ff=.0204+.9796*pow(1.-vdh,5.);",
  " float specular=ggxD(ndh,uRoughness)*smithG(ndv,ndl,uRoughness)*ff*ndl/max(.08,4.*ndv*ndl);",
- " specular=clamp(specular,0.,.85);",
+ " specular=clamp(specular,0.,.29);",
  // Reflection of the procedural atmosphere in the normal direction.
  " vec3 R=reflect(-V,N);",
  " float altitude=smoothstep(-.15,.72,R.y);",
@@ -79,15 +80,17 @@ const fragment=[
  " float level=clamp(.48+vWave/max(.2,uHeight*uStorm*2.0),0.,1.);",
  " vec3 base=mix(uDeep,uShallow,level*.39);",
  " vec3 water=mix(base,reflectedSky,clamp(fresnel*.92+.095,0.,.85));",
- " water+=uSun*specular*1.75;",
+ " water+=uSun*specular*1.18;",
  // Breaking whitewater requires both a crest and sufficiently steep face;
  // deterministic low-frequency value noise breaks foam into organic fragments.
  " float crest=vWave/max(.03,uHeight*uStorm);",
  " float slope=sqrt(max(0.,1.-N.y*N.y));",
  " float breaker=smoothstep(.57,.89,crest)*smoothstep(.055,.18,slope);",
  " float foamPatch=fbm(vWorld.xz*.13+vec2(uTime*uSpeed*.18,-uTime*.09));",
- " float foam=breaker*smoothstep(.45,.68,foamPatch)*(uStorm>1.1?.63:.14);",
- " water=mix(water,vec3(.69,.83,.84),clamp(foam,0.,.7));",
+ // Foam is close-range, low-contrast breaking water, not scattered white beads.
+ " float foam=breaker*smoothstep(.52,.76,foamPatch)*uWhitecaps*(uStorm>1.1?.95:.32);",
+ " foam*=1.-smoothstep(65.,220.,distanceFromCamera);",
+ " water=mix(water,vec3(.38,.52,.58),clamp(foam,0.,.24));",
  // The reflected sky and water converge in mist without a hard horizon line.
  " float haze=1.-exp(-distanceFromCamera*uHaze);",
  " water=mix(water,uSky,haze*.55);",
@@ -110,6 +113,7 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
   uSun:{value:new THREE.Color("#ffe1a0")},
   uSunDir:{value:new THREE.Vector3(-.56,.125,.82).normalize()},
   uRoughness:{value:.25},
+  uWhitecaps:{value:initial.whitecaps},
   uDetail:{value:quality==="low"?.35:quality==="high"?1:.72},
   uHaze:{value:.0035}
  };
@@ -128,6 +132,7 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
   current=normalizeOceanSettings(raw);
   uniforms.uHeight.value=current.height;uniforms.uSpeed.value=current.speed;
   uniforms.uStorm.value=isStorm(current.weather)?1.48:1;
+  uniforms.uWhitecaps.value=current.whitecaps;
   if(current.weather==="storm-sunset"){
    uniforms.uDeep.value.set("#071a29");uniforms.uShallow.value.set("#1c485b");
    uniforms.uSky.value.set("#bd847e");uniforms.uSun.value.set("#ffd69f");
