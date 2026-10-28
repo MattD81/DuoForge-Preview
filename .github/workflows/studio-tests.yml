@@ -7,6 +7,7 @@ on:
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
       - 'tests/creative-core.test.mjs'
+      - 'tests/creative-site-contract.test.mjs'
       - 'tests/creative-hub-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
       - 'tests/living-physics.test.mjs'
@@ -45,9 +46,10 @@ jobs:
         run: |
           node --check workshop/studio/studio.mjs
           node --check workshop/studio/creative-core.mjs
+          node --check workshop/studio/creative-site-contract.mjs
           node --check workshop/studio/creative-hub.mjs
           node --check tests/creative-hub-smoke.mjs
-          node --test tests/creative-core.test.mjs
+          node --test tests/creative-core.test.mjs tests/creative-site-contract.test.mjs
           node --check workshop/studio/living-objects.mjs
           node --check workshop/studio/living-physics.mjs
           node --check workshop/studio/world-planner.mjs
