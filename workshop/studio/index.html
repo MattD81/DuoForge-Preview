@@ -263,7 +263,7 @@
           <button id="filmStill">📸 Rendera stillbild</button>
         </div>
         <details class="film-production-panel film-export-panel" id="filmFrameQueue">
-          <summary>🎞️ Cinema Renderer 2.0 · bildruta för bildruta</summary>
+          <summary>🎞️ DuoForge Cinema Engine Core V1 · bildruta för bildruta</summary>
           <p class="film-note">Exakt tid per bildruta, oberoende av hur lång tid grafikkortet behöver. Renderar PNG-sekvenser lokalt i små ZIP-delar som kan sättas ihop till film. Detta använder WebGL/PBR – inte path tracing per bildruta.</p>
           <div class="film-production-grid">
             <label>Upplösning<select id="filmFrameResolution">
@@ -274,6 +274,24 @@
             <label>Starta på bildruta<input id="filmFrameStart" type="number" min="0" step="1" value="0"></label>
             <label>Bildrutor/del (max 48)<input id="filmFrameCount" type="number" min="1" max="48" step="1" value="24"></label>
           </div>
+          <div class="film-production-grid">
+            <label>Filmisk rendering
+              <select id="filmEngineSamples">
+                <option value="1" selected>1 prov/ruta · snabbt</option>
+                <option value="2">2 prover · mjukare rörelse</option>
+                <option value="4">4 prover · cinema motion blur (dator)</option>
+              </select>
+            </label>
+            <label>Slutarvinkel
+              <select id="filmEngineShutter">
+                <option value="90">90° · skarp action</option>
+                <option value="180" selected>180° · filmstandard</option>
+                <option value="270">270° · mer rörelseoskärpa</option>
+                <option value="360">360° · maximal rörelseoskärpa</option>
+              </select>
+            </label>
+          </div>
+          <p class="film-note">Egen deterministisk renderingskärna med rörelseprover och ljuskorrekt bildackumulering. GLB-scenen ritas fortfarande av Three.js/WebGL. Färdiga bildrutor blir exakt så många som filmens fps och längd kräver.</p>
           <button type="button" id="filmFrameRender">🎞️ Rendera PNG-sekvens till ZIP</button>
           <button type="button" id="filmFrameCancel" hidden>■ Avbryt (spara färdiga rutor)</button>
           <div id="filmFrameStatus" role="status" aria-live="polite">Välj renderingskvalitet och tryck Rendera. Nästa del föreslås automatiskt.</div>
@@ -510,5 +528,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=ocean-physical-v5"></script>
+<script type="module" src="./studio.mjs?v=cinema-core-v1"></script>
 </body></html>
