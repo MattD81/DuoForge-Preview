@@ -122,7 +122,7 @@ export function updateFighterPose(rig,state,time,dt=1/60){
   approach(arms[0].elbow,'z',elbowL);approach(arms[1].elbow,'z',elbowR);
   approach(legs[0].hip,'z',legL);approach(legs[1].hip,'z',legR);
   approach(legs[0].knee,'z',kneeL);approach(legs[1].knee,'z',kneeR);
-  head.position.y=2.55+Math.sin(time*2)*.012;
+  head.position.y=(rig.restHeadY ?? 2.55)+Math.sin(time*2)*.012;
   shadow.scale.setScalar(Math.max(.56,1-state.y*.24));shadow.material.opacity=Math.max(.08,.32-state.y*.09);
   aura.visible=state.move==='special'||state.meter>72;
   aura.children.forEach((m,i)=>{const a=time*(i%2?2:-2)+i*Math.PI/4;m.position.set(Math.cos(a)*(.66+Math.sin(time*4+i)*.08),1+((time*.6+i*.17)%1)*1.5,Math.sin(a)*.43);m.scale.setScalar(1+Math.sin(time*8+i)*.35);});

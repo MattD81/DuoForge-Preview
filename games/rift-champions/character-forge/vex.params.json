@@ -1,0 +1,45 @@
+{
+  "name": "vex_ara",
+  "seed": 71937,
+  "gender": 0.86,
+  "age": 0.56,
+  "muscle": 0.94,
+  "weight": 0.62,
+  "height": 0.7,
+  "proportions": 0.82,
+  "african": 0.64,
+  "asian": 0.08,
+  "caucasian": 0.28,
+  "hair": "mohawk",
+  "eyes": "brownlight",
+  "outfit": "none",
+  "top": "tattered_shirt",
+  "bottom": "techwear_pants",
+  "shoes": "combat_boots",
+  "accessories": [
+    "leather_armor",
+    "arm_guards",
+    "crossed_straps",
+    "neon_accents",
+    "belt"
+  ],
+  "garmentStyles": {
+    "tattered_shirt": {
+      "pattern": "solid",
+      "color": "#401b30",
+      "color2": "#e44766"
+    },
+    "techwear_pants": {
+      "pattern": "leather",
+      "color": "#251b2e",
+      "color2": "#c73264"
+    }
+  },
+  "detail": "high",
+  "rig": "game",
+  "faceBones": true,
+  "faceShapes": true,
+  "speechShapes": true,
+  "animations": true,
+  "weapon": "none"
+}
