@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {newMatch,stepMatch,MOVES,getPosePhase,makeAI} from '../combat.mjs';
+const toFight=m=>{for(let i=0;i<160;i++)stepMatch(m,[{},{}]);assert.equal(m.state,'fight');return m;};
+const advance=(m,input,n=80)=>{for(let i=0;i<n;i++)stepMatch(m,[input,{}]);};
+test('starts with two fighters and three-round rules',()=>{const m=newMatch();assert.equal(m.fighters.length,2);assert.equal(m.state,'intro');toFight(m);assert.equal(m.clock>87,true);});
+test('jab connects once, not once per frame',()=>{const m=toFight(newMatch());m.fighters[0].x=-.7;m.fighters[1].x=.7;advance(m,{jab:true},22);assert.equal(m.fighters[1].hp,94);});
+test('block mitigates damage and consumes guard',()=>{const m=toFight(newMatch());m.fighters[0].x=-.7;m.fighters[1].x=.7;for(let i=0;i<23;i++)stepMatch(m,[{heavy:i===0},{block:true}]);assert.ok(m.fighters[1].hp>=97);assert.ok(m.fighters[1].guard<100);});
+test('special requires meter and costs 40',()=>{const m=toFight(newMatch());m.fighters[0].x=-2;m.fighters[1].x=2;stepMatch(m,[{special:true},{}]);assert.equal(m.fighters[0].move,'idle');m.fighters[0].meter=40;stepMatch(m,[{special:true},{}]);assert.equal(m.fighters[0].move,'special');assert.equal(m.fighters[0].meter,0);});
+test('attack has startup active recovery',()=>{const m=toFight(newMatch());stepMatch(m,[{jab:true},{}]);assert.equal(getPosePhase(m.fighters[0]),'windup');for(let i=0;i<8;i++)stepMatch(m,[{},{}]);assert.equal(getPosePhase(m.fighters[0]),'active');});
+test('infinite attack spam cannot bypass recovery',()=>{const m=toFight(newMatch());m.fighters[0].x=-.7;m.fighters[1].x=.7;for(let i=0;i<14;i++)stepMatch(m,[{heavy:true},{}]);assert.equal(m.fighters[0].move,'heavy');assert.equal(m.fighters[1].hp,100);});
+test('fighters do not overlap after movement',()=>{const m=toFight(newMatch());for(let i=0;i<200;i++)stepMatch(m,[{right:true},{left:true}]);assert.ok(Math.abs(m.fighters[0].x-m.fighters[1].x)>=.98-1e-5);});
+test('jump arcs and returns to ground',()=>{const m=toFight(newMatch());stepMatch(m,[{jump:true},{}]);let max=0;for(let i=0;i<110;i++){stepMatch(m,[{},{}]);max=Math.max(max,m.fighters[0].y)}assert.ok(max>.5);assert.equal(m.fighters[0].y,0);});
+test('timeout produces a winner by health',()=>{const m=toFight(newMatch());m.fighters[0].hp=44;m.fighters[1].hp=12;m.clock=.01;stepMatch(m,[{},{}]);assert.equal(m.state,'ko');assert.equal(m.winner,0);});
+test('best of three ends match and preserves wins',()=>{const m=toFight(newMatch());m.fighters[1].hp=1;m.fighters[0].x=-.7;m.fighters[1].x=.7;advance(m,{jab:true},15);assert.equal(m.state,'ko');for(let i=0;i<170;i++)stepMatch(m,[{},{}]);assert.equal(m.round,2);assert.equal(m.fighters[0].roundWins,1);toFight(m);m.fighters[1].hp=1;m.fighters[0].x=-.7;m.fighters[1].x=.7;advance(m,{jab:true},15);for(let i=0;i<170;i++)stepMatch(m,[{},{}]);assert.equal(m.state,'matchover');assert.equal(m.winner,0);});
+test('AI always returns input object',()=>{const ai=makeAI('normal'),m=toFight(newMatch());for(let i=0;i<15;i++)assert.equal(typeof ai(m,1/60),'object');});

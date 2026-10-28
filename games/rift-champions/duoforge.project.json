@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "title": "RIFT CHAMPIONS — DuoForge 3D Fighting",
+  "category": "3D",
+  "engine": "three",
+  "entry": "index.html",
+  "source": "original-procedural",
+  "visibility": "private",
+  "features": [
+    "3d-fighters",
+    "arcade-combat",
+    "gamepad",
+    "touch-controls",
+    "procedural-stage",
+    "pbr-materials",
+    "effects",
+    "web-audio",
+    "two-player-local",
+    "cpu-opponent"
+  ],
+  "notes": "v0.1.1: removed remote CSS @import for DuoForge isolated builder. Three is declared as npm dependency; no remote GLB required. Never auto-publish."
+}
