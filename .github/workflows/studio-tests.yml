@@ -46,6 +46,8 @@ jobs:
         run: |
           node --check workshop/studio/studio.mjs
           node --check workshop/studio/character-forge.mjs
+          node --check workshop/studio/image-to-3d-client.mjs
+          python3 -m py_compile services/image-to-3d/server.py
           node --check tests/character-forge-smoke.mjs
           node --check workshop/studio/living-objects.mjs
           node --check workshop/studio/living-physics.mjs
