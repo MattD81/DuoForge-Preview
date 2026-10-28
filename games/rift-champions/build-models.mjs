@@ -102,7 +102,7 @@ function create(i){
  for(let j=0;j<2;j++){
    const sg=j===0?-1:1,sh=shoulders[j],el=elbows[j],f=fists[j],h=hips[j],k=knees[j],sn=shins[j],ft=feet[j];
    m.loft(sh,'deltoid',[[ -.56,.125,.16],[-.46,.17,.18],[-.25,.23,.23],[-.09,.265,.25],[.075,.22,.23]],'skin',35,25);
-   m.sphere(sh,'pauldron',[sg*.055,-.10,.025],[.31,.21,.26],'armor',34,17);
+   m.sphere(sh,'pauldron',[sg*.055,-.10,.025],[.27,.18,.235],'armor',34,17);
    m.plate(sh,'edge',sg*.054,-.08,.264,.41,.13,.10,'armorBright');
    for(let r=0;r<4;r++)m.plate(sh,'ribs',sg*.02,-.10-r*.085,.31,.20,.02,.025,'metal');
    m.sphere(el,'elbow',[0,0,0],[.17,.17,.17],'suitAccent',26,15);
@@ -118,33 +118,43 @@ function create(i){
    m.sphere(ft,'boot',[.10,-.05,.085],[.27,.15,.29],'leather',32,19);m.plate(ft,'toe',.12,-.022,.29,.38,.11,.07,'armorBright');
  }
  m.loft(b,'neck',[[2.28,.16,.14],[2.37,.17,.16],[2.52,.13,.12]],'skin',32,17);
- const sculpt=(x,y,z)=>[x*(.85+.15*(1-Math.min(1,Math.abs((y-.11)/.33))**2)),y,z+.045*Math.exp(-(((y-.1)/.11)**2))*Math.max(0,z*3)];
- m.sphere(head,'sculpted-face',[0,.11,0],[.27,.35,.235],'skin',64,40,sculpt);
- m.sphere(head,'chin',[0,-.106,.171],[.148,.072,.125],'skin',32,20);
- m.sphere(head,'nose-bridge',[0,.10,.226],[.074,.16,.056],'skin',28,20);m.sphere(head,'nose-tip',[0,.011,.293],[.082,.068,.072],'skin',26,16);
+ const gaussian=(x,y,cx,cy,sx,sy)=>Math.exp(-(((x-cx)/sx)**2+((y-cy)/sy)**2));
+ const sculpt=(x,y,z)=>{
+   // One continuous face mesh: jaw taper, nose bridge/tip, cheek, brow and mouth are
+   // vertex deformations instead of attached cartoon spheres.
+   const jaw=clip((.15-y)/.38,0,1); x*=1-.15*jaw;
+   if(z>0){
+     z+=.058*gaussian(x,y,0,.10,.058,.13);
+     z+=.048*gaussian(x,y,0,.01,.065,.051);
+     z+=.014*gaussian(Math.abs(x),y,.15,.075,.069,.066);
+     z+=.012*gaussian(Math.abs(x),y,.125,.218,.072,.04);
+     z+=.008*gaussian(x,y,0,-.10,.10,.043);
+     z-=.004*gaussian(x,y,0,-.069,.10,.022);
+   }
+   return [x,y,z];
+ };
+ m.sphere(head,'continuous-sculpted-face',[0,.11,0],[.27,.35,.235],'skin',80,54,sculpt);
+ m.sphere(head,'chin',[0,-.108,.183],[.111,.038,.054],'skin',30,18);
  for(const sg of [-1,1]){
-   m.sphere(head,'nose-wing',[sg*.068,.004,.270],[.052,.041,.044],'skin',18,11);
-   m.sphere(head,'nostril',[sg*.064,-.025,.314],[.019,.011,.014],'skinShade',14,9);
-   m.sphere(head,'cheekbone',[sg*.170,.075,.159],[.098,.071,.072],'skin',26,18);
-   m.sphere(head,'jaw',[sg*.17,-.08,.087],[.060,.127,.11],'skin',22,14);
-   m.sphere(head,'ear',[sg*.274,.077,-.005],[.069,.126,.069],'skin',22,16);
-   m.sphere(head,'ear-inside',[sg*.328,.07,.043],[.02,.054,.018],'skinShade',12,10);
-   m.sphere(head,'socket',[sg*.119,.161,.215],[.098,.064,.052],'skinShade',28,18);
-   m.sphere(head,'sclera',[sg*.12,.160,.253],[.073,.045,.032],'eyeWhite',26,17);
-   m.sphere(head,'iris',[sg*.12,.158,.285],[.03,.03,.010],'iris',20,14);
-   m.sphere(head,'pupil',[sg*.12,.157,.293],[.014,.017,.006],'pupil',18,12);
-   m.sphere(head,'eyelid',[sg*.12,.204,.247],[.084,.026,.04],'skin',28,14);
-   m.wire(head,'brow',[[sg*.06,.247,.248],[sg*.13,.263,.254],[sg*.196,.235,.23]],.022,'hair');
+   m.sphere(head,'nostril',[sg*.051,-.020,.262],[.015,.010,.009],'skinShade',14,10);
+   m.sphere(head,'ear',[sg*.26,.066,-.015],[.043,.080,.046],'skin',22,16);
+   m.sphere(head,'ear-inner',[sg*.292,.065,.02],[.014,.041,.013],'skinShade',12,10);
+   m.sphere(head,'eye-recess',[sg*.116,.160,.202],[.069,.032,.025],'skinShade',30,18);
+   m.sphere(head,'sclera',[sg*.116,.157,.218],[.059,.028,.025],'eyeWhite',32,18);
+   m.sphere(head,'iris',[sg*.116,.156,.242],[.018,.020,.005],'iris',24,15);
+   m.sphere(head,'pupil',[sg*.116,.156,.246],[.008,.012,.003],'pupil',20,14);
+   m.sphere(head,'upper-eyelid',[sg*.116,.187,.22],[.072,.016,.031],'skin',30,14);
+   m.wire(head,'sharp-brow',[[sg*.057,.224,.228],[sg*.127,.237,.241],[sg*.19,.213,.218]],.010,'hair');
  }
- m.sphere(head,'upper-lip',[0,-.058,.250],[.118,.029,.026],'lips',28,15);
- m.sphere(head,'lower-lip',[0,-.089,.247],[.104,.024,.026],'lips',28,15);
+ m.wire(head,'mouth-line',[[-.075,-.081,.225],[0,-.085,.230],[.075,-.081,.225]],.005,'lips');
+ m.sphere(head,'lower-lip',[0,-.105,.218],[.075,.013,.012],'lips',24,12);
  m.sphere(head,'hair-base',[0,.333,-.045],[.265,.128,.235],'hair',35,19);
  for(let q=0;q<11;q++){
    const x=(q-5)*.048;
    m.wire(head,'hand-formed-hair',[[x*.79,.40,-.04],[x*.9,.485,-.08],[x+.052,.42,-.17],[x+.06,.313,-.24]],.020,'hair');
  }
- if(i===0){m.wire(head,'braided-tail',[[0,.38,-.2],[-.06,.23,-.33],[-.16,.08,-.39],[-.19,-.14,-.39]],.046,'hair');m.plate(head,'circuit',0,.296,.225,.094,.052,.02,'glow');}
- else {m.plate(head,'mask',0,-.12,.267,.32,.10,.08,'metal');m.plate(head,'red-mark',0,-.122,.321,.11,.04,.02,'glow');for(const sg of [-1,1])m.wire(head,'mask-horns',[[sg*.21,.35,.04],[sg*.24,.44,.03],[sg*.26,.57,-.016],[sg*.245,.62,-.053]],.049,'metal');}
+ if(i===0){m.plate(head,'breather-mask',0,-.095,.247,.33,.126,.045,'armor');for(let k=-2;k<=2;k++)m.plate(head,'mask-vent',k*.044,-.093,.280,.017,.049,.014,'metal');m.wire(head,'braided-tail',[[0,.38,-.2],[-.06,.23,-.33],[-.16,.08,-.39],[-.19,-.14,-.39]],.046,'hair');m.plate(head,'circuit',0,.296,.225,.094,.052,.02,'glow');}
+ else {m.plate(head,'mask',0,-.104,.256,.32,.136,.058,'armorBright');m.plate(head,'red-mark',0,-.117,.298,.11,.036,.019,'glow');for(const sg of [-1,1])m.wire(head,'mask-horns',[[sg*.21,.35,.04],[sg*.24,.44,.03],[sg*.26,.57,-.016],[sg*.245,.62,-.053]],.049,'metal');}
  m.finish(i===0?'kael.glb':'vex.glb');
 }
 create(0);create(1);
