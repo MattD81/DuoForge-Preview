@@ -6,6 +6,7 @@ import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=surfaces-v1";
+import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 
 const $=id=>document.getElementById(id);
@@ -370,6 +371,7 @@ async function loadGLB(blob,name){
  try{
   const gltf=await loader.loadAsync(url);
   const object=gltf.scene;object.name=name||"Importerad GLB";
+  registerRigClips(object,gltf.animations||[]);
   if(new THREE.Box3().setFromObject(object).isEmpty())throw Error("Filen innehåller ingen synlig geometri.");
   pushHistory();root.add(object);
   object.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
