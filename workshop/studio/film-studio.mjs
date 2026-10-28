@@ -7,7 +7,8 @@ import {createPathTraceStills} from "./path-trace-stills.mjs";
 import {createPathFilm} from "./cinema-path-film.mjs";
 import {createCinemaVideoAssembler} from "./cinema-video-assembly.mjs";
 import {normalizeCuts,movieDuration,locateCut,frameBatch,FrameZip} from "./cinema-production.mjs";
-import {filmClock,TemporalFilmCompositor,ENGINE_VERSION} from "./cinema-engine-core.mjs";
+import {filmClock,ENGINE_VERSION} from "./cinema-engine-core.mjs";
+import {createCinemaCompositor} from "./cinema-gpu-engine.mjs";
 
 const $=id=>document.getElementById(id);
 const safe=(name)=>String(name||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").trim().replace(/\s+/g,"-").slice(0,70)||"DuoForge";
@@ -542,7 +543,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   let compositor=null;
   try{
    setOutputSize(width,height);
-   if(samples>1)compositor=new TemporalFilmCompositor({width,height,platform});
+   if(samples>1)compositor=createCinemaCompositor({width,height,platform});
    for(const f of plan.frames){
     if(frameAborted)break;
     let png;
@@ -578,6 +579,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
      duration:format.duration,start:plan.first,end:plan.first+done,total:plan.total,
      next:resume,cuts:normalizeCuts(cuts),look:$("filmLook").value,
      renderer:ENGINE_VERSION,temporalSamples:samples,shutterAngle,
+     accumulation:compositor?.mode||"native-webgl-png",
      note:"Frame-exact PNG sequence. Optional linear-light motion blur. Source GLB renders through Three.js/WebGL. ZIP contains no soundtrack."};
     await zip.add("manifest.json",new Blob([JSON.stringify(manifest,null,2)],{type:"application/json"}));
     saveBlob(zip.finish(),safe(filename())+"-frames-"+plan.first+"-"+(plan.first+done-1)+".zip");
