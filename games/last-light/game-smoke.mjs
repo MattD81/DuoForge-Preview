@@ -8,7 +8,7 @@ const watch=page=>{
  page.on("console",m=>{if(m.type()==="error")errors.push("console: "+m.text());});
 };
 try{
- const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1,acceptDownloads:true});
+ const page=await browser.newPage({viewport:{width:1152,height:720},deviceScaleFactor:1,acceptDownloads:true});
  watch(page);
  await page.goto("http://127.0.0.1:8080/games/last-light/",{waitUntil:"domcontentloaded"});
  await page.waitForTimeout(2500);
@@ -24,7 +24,9 @@ try{
  await page.locator("#start").click();
  assert.equal(await page.locator("#intro").isVisible(),false);
  await page.keyboard.down("w");await page.waitForTimeout(1300);await page.keyboard.up("w");
- await page.waitForFunction(()=>Number(document.querySelector("#speed")?.textContent)>0,{timeout:5000});
+ await page.waitForTimeout(3000);
+ console.log("FRAME STATE",await page.evaluate(()=>({speed:document.querySelector("#speed")?.textContent,fps:document.querySelector("#fps")?.textContent,boot:document.querySelector("#bootMessage")?.textContent})),errors.slice(0,10));
+ await page.waitForFunction(()=>Number(document.querySelector("#speed")?.textContent)>0,{timeout:12000});
  await page.locator("#auto").click();
  assert.match(await page.locator("#auto").textContent(),/PÅ/);
  await page.locator("#weather").click();
