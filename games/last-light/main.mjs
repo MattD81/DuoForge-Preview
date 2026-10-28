@@ -184,7 +184,7 @@ function prepare(){
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
  renderer.shadowMap.enabled=!isPhone&&quality!=="low";renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- renderer.setPixelRatio(software?.6:Math.min(devicePixelRatio||1,isPhone?1.2:1.5));
+ renderer.setPixelRatio(software ? 0.6 : Math.min(devicePixelRatio||1,isPhone?1.2:1.5));
  scene=new THREE.Scene();
  camera=new THREE.PerspectiveCamera(isPhone?66:61,1,.1,1250);
  camera.position.set(10,12,29);
