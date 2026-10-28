@@ -1,18 +1,19 @@
 import * as THREE from "three";
+import {materialLab,glassMaterial} from "./pbr-materials.mjs";
 // Original procedural rescue cruiser. Real closed 3D geometry, fully modeled back.
 // All components belong to one group and can be exported as a reusable GLB.
 export function createRescueShip(){
  const ship=new THREE.Group();ship.name="LAST LIGHT — AURORA rescue vessel";
- const paint=new THREE.MeshStandardMaterial({color:0x173747,metalness:.7,roughness:.28});
- const navy=new THREE.MeshStandardMaterial({color:0x082333,metalness:.56,roughness:.33});
- const cabin=new THREE.MeshStandardMaterial({color:0xd9e7e5,metalness:.27,roughness:.31});
- const deck=new THREE.MeshStandardMaterial({color:0x846a53,metalness:.07,roughness:.88});
- const brass=new THREE.MeshStandardMaterial({color:0xc2aa7c,metalness:.82,roughness:.2});
- const steel=new THREE.MeshStandardMaterial({color:0x9caeb8,metalness:.86,roughness:.24});
- const orange=new THREE.MeshStandardMaterial({color:0xed6746,metalness:.16,roughness:.39});
+ const paint=materialLab("hull");
+ const navy=materialLab("darkPaint");
+ const cabin=materialLab("ceramic");
+ const deck=materialLab("teak");
+ const brass=materialLab("bronze");
+ const steel=materialLab("steel");
+ const orange=materialLab("safety");
  const glow=new THREE.MeshStandardMaterial({color:0x44e8f5,emissive:0x0ac8e8,emissiveIntensity:2.2,metalness:.15,roughness:.2});
- const glass=new THREE.MeshPhysicalMaterial({color:0x5fa5b4,metalness:.18,roughness:.12,transparent:true,opacity:.64,depthWrite:false,side:THREE.DoubleSide});
- const glassDark=new THREE.MeshStandardMaterial({color:0x152b3b,metalness:.38,roughness:.17});
+ const glass=glassMaterial();
+ const glassDark=new THREE.MeshPhysicalMaterial({color:0x193643,metalness:.15,roughness:.09,clearcoat:1,clearcoatRoughness:.07,ior:1.5});
  const mesh=(geometry,material,name,x=0,y=0,z=0,parent=ship)=>{
   const item=new THREE.Mesh(geometry,material);item.name=name;item.position.set(x,y,z);
   item.castShadow=true;item.receiveShadow=true;parent.add(item);return item;
