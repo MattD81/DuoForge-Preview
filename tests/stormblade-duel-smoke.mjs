@@ -52,9 +52,15 @@ try{
  await mobile.locator("#start").click();
  assert.equal(await mobile.locator('[data-action="attack"]').isVisible(),true);
  const before=await mobile.evaluate(()=>window.__stormblade.state());
+ await mobile.bringToFront();
  await mobile.locator('[data-move="right"]').dispatchEvent("pointerdown",{pointerType:"touch",pointerId:45,button:0});
- await mobile.waitForTimeout(430);
- await mobile.locator('[data-move="right"]').dispatchEvent("pointerup",{pointerType:"touch",pointerId:45,button:0});
+ try{
+  // Software WebGL may have a multi-second shader/warmup frame on mobile.
+  await mobile.waitForFunction(arg=>window.__stormblade.state().playerX>arg.initial+.03,
+   {initial:before.playerX},{timeout:20000});
+ }finally{
+  await mobile.locator('[data-move="right"]').dispatchEvent("pointerup",{pointerType:"touch",pointerId:45,button:0});
+ }
  const after=await mobile.evaluate(()=>window.__stormblade.state());
  assert.ok(after.playerX>before.playerX,JSON.stringify({before,after}));
  await mobile.locator('[data-action="attack"]').dispatchEvent("pointerdown",{pointerType:"touch",pointerId:46,button:0});
