@@ -219,7 +219,7 @@ try{
  // Skeletal GLB bridge must preserve clips and support exact-timestamp bone poses.
  const rigBridge=await page.evaluate(async()=>{
   const THREE=await import("three");
-  const {registerRigClips,cloneRiggedModel,makeRigDirector}=await import("./workshop/studio/cinema-rig.mjs");
+  const {registerRigClips,cloneRiggedModel,makeRigDirector}=await import("/workshop/studio/cinema-rig.mjs");
   const root=new THREE.Group();
   const bone=new THREE.Bone();bone.name="Arm";root.add(bone);
   const clip=new THREE.AnimationClip("wave",2,[
