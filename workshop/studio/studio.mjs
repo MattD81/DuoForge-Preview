@@ -8,6 +8,8 @@ import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=ocean-physical-v5";
 import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
+import {initCharacterForge} from "./character-forge.mjs";
+import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -561,6 +563,8 @@ livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSel
 initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,dirty,fitScene,notify,select});
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
+initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
+initLocalImageTo3D({loadGLB,notify});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);

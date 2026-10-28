@@ -311,3 +311,22 @@
 #filmTraceMovie{background:linear-gradient(105deg,#376e7c,#694a98);border:1px solid #ac94e1;color:#fff}
 #filmTraceCancel{background:#703747;color:#fff}
 #filmRigReset{margin:6px 0;background:#283b60;color:#fff}
+
+
+/* Character Forge: additive, mobile-first modeling controls. */
+.character-forge-panel{background:linear-gradient(145deg,#20234b 0%,#172b48 56%,#122235 100%);border-bottom:1px solid #6653a6}
+.character-forge-panel .section-heading h2{color:#ddceff}
+.character-forge-panel .mini-pill{font-size:9px;color:#c6f6fe;background:#19344d;border-color:#4b7bac;white-space:nowrap}
+.character-forge-panel .hint{font-size:11px;line-height:1.6;color:#c4cde8}
+.character-forge-panel select,.character-forge-panel input[type=file]{display:block;width:100%;max-width:100%;min-width:0;margin:5px 0 12px;padding:9px 8px;border:1px solid #556a8d;border-radius:9px;color:#f5efff;background:#112137;font:inherit;font-size:12px}
+.character-forge-panel input[type=file]{font-size:10px}
+.character-forge-panel .range-line{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11px}
+.character-forge-panel .range-line input{min-width:85px;flex:1}
+.character-forge-panel .range-line output{color:#a6ffef;white-space:nowrap}
+.character-forge-panel .check-line{display:flex;gap:8px;align-items:center;font-size:11px;padding:5px 0 10px}
+.character-forge-panel button{width:100%;white-space:normal;line-height:1.35;min-height:39px;margin:6px 0}
+.character-forge-panel button:disabled{opacity:.5}
+.character-forge-panel hr{border:0;border-top:1px solid #4d5379;margin:15px 0}
+.character-forge-panel .subheading{font-size:12px;color:#e8d7ff}
+.character-forge-panel #forgeStatus{border:1px solid #455d83;border-radius:8px;padding:9px;margin-top:8px;background:#12223c}
+@media(max-width:580px){.character-forge-panel select,.character-forge-panel input[type=file]{font-size:16px}.character-forge-panel button{min-height:44px}}

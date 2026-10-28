@@ -36,3 +36,19 @@ This is an interactive **modeling editor MVP**, not feature parity with Blender 
 Controls: G move, R rotate, S scale, F focus, Delete remove, Ctrl/Cmd+Z undo, Shift+Ctrl/Cmd+Z redo. Drag gizmo handles to transform objects. On mobile use the onscreen buttons and touch orbit controls.
 
 Privacy/cost: The public Pages website contains only public workshop code and procedural starter assets. Imported models and projects are processed in browser memory and stored locally only if the user saves them. GitHub Pages doesn't run the full DuoForge backend.
+
+
+## Character Forge – genuine geometry (v1)
+
+The new Character Forge panel lives in the EXISTING /workshop/studio/ editor. It does not create a second platform or change Sites.
+
+- Skull mage starter model: fully volumetric editable mesh parts for a rounded cloak and hood, modeled skull and eye sockets, cloth details, jewelry and a curved staff. The back is explicitly modeled, not a reference photo stretched over a box.
+- Geometry quality: mobile, balanced and high presets control the procedural mesh density. Three original palettes and a staff toggle are available. The model is added to the standard scene tree and supports existing transform, sculpt, Material Lab, undo/redo, browser-local save and regular GLB export.
+- Image to geometry (limited): an uploaded transparent PNG or an isolated object on a uniform background can be traced into a genuine beveled 2.5D silhouette extrusion. Color is derived from an average of foreground pixels; no reference photograph is pasted onto a flat mesh. This is not high-quality single-image 360-degree AI reconstruction. The silhouette's unseen backside is manufactured, not inferred.
+- Images are kept on-device, downscaled to at most 384 px for analysis (max input 12 MB), with limits on generated geometry. No paid services, uploaded models or new API keys are used.
+
+Known limitations: Full generative 3D from arbitrary images (including hidden surfaces, texture inference, retopology and armature/animation) uses the OPTIONAL self-hosted TripoSR adapter in services/image-to-3d; its source and client are included, but the model weights and running GPU server are not. Without that explicitly installed separate service, Character Forge v1 uses a parametric modeler with a limited silhouette tool. No automatic rigging is claimed. GitHub Pages is separate from the live Sites platform.
+
+tests/character-forge-smoke.mjs covers generating a volumetric character, editing it, exporting GLB, silhouette import and a mobile smoke check.
+
+Optional TripoSR implementation and instructions: services/image-to-3d/README.md. The AI generation button checks for an authorized service on your own computer; it never claims AI is available when the model/server is missing.
