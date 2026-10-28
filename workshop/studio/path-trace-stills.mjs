@@ -2,7 +2,7 @@
 // Stable WebGL release 0.0.24 supports Three.js r180. Never used in gameplay/real-time
 // Film Studio video. All work stays on the user's device (no paid GPU or API).
 import * as THREE from "three";
-import {denoisePixels} from "./cinema-denoise.mjs";
+import {atrousDenoisePixels} from "./cinema-wavelet-denoise.mjs";
 const MODULE_URL="https://esm.sh/three-gpu-pathtracer@0.0.24?bundle&external=three";
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
@@ -125,7 +125,7 @@ export function createPathTraceStills({getAnchor,getCamera,onStatus,filename}){
      const ctx=copy.getContext("2d",{willReadFrequently:true});
      ctx.drawImage(canvas,0,0);
      const image=ctx.getImageData(0,0,width,height);
-     image.data.set(denoisePixels(image.data,width,height));
+     image.data.set(atrousDenoisePixels(image.data,width,height));
      ctx.putImageData(image,0,0);
      output=copy;
     }catch(err){console.warn("Denoising unavailable",err);}
