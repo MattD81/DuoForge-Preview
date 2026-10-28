@@ -2,3 +2,11 @@
 @media(max-width:480px){#rightTop{right:7px;top:145px}#radarPanel{width:90px}#radar{width:75px;height:75px}#options{width:100px}#options button{font-size:8px;min-height:29px}#missionCard{bottom:93px;max-width:calc(100% - 204px);width:194px;padding:7px 8px}#missionCard h2{font-size:15px}#missionCard .eyebrow{font-size:7px}#missionCard .missionFoot{display:none}#controls button{width:58px;height:56px;font-size:18px}.intro-content h1{font-size:clamp(58px,17vw,95px)}.intro-content{padding:15px 0}#vignette{box-shadow:inset 0 0 75px #05132270}}
 @media(max-height:560px) and (orientation:landscape){#topbar{height:40px}#hud{top:46px;left:7px;width:305px}.hud-cell strong{font-size:18px}.hud-cell{padding:4px 8px}#rightTop{top:43px}#missionCard{bottom:10px;left:8px;max-width:195px}#controls{bottom:7px;left:31%;right:7px;transform:none;justify-content:flex-end}#controls button{height:48px;width:54px}.intro-content h1{font-size:clamp(48px,12vw,75px)}.intro-content p{font-size:12px;line-height:1.35;margin-bottom:10px}.intro-content small{margin-top:8px}.feature-tags{margin-bottom:13px}.launch{min-height:45px;padding:8px 16px}.tagline{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){.loader{animation:none}*{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* Real ray-traced photo mode is an opt-in navigation, not a fake WebGL setting. */
+#options a{display:block;background:#173c3ccc;color:#b8f8e1;border:1px solid #5ac5a37a;
+ border-radius:9px;font-size:10px;font-weight:800;padding:10px 8px;text-align:center;
+ min-height:37px;letter-spacing:.04em;text-decoration:none;backdrop-filter:blur(12px)}
+#options a:hover{background:#1c5850;border-color:#a7ffe4}
+@media(max-width:730px){#options a{min-height:30px;padding:5px;font-size:9px;border-radius:6px}}
+@media(max-width:480px){#options a{font-size:8px;min-height:29px}}

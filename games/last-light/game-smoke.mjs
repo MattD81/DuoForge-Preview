@@ -20,6 +20,24 @@ try{
  assert.equal(await page.locator("#intro").isVisible(),true);
  assert.equal(await page.locator("#scene").isVisible(),true);
  assert.match(await page.locator(".performance").textContent(),/WebGL/);
+ assert.match(await page.locator("#raytrace").getAttribute("href"),/raytrace\.html$/,"Optional real WebGPU renderer is linked");
+ const pbr=await page.evaluate(async()=>{
+   const {createRescueShip}=await import("./ship.mjs");
+   const {materialLab,materialManifest}=await import("./pbr-materials.mjs");
+   const ship=createRescueShip();
+   const surfaces=[];
+   ship.group.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.userData?.source==="DuoForge Material Lab V3")
+    surfaces.push({name:mesh.material.name,map:!!mesh.material.map,normal:!!mesh.material.normalMap,
+     orm:!!mesh.material.roughnessMap,physical:mesh.material.isMeshPhysicalMaterial,
+     pixel:mesh.material.roughnessMap?.image?.width})});
+   return {surfaces:surfaces.slice(0,5),count:surfaces.length,
+    manifest:materialManifest(),deck:materialLab("teak").userData.spec.roughness};
+ });
+ assert.ok(pbr.count>25,"Ship uses new real physically based materials throughout");
+ assert.ok(pbr.surfaces.every(s=>s.map&&s.normal&&s.orm&&s.physical&&s.pixel>=64));
+ assert.ok(Object.keys(pbr.manifest).length>=9);
+ assert.ok(pbr.deck>.7&&pbr.deck<1);
+
  assert.equal(await page.locator("#game").getAttribute("data-islands"),"8","Eight real 3D terrain islands are generated");
  assert.ok(Number(await page.locator("#game").getAttribute("data-forest"))>=180,"Organic forests are instanced");
  assert.ok(Number(await page.locator("#game").getAttribute("data-granite"))>=100,"Granite rocks are instanced");
@@ -64,6 +82,18 @@ try{
  assert.match(ship.suggestedFilename(),/\.glb$/);
  assert.ok(await ship.path());
  await page.screenshot({path:"last-light-storm-desktop.png"});
+ // The WebGPU still-image path is optional. Headless WebGL-only runners must
+ // receive an honest no-WebGPU explanation, not a fabricated raytraced image.
+ const probe=await browser.newPage({viewport:{width:760,height:610},deviceScaleFactor:1});
+ await probe.goto("http://127.0.0.1:8080/games/last-light/raytrace.html",{waitUntil:"domcontentloaded"});
+ assert.equal(await probe.locator("#photo").isVisible(),true);
+ assert.equal(await probe.locator("#render").isVisible(),true);
+ const hasGPU=await probe.evaluate(()=>!!navigator.gpu);
+ if(!hasGPU){
+  await probe.waitForFunction(()=>document.querySelector("#fallback")?.classList.contains("visible"),{timeout:10000});
+  assert.match(await probe.locator("#fallbackText").textContent(),/WebGPU/);
+ }
+ await probe.close();
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
  watch(mobile);
  await mobile.goto("http://127.0.0.1:8080/games/last-light/",{waitUntil:"domcontentloaded"});

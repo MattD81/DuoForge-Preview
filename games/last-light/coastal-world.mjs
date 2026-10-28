@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {materialLab} from "./pbr-materials.mjs";
 import {ISLAND_SITES,terrainHeight,coastlineRadius,isLand,selectTerrainResolution,deterministicRandom} from "./coastal-terrain.mjs";
 
 const up=new THREE.Object3D(),tint=new THREE.Color();
@@ -44,11 +45,11 @@ export function buildIslandGeometry(site,quality="medium"){
  geo.computeVertexNormals();geo.computeBoundingSphere();
  return geo;
 }
-const rockMaterial=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:false,roughness:.97,metalness:.01});
+const rockMaterial=materialLab("stone");
 const cliffMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.98,metalness:0,side:THREE.DoubleSide});
 const pineMaterial=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1});
 const trunkMaterial=new THREE.MeshStandardMaterial({color:0x5a4d41,roughness:.97});
-const graniteMaterial=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95});
+const graniteMaterial=materialLab("stone");
 const pineShape=new THREE.ConeGeometry(1,1,7);
 const trunkShape=new THREE.CylinderGeometry(.18,.26,1,6);
 const scatterShape=new THREE.IcosahedronGeometry(1,1);
@@ -108,10 +109,10 @@ function addRockField(group,site,quality){
  rocks.castShadow=quality==="high";rocks.receiveShadow=true;group.add(rocks);
  return max;
 }
-const dockWood=new THREE.MeshStandardMaterial({color:0x635245,roughness:.93,metalness:.01});
-const siding=new THREE.MeshStandardMaterial({color:0x986c4f,roughness:.87,metalness:0});
-const slateRoof=new THREE.MeshStandardMaterial({color:0x303e46,roughness:.76,metalness:.15});
-const darkWood=new THREE.MeshStandardMaterial({color:0x302e2c,roughness:.94});
+const dockWood=materialLab("wood");
+const siding=materialLab("teak");
+const slateRoof=materialLab("roof");
+const darkWood=materialLab("darkPaint");
 const warmWindow=new THREE.MeshStandardMaterial({color:0xffd79a,emissive:0xfda756,emissiveIntensity:.68,metalness:0,roughness:.3});
 const harborLights=[];
 function put(group,geo,mat,name,x,y,z){
