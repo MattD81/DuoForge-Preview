@@ -72,7 +72,7 @@ export const DELUXE_SHARPEN_SHADER=Object.freeze({
  'vec3 detail=center.rgb-near4;',
  'float edge=abs(dot(detail,vec3(.2126,.7152,.0722)));',
  'float haloGate=1.-smoothstep(.10,.32,edge);',
- 'vec3 result=clamp(center.rgb+detail*uStrength*haloGate,0.,1.);',
+ 'vec3 result=max(center.rgb+detail*uStrength*haloGate,vec3(0.));',
  'gl_FragColor=vec4(result,center.a);',
  '}'
  ].join('\n')
