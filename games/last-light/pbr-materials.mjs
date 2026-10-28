@@ -29,7 +29,7 @@ export function pixelAt(x,y,size,spec){
  const modulation=clamp(.82+(h-.5)*.66,.66,1.02);
  const base=new THREE.Color(spec.color).convertLinearToSRGB();
  const c=[base.r,base.g,base.b].map(v=>Math.round(clamp(v*modulation,0,1)*255));
- const rough=Math.round(clamp(spec.roughness+(h-.5)*.42,.045,1)*255);
+ const rough=Math.round(clamp(spec.roughness+(h-.5)*.31,.045,1)*255);
  const metal=Math.round(spec.metalness*255);
  const nx=-hx*1.8,ny=-hy*1.8,norm=Math.hypot(nx,ny,1);
  return {
@@ -73,7 +73,7 @@ export function materialLab(name,{size=128}={}){
   map:maps.color,
   roughnessMap:maps.orm,metalnessMap:maps.orm,
   normalMap:maps.normal,normalScale:new THREE.Vector2(.27,.27),
-  color:0xffffff,metalness:spec.metalness,roughness:spec.roughness,
+  color:0xffffff,metalness:1,roughness:1,
   clearcoat:spec.clearcoat,clearcoatRoughness:spec.clearcoatRoughness,
   envMapIntensity:.95
  });
