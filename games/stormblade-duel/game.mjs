@@ -1,14 +1,16 @@
 import * as THREE from "three";
 import {createWorld} from "./world.mjs";
 import {createFighterUpgrade} from "./character-forge-bridge.mjs";
+import {createDuoForgePlayDirector} from "./play-director.mjs";
+import {createCinematicLighting} from "../../workshop/studio/cinematic-lighting.mjs";
 import {createGPUDeluxe,DELUXE_SHARPEN_SHADER} from "../../workshop/studio/gpu-deluxe.mjs";
 
 const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const host=$("sceneHost");
-let renderer,scene,camera,world,gpu,composer=null,sharp=null,fighterUpgrade=null;
+let renderer,scene,camera,world,gpu,composer=null,sharp=null,fighterUpgrade=null,playDirector=null,filmLights=null;
 let running=false,finished=false,round=90,last=0,now=0,screenFlash=0,frame=0,noticeTime=0;
-let mode="auto",soundEnabled=false,audio=null;
+let mode="auto",filmLook="off",soundEnabled=false,audio=null;
 const held={up:false,down:false,left:false,right:false,block:false};
 const player={hp:100,attack:null,cool:0,invuln:0,stun:0,dodge:0,combo:0,comboTime:0};
 const enemy={hp:100,attack:null,cool:1.3,invuln:0,stun:0,dodge:0};
@@ -22,12 +24,21 @@ function initRenderer(){
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
  renderer.toneMappingExposure=1.3;
- renderer.shadowMap.enabled=false; // mobile-friendly and stable; scene remains truly lit.
+ renderer.shadowMap.enabled=false; // expensive PCF shadows are opt-in in Film mode.
+ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  host.appendChild(renderer.domElement);
  gpu=createGPUDeluxe({renderer,canvas:renderer.domElement});
  gpu.configure({mode,quality:"high"});
  world=createWorld(scene,camera,renderer);
  fighterUpgrade=createFighterUpgrade(world,{onStatus:message=>setNotice(message,3.5)});
+ playDirector=createDuoForgePlayDirector({camera,world,canvas:host});
+ filmLights=createCinematicLighting({
+  scene,renderer,getAnchor:()=>world.ship,
+  getQuality:()=>mode==="quality"?"high":"medium"
+ });
+ // Keep PBR shadows bounded to actual combatants; ship planks already receive.
+ for(const fighter of [world.player,world.opponent])
+  fighter.root.traverse(obj=>{if(obj.isMesh)obj.castShadow=true});
  resize();addEventListener("resize",resize,{passive:true});
  document.addEventListener("visibilitychange",()=>{last=performance.now()*.001;});
  setupPost();
@@ -93,6 +104,7 @@ function resetState(){
  world.player.root.rotation.y=-Math.PI/2;
  world.opponent.root.rotation.y=Math.PI/2;
  round=90;finished=false;running=true;now=0;frame=0;screenFlash=0;last=performance.now()*.001;
+ playDirector?.reset();
  $("modal").hidden=true;$("endModal").hidden=true;
  syncHUD();setNotice("⚡ RUNDA 1 — KÄMPA FÖR SKEPPET!",2.8);
 }
@@ -142,6 +154,7 @@ function applyHit(attacker,defender,from,to,heavy){
  const impact=to.root.position.clone().lerp(from.root.position,.26).add(new THREE.Vector3(0,1.58,0));
  world.spark(impact,blocking?0x7ef2f4:heavy?0xffd16f:0xf4a168);
  screenFlash=blocking?.05:heavy?.20:.11;
+ playDirector?.hit({heavy,blocked:blocking});
  playTone(blocking?540:heavy?72:120,heavy?.24:.12,blocking?"sine":"sawtooth",.055);
  if(attacker===player){
   player.combo=player.comboTime>0?player.combo+1:1;player.comboTime=2.6;
@@ -243,10 +256,11 @@ function renderFrame(timeMs){
  const seconds=timeMs*.001,elapsed=last?clamp(seconds-last,0,.12):1/60;last=seconds;
  if(document.hidden)return;
  tick(elapsed);
+ playDirector?.update(elapsed);
  if(screenFlash>0){
   screenFlash=Math.max(0,screenFlash-elapsed);
-  renderer.toneMappingExposure=1.3+screenFlash*1.3;
- }else renderer.toneMappingExposure=1.3;
+  renderer.toneMappingExposure=(filmLook==="off"?1.3:1.08)+screenFlash*1.3;
+ }else renderer.toneMappingExposure=filmLook==="off"?1.3:1.08;
  if(gpu&&running&&frame%1===0){
   perfState=gpu.tick(elapsed,{onResize:()=>{composer?.setPixelRatio(renderer.getPixelRatio());composer?.setSize(host.clientWidth||1,host.clientHeight||1);}});
  }
@@ -289,6 +303,19 @@ for(const el of document.querySelectorAll("[data-move],[data-action]")){
 }
 $("start").onclick=startDemo;$("restart").onclick=resetState;$("endRestart").onclick=resetState;
 $("sound").onclick=toggleSound;
+$("cinema").onclick=()=>{
+ const looks=["off","noir","natural","golden"];
+ filmLook=looks[(looks.indexOf(filmLook)+1)%looks.length];
+ if(filmLook==="off"){
+  filmLights?.clear();renderer.shadowMap.enabled=false;
+ }else{
+  renderer.shadowMap.enabled=mode==="quality"||window.innerWidth>800;
+  filmLights?.apply(filmLook,true);
+ }
+ const labels={off:"Film av",noir:"Film noir",natural:"Naturligt",golden:"Gyllene"};
+ $("cinema").textContent="◉ "+labels[filmLook];
+ setNotice("CINEMA 3D • "+labels[filmLook],1.7);
+};
 $("models").onclick=async()=>{
  const button=$("models");
  if(!fighterUpgrade||button.disabled)return;
@@ -303,6 +330,10 @@ $("quality").onclick=()=>{
  const modes=["auto","quality","performance","off"];
  mode=modes[(modes.indexOf(mode)+1)%modes.length];
  gpu.configure({mode,quality:"high"});
+ if(filmLook!=="off"){
+  renderer.shadowMap.enabled=mode==="quality"||window.innerWidth>800;
+  filmLights?.apply(filmLook,true);
+ }
  const label={auto:"AUTO",quality:"KVALITET",performance:"PRESTANDA",off:"AV"}[mode];
  $("quality").textContent="◈ "+label;
  setNotice("GPU Deluxe: "+label,1.2);
@@ -314,7 +345,8 @@ try{
   state:()=>({playerHp:player.hp,enemyHp:enemy.hp,running,finished,round,mode,
    playerX:world?.player.root.position.x,enemyX:world?.opponent.root.position.x,
    backend:gpu?.info().capabilities.backend,
-   ocean:world?.oceanVersion,characterModel:fighterUpgrade?.status}),
+   ocean:world?.oceanVersion,characterModel:fighterUpgrade?.status,
+   filmLook,playDirector:playDirector?.info()}),
   restart:resetState
  });
  Object.defineProperty(window,"__stormblade",{value:qa,configurable:false});
