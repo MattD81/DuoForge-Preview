@@ -9,6 +9,7 @@ import {createEnvironment,worldNames} from "./render-environments.mjs?v=ocean-1"
 import {normalizeOceanSettings} from "./ocean-water.mjs";
 import {initFilmStudio} from "./film-studio.mjs";
 import {createCinematicLighting} from "./cinematic-lighting.mjs";
+import {cloneRiggedModel,makeRigDirector} from "./cinema-rig.mjs";
 import {checkpointProgress} from "./render-missions.mjs";
 
 const $=id=>document.getElementById(id);
@@ -36,7 +37,7 @@ export function initRenderWorld(ctx){
  let composer=null,envTexture=null,pmrem=null,sessionTime=0,gameTime=0,mission=[],nextGate=0,completed=false;
  let cinematicFx={dof:false,reflections:false,aperture:.001,maxblur:.009,focusScale:1};
  let dofPass=null,dofFocusCenter=null,hdrTexture=null,hdrRenderTarget=null,hdrIntensity=1,hdrVersion=0;
- let filmRest=null;
+ let filmRest=null,rigDirector=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
  const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
@@ -273,7 +274,8 @@ export function initRenderWorld(ctx){
  function placeModel(){
   const obj=objectToPreview();
   if(!obj)throw Error("Skapa eller importera först ett 3D-objekt.");
-  model=obj.clone(true);
+  rigDirector?.release();model=cloneRiggedModel(obj);
+  rigDirector=makeRigDirector(model);
   model.name=obj.name+" (testkopia)";
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
   anchor=new THREE.Group();anchor.name="Render World preview character/vehicle";
@@ -423,6 +425,7 @@ export function initRenderWorld(ctx){
  function stop(){
   if(!active)return;
   filmStudio?.onPreviewExit();
+  rigDirector?.release();rigDirector=null;
   unloadHDRI();cinemaLighting.clear();
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
@@ -620,6 +623,7 @@ export function initRenderWorld(ctx){
   notify,filename,
   applyFilmLook:(look,finish)=>cinemaLighting.apply(look,finish),
   setFilmPose,importHDRI,setHDRIIntensity,unloadHDRI,
+  getRigDirector:()=>rigDirector,
   setCinematicEffects,
   getPreviewAnchor:()=>anchor
  });
