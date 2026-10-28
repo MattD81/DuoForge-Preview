@@ -304,3 +304,10 @@
 .film-export-panel #filmFrameCancel{background:#793a46;border-color:#c47787}
 #filmFrameStatus{margin-top:9px;padding:9px;line-height:1.5;font-size:10px;background:#112d38;color:#a7ead6;border:1px solid #3f6b74;border-radius:7px}
 @media(max-width:580px){.film-production-panel{padding:8px}.film-production-grid{gap:5px}.film-cut-row{padding:5px 3px}}
+
+/* Rig animator and offline film-path job status */
+#filmRigStatus,#filmTraceStatus{margin-top:9px;padding:9px;font-size:10px;line-height:1.5;
+ color:#bde8e4;background:#102a33;border:1px solid #35566a;border-radius:8px}
+#filmTraceMovie{background:linear-gradient(105deg,#376e7c,#694a98);border:1px solid #ac94e1;color:#fff}
+#filmTraceCancel{background:#703747;color:#fff}
+#filmRigReset{margin:6px 0;background:#283b60;color:#fff}
