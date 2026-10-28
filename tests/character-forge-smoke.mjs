@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {chromium} from "playwright";
+
+const browser=await chromium.launch({headless:true,args:["--no-sandbox","--use-gl=angle","--use-angle=swiftshader","--enable-webgl","--disable-gpu-sandbox"]});
+const errors=[];
+try {
+ const page=await browser.newPage({viewport:{width:1450,height:900},acceptDownloads:true});
+ page.on("pageerror",e=>errors.push(e.message));
+ await page.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
+ assert.equal(await page.locator("#characterForge").count(),1);
+ await page.locator("#forgeDetail").selectOption("3");
+ await page.locator("#forgeCreate").click();
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
+ const stats=await page.locator("#sceneStats").innerText();
+ const triangles=Number(stats.match(/([\d\s\u00a0]+) trianglar/)[1].replace(/\s/g,""));
+ assert.ok(triangles>3000,"real geometry, got "+triangles);
+ assert.match(await page.locator("#hierarchy").innerText(),/Huva · rundad hel baksida/);
+ console.log("PASS: editable 360-degree hood, skull, staff and cape");
+ const [dl]=await Promise.all([page.waitForEvent("download"),page.locator("#exportGLB").click()]);
+ const buffer=readFileSync(await dl.path());
+ assert.equal(buffer.subarray(0,4).toString(),"glTF");
+ const len=buffer.readUInt32LE(12);
+ const gltf=JSON.parse(buffer.subarray(20,20+len).toString());
+ assert.ok(gltf.meshes.length>=40,"multiple distinct 3D mesh parts");
+ console.log("PASS: binary GLB includes editable geometries");
+ await page.locator("#undo").click();
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1");
+ await page.locator("#redo").click();
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
+ console.log("PASS: undo and redo");
+ const base64=await page.evaluate(()=>{
+   const c=document.createElement("canvas");c.width=128;c.height=128;
+   const ctx=c.getContext("2d");ctx.fillStyle="#45becc";
+   ctx.beginPath();ctx.ellipse(64,60,28,47,0,0,Math.PI*2);ctx.fill();
+   return c.toDataURL("image/png").split(",")[1];
+ });
+ await page.locator("#forgeImage").setInputFiles({name:"isolated.png",mimeType:"image/png",buffer:Buffer.from(base64,"base64")});
+ await page.locator("#forgeSilhouette").click();
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="3",{timeout:15000});
+ assert.match(await page.locator("#forgeStatus").innerText(),/Siluettvolym klar/);
+ console.log("PASS: offline image silhouette becomes a 2.5D mesh");
+ await page.screenshot({path:"character-forge-desktop.png"});
+ const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+ mobile.on("pageerror",e=>errors.push(e.message));
+ await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
+ await mobile.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
+ await mobile.locator("#forgeCreate").click();
+ await mobile.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
+ await mobile.screenshot({path:"character-forge-mobile.png",fullPage:true});
+ console.log("PASS: mobile UI");
+ assert.deepEqual(errors,[]);
+} finally {await browser.close()}
