@@ -27,7 +27,7 @@ function setButtons(){
  for(const [id,key] of Object.entries(aliases)){
   const el=$(id);
   const down=e=>{
-   e.preventDefault();if(e.pointerId!==undefined)el.setPointerCapture?.(e.pointerId);
+   e.preventDefault();if(e.pointerId!==undefined){try{el.setPointerCapture?.(e.pointerId)}catch{/* Synthetic/inactive pointers: buttons remain functional without capture. */}}
    keys[key]=true;el.classList.add("pressed");
    if(game.auto){game.auto=false;updateButtons();}
   };
