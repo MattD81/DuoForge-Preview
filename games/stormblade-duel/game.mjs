@@ -2,6 +2,7 @@ import * as THREE from "three";
 import {createWorld} from "./world.mjs";
 import {createFighterUpgrade} from "./character-forge-bridge.mjs";
 import {createDuoForgePlayDirector} from "./play-director.mjs";
+import {createGamepadBridge} from "./duopad-input.mjs";
 import {createCinematicLighting} from "../../workshop/studio/cinematic-lighting.mjs";
 import {createGPUDeluxe,DELUXE_SHARPEN_SHADER} from "../../workshop/studio/gpu-deluxe.mjs";
 
@@ -12,6 +13,9 @@ let renderer,scene,camera,world,gpu,composer=null,sharp=null,fighterUpgrade=null
 let running=false,finished=false,round=90,last=0,now=0,screenFlash=0,frame=0,noticeTime=0;
 let mode="auto",filmLook="off",soundEnabled=false,audio=null;
 const held={up:false,down:false,left:false,right:false,block:false};
+const gamepad=createGamepadBridge();
+let padState={connected:false,left:false,right:false,up:false,down:false,block:false};
+const inputDown=name=>Boolean(held[name]||padState[name]);
 const player={hp:100,attack:null,cool:0,invuln:0,stun:0,dodge:0,combo:0,comboTime:0};
 const enemy={hp:100,attack:null,cool:1.3,invuln:0,stun:0,dodge:0};
 let perfState={frameMs:null,fps:null,p95Ms:null,pixelRatio:1};
@@ -144,7 +148,7 @@ function applyHit(attacker,defender,from,to,heavy){
  if(dist>(heavy?2.7:2.25))return;
  const hurt=attacker===player?enemy:player;
  if(hurt.invuln>0)return;
- const blocking=defender===world.player&&held.block;
+ const blocking=defender===world.player&&inputDown("block");
  const raw=heavy?27:15;
  const amount=blocking?Math.round(raw*.23):raw;
  hurt.hp=clamp(hurt.hp-amount,0,100);
@@ -190,10 +194,10 @@ function end(outcome){
 function movePlayer(dt){
  const root=world.player.root;
  if(player.stun>0||player.attack?.heavy)return 0;
- let x=(held.right?1:0)-(held.left?1:0),z=(held.down?1:0)-(held.up?1:0);
+ let x=(inputDown("right")?1:0)-(inputDown("left")?1:0),z=(inputDown("down")?1:0)-(inputDown("up")?1:0);
  const l=Math.hypot(x,z);if(!l)return 0;
  x/=l;z/=l;
- const speed=held.block?1.22:3.08;
+ const speed=inputDown("block")?1.22:3.08;
  root.position.x=clamp(root.position.x+x*speed*dt,-2.17,2.17);
  root.position.z=clamp(root.position.z+z*speed*dt,-5.8,5.8);
  return 1;
@@ -238,7 +242,7 @@ function tick(dt){
  updateAttack(player,world.player,world.opponent,dt);
  updateAttack(enemy,world.opponent,world.player,dt);
  const poses=[
-  {walk,block:held.block?1:0,swing:player.attack?1-player.attack.remaining/player.attack.total:0,
+  {walk,block:inputDown("block")?1:0,swing:player.attack?1-player.attack.remaining/player.attack.total:0,
    heavy:!!player.attack?.heavy,hurt:player.stun,groundY:.57},
   {walk:enemyWalk,block:0,swing:enemy.attack?1-enemy.attack.remaining/enemy.attack.total:0,
    heavy:!!enemy.attack?.heavy,hurt:enemy.stun,groundY:.57}
@@ -255,6 +259,11 @@ function renderFrame(timeMs){
  requestAnimationFrame(renderFrame);
  const seconds=timeMs*.001,elapsed=last?clamp(seconds-last,0,.12):1/60;last=seconds;
  if(document.hidden)return;
+ padState=gamepad.poll();
+ if(padState.edges?.connected)setNotice("🎮 DUOPAD ANSLUTEN!",2.5);
+ if(padState.edges?.attack)attack(player,false);
+ if(padState.edges?.heavy)attack(player,true);
+ if(padState.edges?.dodge)dodge();
  tick(elapsed);
  playDirector?.update(elapsed);
  if(screenFlash>0){
@@ -346,7 +355,7 @@ try{
    playerX:world?.player.root.position.x,enemyX:world?.opponent.root.position.x,
    backend:gpu?.info().capabilities.backend,
    ocean:world?.oceanVersion,characterModel:fighterUpgrade?.status,
-   filmLook,playDirector:playDirector?.info()}),
+   filmLook,playDirector:playDirector?.info(),gamepad:padState.connected}),
   restart:resetState
  });
  Object.defineProperty(window,"__stormblade",{value:qa,configurable:false});
