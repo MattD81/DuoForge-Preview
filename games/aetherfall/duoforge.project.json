@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "title": "AETHERFALL — Fusion Engine 3D Action",
+  "category": "3D",
+  "engine": "three",
+  "entry": "index.html",
+  "source": "original-procedural",
+  "visibility": "private",
+  "features": [
+    "three-level-progression",
+    "3d-combat",
+    "procedural-pbr-world",
+    "gamepad",
+    "touch-controls",
+    "auto-director",
+    "scene-dna",
+    "horizon-detail-budget",
+    "adaptive-resolution"
+  ],
+  "notes": "Source in existing DuoForge-Preview. Requires ../../workshop/studio/fusion-engine.mjs from PR #32. Three is declared as npm dependency for DuoForge isolated builder. No external CSS, paid APIs, or missing binary assets."
+}
