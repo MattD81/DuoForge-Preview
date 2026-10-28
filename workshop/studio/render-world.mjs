@@ -146,6 +146,8 @@ export function initRenderWorld(ctx){
   for(const id of ["oceanHeight","oceanHeightLive"])$(id).value=oceanSettings.height;
   for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).value=oceanSettings.speed;
   for(const id of ["oceanWeather","oceanWeatherLive"])$(id).value=oceanSettings.weather;
+  for(const id of ["oceanWhitecaps","oceanWhitecapsLive"])$(id).value=oceanSettings.whitecaps;
+  $("oceanWhitecapsValue").textContent=Math.round(oceanSettings.whitecaps*100)+" %";
   $("oceanHeightValue").textContent=oceanSettings.height.toFixed(2).replace(".",",")+" m";
   $("oceanSpeedValue").textContent=oceanSettings.speed.toFixed(2).replace(".",",")+"×";
  }
@@ -609,6 +611,7 @@ export function initRenderWorld(ctx){
  ])$(id).onchange=event=>{handler(event.target.value);event.target.blur();};
  for(const id of ["oceanHeight","oceanHeightLive"])$(id).oninput=event=>updateOceanSetting("height",Number(event.target.value));
  for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).oninput=event=>updateOceanSetting("speed",Number(event.target.value));
+ for(const id of ["oceanWhitecaps","oceanWhitecapsLive"])$(id).oninput=event=>updateOceanSetting("whitecaps",Number(event.target.value));
  for(const id of ["oceanWeather","oceanWeatherLive"])$(id).onchange=event=>{updateOceanSetting("weather",event.target.value);event.target.blur()};
  filmStudio=initFilmStudio({
   camera,orbit,canvas,renderer,scene,
