@@ -63,6 +63,18 @@
         0.7,
         1.6
       ]
+    },
+    {
+      "id": "rift-kael-skinned-v3",
+      "name": "Kael Vortex – 21-bensrigg, 8 ansiktsuttryck (GLB V3)",
+      "kind": "glb",
+      "path": "./models/rift-kael-skinned-v3.glb"
+    },
+    {
+      "id": "rift-vex-skinned-v3",
+      "name": "Vex Revenant – 21-bensrigg, 8 ansiktsuttryck (GLB V3)",
+      "kind": "glb",
+      "path": "./models/rift-vex-skinned-v3.glb"
     }
   ]
 }

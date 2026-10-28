@@ -34,3 +34,14 @@ Fixed `project:style.css:1:12 ... npm-beroendet https: saknas` by deleting remot
 If you have already imported v0.1.0 into DuoForge, update **the existing game's** `style.css` (remove line 1 beginning with `@import url('https://fonts.googleapis.com`) or replace the project's code with this corrected package while preserving the same project ID. The GitHub branch is a source of truth for this game; no production Sites update is implied.
 
 Rendering on the real DuoForge isolated builder has not yet been verified from this environment. A new error, if any, needs its exact diagnostic rather than guessing.
+
+
+## Character Forge V3 – Continuous Skin / Morphs / BVH (Oct 28 2026)
+
+The existing game now progressively loads `models/kael_skinned_v3.glb` and `models/vex_skinned_v3.glb` with the real skinned topology, 21 bone hierarchy, 8 glTF facial blend shapes, PBR skin/armor detailing and 6 authored animation clips. Facial expressions respond to hit/block/special events. Combat simulation, arena and input remain unchanged. V2 GLB and older procedural fighters remain safe fallbacks.
+
+Models are reconstructed **at GitHub Pages deployment** from the audited Brotli-compressed Python generator split across `tools/v3-generator/*.b64part` (source SHA256 pinned in the workflow). Binary GLBs are generated using CPU + free Python packages; no Work, GPU rental or AI API. Deployed GLBs are also copied to `/workshop/models/rift-*-skinned-v3.glb` and registered in `workshop/models.json` for import to the existing workshop. The V3 source is readable after reconstruction by the workflow; original uncompressed Python generator is also shipped in the user's Character Forge V3 ZIP.
+
+`./character-forge/` is a dedicated preview/retargeting panel with GLB animation, facial expressions and local BVH motion-capture import (CMU samples optional). **The game does not automatically use mocap clips in combat**; it uses authored state-driven combat poses until a specific retargeted clip is validated. This is a stylistic procedure-based model, not guaranteed professional AAA sculpting.
+
+CI validates real GLB metadata, model size, 21 joints, 8 morph shapes, 6 clips, shared workshop hashes and 17+ combat/model tests. A passing deploy is not proof of correct iPhone rendering. Keep performance and visual QA separate.

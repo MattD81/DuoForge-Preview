@@ -27,6 +27,71 @@ jobs:
           node --test games/rift-champions/tests/*.test.mjs
           test -s games/rift-champions/models/kael.glb
           test -s games/rift-champions/models/vex.glb
+      # Character Forge V3: generate GLB binaries on the public Pages runner.
+      # We keep binary model files out of git; the 9 checked-in parts reconstruct
+      # the exact audited 21 kB Python source (SHA256 pinned below).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Restore verified Character Forge V3 source
+        run: |
+          python -m pip install --disable-pip-version-check --quiet brotli==1.2.0
+          python - <<'PY'
+          import base64, hashlib
+          from pathlib import Path
+          import brotli
+          parts=sorted(Path('games/rift-champions/tools/v3-generator').glob('*.b64part'))
+          assert len(parts)==9, f'Generator fragments missing: {len(parts)}'
+          payload=''.join(p.read_text().strip() for p in parts)
+          assert len(payload)==10268, 'Incorrect generator payload length'
+          source=brotli.decompress(base64.b64decode(payload, validate=True))
+          assert hashlib.sha256(source).hexdigest()=='c023f073b247c2b30da4b12a5b424704e4f341fa3f41b6ed57e60ea5b47ca3d6'
+          output=Path('games/rift-champions/tools/build_fighters.py')
+          output.parent.mkdir(parents=True,exist_ok=True)
+          output.write_bytes(source)
+          print('Restored verified V3 skinned anatomy / morph generator:',len(source),'bytes')
+          PY
+      - uses: actions/cache@v4
+        id: rift-v3-cache
+        with:
+          path: |
+            games/rift-champions/models/kael_skinned_v3.glb
+            games/rift-champions/models/vex_skinned_v3.glb
+            workshop/models/rift-kael-skinned-v3.glb
+            workshop/models/rift-vex-skinned-v3.glb
+          key: rift-character-v3-${{ hashFiles('games/rift-champions/tools/v3-generator/*.b64part') }}
+      - name: Generate skinned/morph GLB characters on CPU (cached)
+        if: steps.rift-v3-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install --disable-pip-version-check --quiet numpy==2.3.5 scipy==1.17.0 scikit-image==0.26.0 trimesh==4.11.1 pillow==12.3.0
+          python games/rift-champions/tools/build_fighters.py
+          mkdir -p workshop/models
+          cp games/rift-champions/models/kael_skinned_v3.glb workshop/models/rift-kael-skinned-v3.glb
+          cp games/rift-champions/models/vex_skinned_v3.glb workshop/models/rift-vex-skinned-v3.glb
+      - name: Validate real glTF skins, morph targets and linked workshop assets
+        run: |
+          node --test games/rift-champions/tests/*.test.mjs
+          python - <<'PY'
+          import json,struct
+          from pathlib import Path
+          for name in ('kael','vex'):
+              game=Path(f'games/rift-champions/models/{name}_skinned_v3.glb')
+              studio=Path(f'workshop/models/rift-{name}-skinned-v3.glb')
+              assert game.stat().st_size>1_000_000, f'Missing full-resolution model {name}'
+              assert studio.read_bytes()==game.read_bytes(), f'Workshop model differs: {name}'
+              data=game.read_bytes()
+              magic,version,length=struct.unpack_from('<4sII',data,0)
+              assert magic==b'glTF' and version==2 and length==len(data)
+              n,kind=struct.unpack_from('<I4s',data,12)
+              assert kind==b'JSON'
+              doc=json.loads(data[20:20+n])
+              assert len(doc.get('skins',[]))==1 and len(doc['skins'][0]['joints'])>=21
+              body=doc['meshes'][0]['primitives'][0]
+              assert 'WEIGHTS_0' in body['attributes']
+              assert len(body['targets'])==8
+              assert len(doc.get('animations',[]))>=6
+              print(f'{name} V3 validated: {len(data)} bytes, 21 skinned joints, 8 facial shapes, 6 clips')
+          PY
       - uses: actions/configure-pages@v5
         with:
           enablement: true

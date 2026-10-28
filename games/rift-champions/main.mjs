@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {newMatch,stepMatch,makeAI,getPosePhase} from './combat.mjs';
 import {createFighter,updateFighterPose} from './fighter.mjs';
-import {loadDetailedFighter} from './fighter-loader.mjs';
+import {loadDetailedFighter,updateFacialRig} from './fighter-loader.mjs';
 import {createArena} from './arena.mjs';
 import {createEffects,makeAudio} from './fx.mjs';
 const $=id=>document.getElementById(id), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -14,8 +14,10 @@ const arena=createArena(scene),rigs=[createFighter({index:0}),createFighter({ind
 // Progressive HD asset loading: preserve the existing animated fighters as a safe fallback.
 const detailedModelStatus=[{status:'loading'},{status:'loading'}];
 for(let i=0;i<2;i++){
-  const url='./models/'+(i===0?'kael':'vex')+'.glb';
-  loadDetailedFighter(url,i).then(detailed=>{
+  const fighter=i===0?'kael':'vex';
+  const v3='./models/'+fighter+'_skinned_v3.glb';
+  const v2='./models/'+fighter+'.glb';
+  loadDetailedFighter(v3,i).catch(err=>{console.warn('V3 unavailable, loading V2:',err);return loadDetailedFighter(v2,i);}).then(detailed=>{
     const previous=rigs[i];
     if(!previous?.root || !detailed?.root)return;
     // Both versions use the same pose API; existing combat, HUD, input and camera remain untouched.
@@ -131,7 +133,7 @@ function renderLoop(now){requestAnimationFrame(renderLoop);
     while(accumulator>=1/60&&ticks++<4){const a=mergeInput(0),b=pvp?mergeInput(1):ai(match,1/60);stepMatch(match,[a,b],1/60);takeEvents();accumulator-=1/60;}
   }
   if(!paused){arena.update(time,dt);fx.update(dt);}
-  for(let i=0;i<2;i++)updateFighterPose(rigs[i],match.fighters[i],time,dt);
+  for(let i=0;i<2;i++){updateFighterPose(rigs[i],match.fighters[i],time,dt);updateFacialRig(rigs[i],match.fighters[i],time,dt);}
   updateCamera(dt,time);syncUI();
   if(eventTimer>0){eventTimer-=dt;if(eventTimer<=0)$('eventText').classList.remove('show');}
   if(comboTimer>0){comboTimer-=dt;if(comboTimer<=0)$('combo').classList.remove('visible');}
