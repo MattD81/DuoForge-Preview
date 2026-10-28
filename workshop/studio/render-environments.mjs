@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {createSurfaceLibrary} from "./procedural-materials.mjs";
-import {buildOceanScene} from "./ocean-scene.mjs";
-import {normalizeOceanSettings} from "./ocean-water.mjs";
+import {buildOceanScene} from "./ocean-scene.mjs?v=ocean-clean-v7";
+import {normalizeOceanSettings} from "./ocean-water.mjs?v=ocean-clean-v7";
 
 export function getOceanSun(weather="clear"){
  if(weather==="storm-sunset"||weather==="sunset")
