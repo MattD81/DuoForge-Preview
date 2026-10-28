@@ -8,7 +8,8 @@ const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const isPhone=matchMedia("(max-width: 700px)").matches;
 let game=createGameState(),ship,world,scene,renderer,camera;
-let cameraMode="chase",quality=isPhone?"low":"high",elapsed=0,previous=0,slowFrames=0;
+const requestedQuality=new URLSearchParams(location.search).get("quality");
+let cameraMode="chase",quality=(requestedQuality==="low"||requestedQuality==="high")?requestedQuality:isPhone?"low":"high",elapsed=0,previous=0,slowFrames=0;
 let audioCtx=null,soundGain=null,noise=null,rafId=null;
 let keys={left:false,right:false,gas:false,brake:false};
 let lastRescued=0,lastMessage=0,showFps=false,frames=0,fpsStart=performance.now();
@@ -21,6 +22,7 @@ function updateButtons(){
  $("auto").classList.toggle("on",game.auto);$("auto").textContent=game.auto?"✦ AUTOPILOT PÅ":"✦ AUTOPILOT AV";
  $("view").textContent=cameraMode==="chase"?"◉ FÖLJKAMERA":cameraMode==="deck"?"◉ DÄCKSKAMERA":"◉ FILMKAMERA";
  $("weather").textContent=world.state.weather==="storm"?"⛈️ STORM":"🌅 SOLNEDGÅNG";
+ $("quality").textContent=quality==="low"?"▤ GRAFIK: MOBIL":"▤ GRAFIK: FILM";
 }
 function setButtons(){
  const aliases={left:"left",right:"right",gas:"gas",brake:"brake"};
@@ -50,6 +52,11 @@ function setButtons(){
  });
  addEventListener("blur",()=>{for(const key of Object.keys(keys))keys[key]=false;});
  $("view").addEventListener("click",changeView);
+ $("quality").addEventListener("click",()=>{
+  const next=quality==="low"?"high":"low";
+  const url=new URL(location.href);url.searchParams.set("quality",next);
+  location.assign(url.href);
+ });
  $("auto").addEventListener("click",toggleAuto);
  $("weather").addEventListener("click",()=>{
   world.setWeather(world.state.weather==="storm"?"storm-sunset":"storm");
@@ -78,7 +85,7 @@ function reset(){
  game=createGameState();game.started=true;game.auto=false;
  elapsed=0;lastRescued=0;cameraMode="chase";
  $("ending").hidden=true;$("intro").hidden=true;
- world.setWeather("storm-sunset");updateButtons();message("Nytt uppdrag – fyra nödsignaler väntar",3);
+ world.setWeather("storm-sunset");world.wake?.reset();updateButtons();message("Nytt uppdrag – fyra nödsignaler väntar",3);
  startSound();
 }
 function playPing(){
@@ -195,6 +202,11 @@ function prepare(){
   scene.environment=result.texture;room.dispose();pmrem.dispose();
  }catch(err){console.warn("PBR reflection fallback",err);}
  world=createWorld({scene,quality});
+ const stats=world.coast.stats;
+ $("game").dataset.islands=String(stats.islands);
+ $("game").dataset.forest=String(stats.forestInstances);
+ $("game").dataset.granite=String(stats.rocks);
+ $("game").dataset.terrainQuality=quality;
  ship=createRescueShip();scene.add(ship.group);
  const resize=()=>{
   const width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
