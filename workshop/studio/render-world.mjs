@@ -7,6 +7,7 @@ import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
 import {createEnvironment,worldNames,getOceanSun} from "./render-environments.mjs?v=ocean-clean-v7";
 import {normalizeOceanSettings} from "./ocean-water.mjs?v=ocean-clean-v7";
+import {sunElevationFor} from "./atmosphere-scattering.mjs";
 import {initFilmStudio} from "./film-studio.mjs";
 import {createCinematicLighting} from "./cinematic-lighting.mjs";
 import {cloneRiggedModel,makeRigDirector} from "./cinema-rig.mjs";
@@ -147,16 +148,20 @@ export function initRenderWorld(ctx){
   for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).value=oceanSettings.speed;
   for(const id of ["oceanWeather","oceanWeatherLive"])$(id).value=oceanSettings.weather;
   for(const id of ["oceanWhitecaps","oceanWhitecapsLive"])$(id).value=oceanSettings.whitecaps;
+  for(const id of ["oceanSun","oceanSunLive"])$(id).value=oceanSettings.sunElevation;
+  $("oceanSunValue").textContent=Math.round(oceanSettings.sunElevation)+"°";
   $("oceanWhitecapsValue").textContent=Math.round(oceanSettings.whitecaps*100)+" %";
   $("oceanHeightValue").textContent=oceanSettings.height.toFixed(2).replace(".",",")+" m";
   $("oceanSpeedValue").textContent=oceanSettings.speed.toFixed(2).replace(".",",")+"×";
  }
  function updateOceanSetting(key,value){
-  oceanSettings=normalizeOceanSettings({...oceanSettings,[key]:value});
+  const next={...oceanSettings,[key]:value};
+  if(key==="weather")next.sunElevation=sunElevationFor(value);
+  oceanSettings=normalizeOceanSettings(next);
   if(active&&world==="ocean"){
    environment?.setOceanSettings?.(oceanSettings);
-   if(key==="weather"){
-    const natural=getOceanSun(oceanSettings.weather);
+   if(key==="weather"||key==="sunElevation"){
+    const natural=getOceanSun(oceanSettings.weather,oceanSettings.sunElevation);
     sun.position.fromArray(natural.position);
     sun.color.set(natural.color);
     sun.intensity=natural.power;
@@ -612,6 +617,7 @@ export function initRenderWorld(ctx){
  for(const id of ["oceanHeight","oceanHeightLive"])$(id).oninput=event=>updateOceanSetting("height",Number(event.target.value));
  for(const id of ["oceanSpeed","oceanSpeedLive"])$(id).oninput=event=>updateOceanSetting("speed",Number(event.target.value));
  for(const id of ["oceanWhitecaps","oceanWhitecapsLive"])$(id).oninput=event=>updateOceanSetting("whitecaps",Number(event.target.value));
+ for(const id of ["oceanSun","oceanSunLive"])$(id).oninput=event=>updateOceanSetting("sunElevation",Number(event.target.value));
  for(const id of ["oceanWeather","oceanWeatherLive"])$(id).onchange=event=>{updateOceanSetting("weather",event.target.value);event.target.blur()};
  filmStudio=initFilmStudio({
   camera,orbit,canvas,renderer,scene,
