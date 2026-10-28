@@ -12,6 +12,7 @@ import {initCharacterForge} from "./character-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initResearchStack} from "./research-stack-ui.mjs";
+import {initFusionLab} from "./fusion-lab.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 
 const $=id=>document.getElementById(id);
@@ -570,6 +571,7 @@ initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dir
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
+initFusionLab({root,renderer,canvas,camera,orbit,renderWorld,livingRuntime,getProjectName:()=>$("projectName").value,notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
