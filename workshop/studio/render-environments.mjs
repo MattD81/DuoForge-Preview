@@ -183,16 +183,62 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
  const sky=new THREE.Mesh(new THREE.SphereGeometry(470,28,14),
   new THREE.ShaderMaterial({
    side:THREE.BackSide,depthWrite:false,fog:false,
-   uniforms:{top:{value:skyColorTop},bottom:{value:skyColorHorizon}},
+   uniforms:{top:{value:skyColorTop},bottom:{value:skyColorHorizon},
+    uOcean:{value:world==="ocean"?1:0},
+    uWeather:{value:world==="ocean"?normalizeOceanSettings(oceanSettings).weather==="storm-sunset"?3:
+     normalizeOceanSettings(oceanSettings).weather==="storm"?2:
+     normalizeOceanSettings(oceanSettings).weather==="sunset"?1:0:0},
+    uTime:{value:0}},
    vertexShader:`varying vec3 vPosition;void main(){vPosition=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-   fragmentShader:`varying vec3 vPosition;uniform vec3 top;uniform vec3 bottom;void main(){float t=clamp(normalize(vPosition).y*.7+.44,0.,1.);gl_FragColor=vec4(mix(bottom,top,t),1.);}`
+   fragmentShader:`
+    varying vec3 vPosition;
+    uniform vec3 top,bottom;
+    uniform float uOcean,uWeather,uTime;
+    float hashSky(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+    float noiseSky(vec2 p){
+      vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+      return mix(mix(hashSky(i),hashSky(i+vec2(1.,0.)),f.x),
+                 mix(hashSky(i+vec2(0.,1.)),hashSky(i+vec2(1.,1.)),f.x),f.y);
+    }
+    void main(){
+      vec3 d=normalize(vPosition);
+      float altitude=clamp(d.y*.7+.44,0.,1.);
+      vec3 color=mix(bottom,top,altitude);
+      if(uOcean>.5){
+        vec2 uv=vec2(atan(d.x,d.z)*2.8,d.y*4.4);
+        vec2 drift=vec2(uTime*.002,-uTime*.0006);
+        float n=.56*noiseSky(uv*1.5+drift)+.28*noiseSky(uv*3.6-drift*.4)
+           +.16*noiseSky(uv*8.6+drift*1.8);
+        float storm=step(1.5,uWeather);
+        float sunset=step(.5,uWeather)*(1.-step(1.5,uWeather))+
+                     step(2.5,uWeather);
+        float cover=smoothstep(.43,.63,n+storm*.065);
+        cover*=1.-smoothstep(.63,.98,d.y);
+        vec3 cloud=vec3(.24,.31,.40);
+        cloud=mix(cloud,vec3(.10,.13,.21),storm);
+        cloud=mix(cloud,vec3(.48,.29,.31),sunset*.30);
+        color=mix(color,cloud,cover*(.44+storm*.46));
+        vec3 sun=normalize(vec3(-.56,.125,.82));
+        float facing=max(dot(d,sun),0.);
+        float warm=pow(facing,24.)*(.40+.60*sunset);
+        float disk=pow(facing,1550.)*(1.-cover*.8);
+        color+=vec3(1.0,.39,.11)*warm*.32*sunset;
+        color+=vec3(1.,.83,.51)*disk*(.52+.48*sunset);
+        float rim=(smoothstep(.36,.50,n)-smoothstep(.54,.68,n));
+        color+=rim*vec3(.27,.10,.045)*sunset*warm;
+        float haze=(1.-smoothstep(-.035,.16,abs(d.y)))*.09;
+        color+=vec3(.50,.31,.25)*haze*sunset;
+      }
+      gl_FragColor=vec4(max(color,vec3(0.)),1.);
+    }`
   }));
  sky.castShadow=false;sky.receiveShadow=false;sky.renderOrder=-100;group.add(sky);owned.push(sky);
  const fog=new THREE.FogExp2(theme.fog,world==="night"?.007:world==="showroom"?.012:world==="forest"?.006:world==="ocean"?.0028:.003);
  const background=new THREE.Color(theme.background);
  if(ocean){
   const weather=normalizeOceanSettings(oceanSettings).weather;
-  const palette=weather==="storm"?["#36495b","#70889a","#748b9a"]:
+  const palette=weather==="storm-sunset"?["#243550","#d69b87","#9c827f"]:
+   weather==="storm"?["#36495b","#70889a","#748b9a"]:
    weather==="sunset"?["#34537d","#f1aa89","#d8a28e"]:["#4b93be","#92bfd6","#9abed0"];
   sky.material.uniforms.top.value.set(palette[0]);
   sky.material.uniforms.bottom.value.set(palette[1]);fog.color.set(palette[2]);background.set(palette[1]);
@@ -204,9 +250,12 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
   setOceanSettings(next){
    if(!ocean)return null;
    const settings=ocean.setSettings(normalizeOceanSettings(next));
-   const palette=settings.weather==="storm"?{top:"#36495b",horizon:"#70889a",fog:"#748b9a"}:
+   const palette=settings.weather==="storm-sunset"?{top:"#243550",horizon:"#d69b87",fog:"#9c827f"}:
+    settings.weather==="storm"?{top:"#36495b",horizon:"#70889a",fog:"#748b9a"}:
     settings.weather==="sunset"?{top:"#34537d",horizon:"#f1aa89",fog:"#d8a28e"}:
     {top:"#4b93be",horizon:"#92bfd6",fog:"#9abed0"};
+   sky.material.uniforms.uWeather.value=
+    settings.weather==="storm-sunset"?3:settings.weather==="storm"?2:settings.weather==="sunset"?1:0;
    sky.material.uniforms.top.value.set(palette.top);
    sky.material.uniforms.bottom.value.set(palette.horizon);
    fog.color.set(palette.fog);
@@ -214,6 +263,7 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
    return settings;
   },
   update(time,dt){
+   sky.material.uniforms.uTime.value=time;
    ocean?.update(time);
    if(world==="showroom"){
     // Slow lighting motion demonstrates PBR surfaces without moving the model.
