@@ -1,0 +1,14 @@
+{
+  "name": "duoforge-aetherfall",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Free 3D action adventure using DuoForge Fusion Engine",
+  "scripts": {
+    "test": "node --test logic.test.mjs",
+    "dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  }
+}
