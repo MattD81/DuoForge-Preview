@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stormblade – DuoForge 3D</title><link rel="stylesheet" href="./style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/"}}</script></head>
+<body><main id="game">
+<div id="sceneHost"></div>
+<header><a href="../../workshop/studio/">◈ DuoForge GPU Deluxe</a><h1>STORM<span>BLADE</span></h1><div id="perf">GPU laddar …</div></header>
+<div class="health"><section><b>RAGNAR / DU</b><div class="bar"><i id="pHealth"></i></div><small id="pHp">100 HP</small></section><div class="versus">⚔</div><section><b>SKADI / FIENDEN</b><div class="bar"><i id="eHealth"></i></div><small id="eHp">100 HP</small></section></div>
+<div id="timer">01:30</div><div id="notice" role="status">Nordhavet väntar på din duell</div>
+<div class="bottom"><div class="instructions">WASD / PILAR: GÅ • J: HUGG • K: KRAFTSLAG • MELLANSLAG: BLOCK • SHIFT: DUCKA</div>
+<div><button id="restart">↻ Starta om</button><button id="sound">♪ Ljud av</button><button id="quality">◈ GPU Auto</button></div></div>
+<div id="touch" class="touch"><div class="dpad"><button data-move="up">▲</button><div><button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div></div><div class="actions"><button data-action="block">◆ Block</button><button data-action="dodge">↯ Ducka</button><button data-action="heavy">⚡ Kraft</button><button data-action="attack">⚔ Hugg</button></div></div>
+<div id="modal" class="modal"><div class="card"><small>DUOFORGE • GPU DELUXE</small><h2>STORMBLADE</h2><p>Två krigare. Ett vikingaskepp. En våldsam storm. Besegra din motståndare i 3D!</p><button id="start">⚔ STARTA DUELLEN</button><p class="hint">Fungerar med tangentbord och touch.</p></div></div>
+<div id="endModal" class="modal" hidden><div class="card"><h2 id="endTitle">SEGER</h2><p id="endBody"></p><button id="endRestart">SPELA IGEN</button></div></div>
+<div id="fatal" class="fatal" hidden>3D-motorn kunde inte starta. Kontrollera webbläsarens WebGL-stöd.</div>
+</main><script type="module" src="./game.mjs"></script></body></html>
