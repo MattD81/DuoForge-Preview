@@ -173,14 +173,18 @@ function renderHud(){
  drawRadar();
 }
 function prepare(){
- const canvas=$("scene"),gl=canvas.getContext("webgl2",{antialias:true,alpha:false})||canvas.getContext("webgl",{antialias:true,alpha:false});
+ const canvas=$("scene"),gl=canvas.getContext("webgl2",{antialias:!isPhone,alpha:false})||canvas.getContext("webgl",{antialias:!isPhone,alpha:false});
  if(!gl)throw Error("WebGL saknas. Öppna i en webbläsare med 3D-grafik.");
  // The existing engine is WebGL. WebGPU is not represented as active.
+ const debug=gl.getExtension("WEBGL_debug_renderer_info");
+ const gpuName=String(debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER));
+ const software=/swiftshader|llvmpipe|software/i.test(gpuName);
+ if(software)quality="low";
  renderer=new THREE.WebGLRenderer({canvas,context:gl,antialias:!isPhone,powerPreference:"high-performance"});
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
- renderer.shadowMap.enabled=!isPhone;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- renderer.setPixelRatio(Math.min(devicePixelRatio||1,isPhone?1.3:1.8));
+ renderer.shadowMap.enabled=!isPhone&&quality!=="low";renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ renderer.setPixelRatio(software?.6:Math.min(devicePixelRatio||1,isPhone?1.2:1.5));
  scene=new THREE.Scene();
  camera=new THREE.PerspectiveCamera(isPhone?66:61,1,.1,1250);
  camera.position.set(10,12,29);
@@ -242,7 +246,7 @@ function frame(now){
  camera.position.lerp(desired,Math.min(1,dt*(cameraMode==="deck"?5:2.1)));
  camera.lookAt(aim);
  renderer.render(scene,camera);
- if(frames%5===0)renderHud();
+ if(frames%2===0)renderHud();
  if(now-fpsStart>1500){
   const fps=frames*1000/(now-fpsStart);frames=0;fpsStart=now;
   $("fps").textContent=Math.round(fps)+" FPS";
