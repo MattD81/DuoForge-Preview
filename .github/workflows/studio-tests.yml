@@ -18,6 +18,7 @@ on:
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/research-3d.test.mjs'
       - 'tests/research-stack.test.mjs'
+      - 'tests/research-stack-smoke.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
       - 'tests/sites-cinema-bridge-smoke.mjs'
       - 'tests/film-studio-smoke.mjs'
@@ -55,6 +56,7 @@ jobs:
           node --check workshop/studio/research-stack-ui.mjs
           node --check workshop/studio/gaussian-preview.mjs
           node --check tests/research-stack.test.mjs
+          node --check tests/research-stack-smoke.mjs
           node --check workshop/studio/atmosphere-scattering.mjs
           node --check tests/research-3d.test.mjs
           node --check workshop/studio/sites-cinema-bridge.mjs
@@ -123,6 +125,8 @@ jobs:
         run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
+      - name: Test free research stack in browser and mobile
+        run: node tests/research-stack-smoke.mjs
       - name: Test Character Forge volumetric GLB and image silhouettes
         run: node tests/character-forge-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
