@@ -3,6 +3,7 @@ import {
  inspectGLB,inspectScene,makeIndexEntry,makePortableReport,recommendReuse,
  MAX_GLB_BYTES
 } from "./research-stack-core.mjs";
+import {previewLocalSplat,validLocalSplat} from "./gaussian-preview.mjs";
 const DB="duoforge-research-index-local";
 function openDB(){
  return new Promise((resolve,reject)=>{
@@ -65,6 +66,9 @@ export function initResearchStack({root,renderer,canvas,toGLB,getProjectName,get
   '<div class="row two"><button id="stackHealth">🧪 Testa 3D-scen</button><button id="stackMobile">📱 Mobil-GLB</button></div>',
   '<button id="stackIndex" class="accent-outline">💾 Indexera scen (SHA-256)</button>',
   '<button id="stackReport">⬇ Rapport + resursmanifest (JSON)</button>',
+  '<label class="field-label" for="stackSplat">🌐 Gaussian Splat (experimentell lokal 3D-visare)</label>',
+  '<input id="stackSplat" type="file" accept=".spz,.splat,.ksplat,.ply,.sog">',
+  '<p class="hint">Klicka för att välja en fil. Då hämtas Spark (MIT) från dess officiella CDN för visning. Ingen GLB skapas.</p>',
   '<label class="field-label" for="stackImport">Analysera en GLB-fil utan att importera</label>',
   '<input id="stackImport" type="file" accept=".glb,model/gltf-binary">',
   '<div id="stackInfo" class="hint" role="status" aria-live="polite">Redo. Inga analyser har körts.</div>',
@@ -148,6 +152,12 @@ export function initResearchStack({root,renderer,canvas,toGLB,getProjectName,get
   const portable=makePortableReport({entry,glb,scene:report,capability});
   downloadJSON(portable,"duoforge-research-report.json");
   message("Analysrapport exporterad: "+entry.sha256.slice(0,12)+"… GLB-modellen måste exporteras separat.");
+ });
+ $("stackSplat").addEventListener("change",async()=>{
+  const file=$("stackSplat").files?.[0];if(!file)return;
+  try{validLocalSplat(file);await previewLocalSplat(file,{notify});}
+  catch(error){message("Splat: "+error.message);}
+  finally{$("stackSplat").value="";}
  });
  $("stackImport").addEventListener("change",()=>safeRun(async()=>{
   const file=$("stackImport").files?.[0];if(!file)return;
