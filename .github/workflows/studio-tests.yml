@@ -57,6 +57,7 @@ jobs:
           node --check workshop/studio/cinematic-lighting.mjs
           node --check workshop/studio/cinema-production.mjs
           node --check workshop/studio/cinema-engine-core.mjs
+          node --check workshop/studio/cinema-gpu-engine.mjs
           node --check workshop/studio/cinema-denoise.mjs
           node --check workshop/studio/cinema-wavelet-denoise.mjs
           node --check workshop/studio/cinema-rig.mjs
