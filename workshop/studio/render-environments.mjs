@@ -1,14 +1,12 @@
 import * as THREE from "three";
+import {atmosphereState} from "./atmosphere-scattering.mjs";
 import {createSurfaceLibrary} from "./procedural-materials.mjs";
 import {buildOceanScene} from "./ocean-scene.mjs?v=ocean-clean-v7";
 import {normalizeOceanSettings} from "./ocean-water.mjs?v=ocean-clean-v7";
 
-export function getOceanSun(weather="clear"){
- if(weather==="storm-sunset"||weather==="sunset")
-  return {position:[-22.4,5,32.8],color:0xffd6a3,power:2.65,hemisphere:1.5};
- if(weather==="storm")
-  return {position:[-14,14,24],color:0xcbd9e8,power:1.65,hemisphere:1.25};
- return {position:[-15,24,16],color:0xffefd1,power:2.9,hemisphere:1.85};
+export function getOceanSun(weather="clear",sunElevation){
+ const sky=atmosphereState(weather,sunElevation);
+ return {position:sky.position,color:sky.sunColor,power:sky.power,hemisphere:sky.hemisphere};
 }
 export const worldNames=["showroom","racetrack","forest","city","night","ocean"];
 const colors={
@@ -185,8 +183,10 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
   }
  }
  // A procedural sky hemisphere; uses no external assets or paid rendering.
- const skyColorTop=new THREE.Color(world==="night"?0x08132b:world==="showroom"?0x102132:world==="ocean"?0x4b93be:0x5e9dd9);
- const skyColorHorizon=new THREE.Color(theme.background);
+ const activeOcean=normalizeOceanSettings(oceanSettings);
+ const air=atmosphereState(activeOcean.weather,activeOcean.sunElevation);
+ const skyColorTop=new THREE.Color(world==="night"?0x08132b:world==="showroom"?0x102132:world==="ocean"?air.skyTop:0x5e9dd9);
+ const skyColorHorizon=new THREE.Color(world==="ocean"?air.skyHorizon:theme.background);
  const sky=new THREE.Mesh(new THREE.SphereGeometry(470,28,14),
   new THREE.ShaderMaterial({
    side:THREE.BackSide,depthWrite:false,fog:false,
@@ -195,12 +195,13 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
     uWeather:{value:world==="ocean"?normalizeOceanSettings(oceanSettings).weather==="storm-sunset"?3:
      normalizeOceanSettings(oceanSettings).weather==="storm"?2:
      normalizeOceanSettings(oceanSettings).weather==="sunset"?1:0:0},
-    uTime:{value:0}},
+    uTime:{value:0},uSunDir:{value:new THREE.Vector3(...air.direction)}},
    vertexShader:`varying vec3 vPosition;void main(){vPosition=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
    fragmentShader:`
     varying vec3 vPosition;
     uniform vec3 top,bottom;
     uniform float uOcean,uWeather,uTime;
+    uniform vec3 uSunDir;
     float hashSky(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
     float noiseSky(vec2 p){
       vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
@@ -225,11 +226,17 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
         cloud=mix(cloud,vec3(.10,.13,.21),storm);
         cloud=mix(cloud,vec3(.48,.29,.31),sunset*.30);
         color=mix(color,cloud,cover*(.44+storm*.46));
-        vec3 sun=normalize(vec3(-.56,.125,.82));
+        // Analytic single scattering: Rayleigh and forward-focused Mie phase.
+        vec3 sun=normalize(uSunDir);
         float facing=max(dot(d,sun),0.);
+        float rayleigh=3.*(1.+facing*facing)/(16.*3.14159265);
+        float g=.76;
+        float mie=(1.-g*g)/(4.*3.14159265*pow(max(.04,1.+g*g-2.*g*facing),1.5));
         float warm=pow(facing,24.)*(.40+.60*sunset);
         float disk=pow(facing,1550.)*(1.-cover*.8);
         color+=vec3(1.0,.39,.11)*warm*.32*sunset;
+        color+=vec3(1.,.62,.36)*min(mie*.042,.28)*(1.-cover*.65);
+        color+=vec3(.12,.24,.43)*rayleigh*.22;
         color+=vec3(1.,.83,.51)*disk*(.52+.48*sunset);
         float rim=(smoothstep(.36,.50,n)-smoothstep(.54,.68,n));
         color+=rim*vec3(.27,.10,.045)*sunset*warm;
@@ -243,33 +250,26 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
  const fog=new THREE.FogExp2(theme.fog,world==="night"?.007:world==="showroom"?.012:world==="forest"?.006:world==="ocean"?.0028:.003);
  const background=new THREE.Color(theme.background);
  if(ocean){
-  const weather=normalizeOceanSettings(oceanSettings).weather;
-  const palette=weather==="storm-sunset"?["#243550","#d69b87","#9c827f"]:
-   weather==="storm"?["#36495b","#70889a","#748b9a"]:
-   weather==="sunset"?["#34537d","#f1aa89","#d8a28e"]:["#4b93be","#92bfd6","#9abed0"];
-  sky.material.uniforms.top.value.set(palette[0]);
-  sky.material.uniforms.bottom.value.set(palette[1]);fog.color.set(palette[2]);background.set(palette[1]);
+  fog.color.set(air.fog);background.set(air.skyHorizon);
  }
  return {
   group,door,world,ocean,background,fog,
-  hemisphere:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).hemisphere:theme.hemisphere,
-  sun:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).power:theme.sun,
-  sunColor:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).color:theme.sunColor,
-  sunPosition:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).position:
+  hemisphere:world==="ocean"?getOceanSun(activeOcean.weather,activeOcean.sunElevation).hemisphere:theme.hemisphere,
+  sun:world==="ocean"?getOceanSun(activeOcean.weather,activeOcean.sunElevation).power:theme.sun,
+  sunColor:world==="ocean"?getOceanSun(activeOcean.weather,activeOcean.sunElevation).color:theme.sunColor,
+  sunPosition:world==="ocean"?getOceanSun(activeOcean.weather,activeOcean.sunElevation).position:
    world==="night"?[4,9,-7]:[-15,24,16],
   setOceanSettings(next){
    if(!ocean)return null;
    const settings=ocean.setSettings(normalizeOceanSettings(next));
-   const palette=settings.weather==="storm-sunset"?{top:"#243550",horizon:"#d69b87",fog:"#9c827f"}:
-    settings.weather==="storm"?{top:"#36495b",horizon:"#70889a",fog:"#748b9a"}:
-    settings.weather==="sunset"?{top:"#34537d",horizon:"#f1aa89",fog:"#d8a28e"}:
-    {top:"#4b93be",horizon:"#92bfd6",fog:"#9abed0"};
+   const nextAir=atmosphereState(settings.weather,settings.sunElevation);
    sky.material.uniforms.uWeather.value=
     settings.weather==="storm-sunset"?3:settings.weather==="storm"?2:settings.weather==="sunset"?1:0;
-   sky.material.uniforms.top.value.set(palette.top);
-   sky.material.uniforms.bottom.value.set(palette.horizon);
-   fog.color.set(palette.fog);
-   background.set(palette.horizon);
+   sky.material.uniforms.uSunDir.value.fromArray(nextAir.direction);
+   sky.material.uniforms.top.value.set(nextAir.skyTop);
+   sky.material.uniforms.bottom.value.set(nextAir.skyHorizon);
+   fog.color.set(nextAir.fog);
+   background.set(nextAir.skyHorizon);
    return settings;
   },
   update(time,dt){
