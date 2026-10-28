@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="description" content="DuoForge 3D Studio – bygg, redigera och exportera spelklara 3D-modeller direkt i webbläsaren.">
 <title>DuoForge 3D Studio – Modellera, bygg, exportera</title>
-<link rel="stylesheet" href="./studio.css?v=cinema-production-v2">
+<link rel="stylesheet" href="./studio.css?v=cinema-rig-film-v3">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
 </script>
@@ -203,7 +203,7 @@
             <label for="filmAudioFile">🎵 Musik eller ljudspår (förhandslyssning)</label>
             <input type="file" id="filmAudioFile" accept="audio/*,.mp3,.wav,.ogg,.m4a">
             <audio controls id="filmAudioPlayer" preload="metadata" hidden></audio>
-            <small id="filmAudioStatus">Ljudet spelas lokalt. Det mixas ännu inte in i exporterad video.</small>
+            <small id="filmAudioStatus">Ljudet mixas automatiskt i vanlig videoexport när webbläsaren har en kompatibel videokodare. PNG-sekvenser innehåller inte ljud.</small>
           </div>
         </details>
         <details class="film-production-panel" id="filmEnvironmentPanel">
@@ -214,6 +214,19 @@
             <input id="filmHdriIntensity" type="range" min=".2" max="3" value="1" step=".1">
           </label>
           <small id="filmHdriStatus">Importera egen miljökarta lokalt. Originalmodellen påverkas inte.</small>
+        </details>
+        <details class="film-production-panel" id="filmRigPanel">
+          <summary>🦴 Character Rig Studio · skelett &amp; animation</summary>
+          <p class="film-note">Importera GLB med inbyggt skelett och animationer. Välj animationsklipp och justera riktiga leder utan att ändra originalfilen. Modeller utan rigg behöver riggas separat.</p>
+          <div class="film-production-grid">
+            <label>Animationsklipp<select id="filmRigClip"><option value="">Ingen animation</option></select></label>
+            <label>Led / ben<select id="filmRigBone"><option value="">Välj led</option></select></label>
+            <label>Rotation X (grader)<input id="filmRigX" type="range" min="-90" max="90" value="0" step="1"></label>
+            <label>Rotation Y (grader)<input id="filmRigY" type="range" min="-90" max="90" value="0" step="1"></label>
+            <label>Rotation Z (grader)<input id="filmRigZ" type="range" min="-90" max="90" value="0" step="1"></label>
+          </div>
+          <button id="filmRigReset" type="button">↶ Återställ pose</button>
+          <div id="filmRigStatus" role="status">Importera en karaktärs-GLB med ben och animationer.</div>
         </details>
         <div class="film-keyframes">
           <span>Egna kamerapunkter: <strong id="filmKeyframes">0</strong></span>
@@ -265,9 +278,33 @@
           <button type="button" id="filmFrameCancel" hidden>■ Avbryt (spara färdiga rutor)</button>
           <div id="filmFrameStatus" role="status" aria-live="polite">Välj renderingskvalitet och tryck Rendera. Nästa del föreslås automatiskt.</div>
         </details>
+        <details class="film-production-panel film-export-panel" id="filmPathMovie">
+          <summary>🌟 Path-traced film · exakt bildruta för bildruta (beta)</summary>
+          <p class="film-note">Rendera riktigt raytracade PNG-bildrutor i små delar. Fortsätt från nästa bildruta och montera delarna till en film. Mycket tungt för telefoner. Automatisk MP4 av raytracade bildrutor är ännu inte färdig.</p>
+          <div class="film-production-grid">
+            <label>Upplösning<select id="filmTraceResolution"><option value="540" selected>540p · test</option><option value="720">720p · krävande</option></select></label>
+            <label>Samples/bildruta<select id="filmTraceSamples"><option value="4">4 · test</option><option value="8" selected>8 · snabb</option><option value="16">16 · högre kvalitet</option><option value="32">32 · tung</option></select></label>
+            <label>Startbildruta<input id="filmTraceStart" type="number" min="0" value="0"></label>
+            <label>Bildrutor/del<input id="filmTraceCount" type="number" min="1" max="8" value="2"></label>
+          </div>
+          <label class="film-fx-check"><input id="filmTraceDenoise" type="checkbox" checked> Brusreducera varje bildruta</label>
+          <button id="filmTraceMovie" type="button">🌟 Rendera path-traced PNG-sekvens</button>
+          <button id="filmTraceCancel" type="button" hidden>■ Avbryt och spara färdiga bildrutor</button>
+          <div id="filmTraceStatus" role="status">Renderas på ditt eget grafikkort. Använd dator för längre filmer.</div>
+        </details>
+        <details class="film-production-panel film-export-panel" id="filmAssemblePanel">
+          <summary>🎬 Skapa film från path-tracade bilder + ljud</summary>
+          <p class="film-note">Ladda dina färdiga DuoForge PNG-ZIP-delar, inklusive alla bildrutor i rätt ordning. Systemet kodar dem till MP4 eller WebM och lägger in ljudspåret som du valt ovan. Ingen uppladdning till molnet.</p>
+          <label>Välj alla PNG-ZIP-delar (max 250 MB)
+            <input type="file" id="filmFramesFiles" accept=".zip,application/zip" multiple>
+          </label>
+          <button type="button" id="filmAssembleVideo">🎬 Koda färdig film med ljud</button>
+          <button type="button" id="filmAssembleCancel" hidden>■ Avbryt kodning</button>
+          <div id="filmAssembleStatus" role="status">Stöder upp till 30 sekunder per klipp, beroende på enhet. Video exporteras i ett av webbläsarens kompatibla format.</div>
+        </details>
         <div class="cinema-pathtrace">
           <strong>✨ Ray tracing · stillbild (beta)</strong>
-          <small>Riktig ljusstrålesimulering och reflexer med flera samples. Endast statiska GLB-scener, inte realtidsfilm. GPU-arbete på din enhet.</small>
+          <small>Riktig ljusstrålesimulering och reflexer med flera samples. Här renderas en statisk bild, inte realtidsfilm. GPU-arbete på din enhet.</small>
           <div class="film-path-opts">
             <label>Upplösning <select id="filmPathResolution">
               <option value="540">960×540 · prov</option>
@@ -472,5 +509,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=cinema-production-v2"></script>
+<script type="module" src="./studio.mjs?v=cinema-rig-film-v3"></script>
 </body></html>

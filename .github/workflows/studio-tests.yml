@@ -18,6 +18,8 @@ on:
       - 'tests/film-path.test.mjs'
       - 'tests/cinema-production.test.mjs'
       - 'tests/cinema-denoise.test.mjs'
+      - 'tests/cinema-wavelet-denoise.test.mjs'
+      - 'tests/cinema-video-assembly.test.mjs'
       - 'tests/render-missions.test.mjs'
       - 'tests/surface-classifier.test.mjs'
       - 'tests/material-lab-smoke.mjs'
@@ -52,6 +54,10 @@ jobs:
           node --check workshop/studio/cinematic-lighting.mjs
           node --check workshop/studio/cinema-production.mjs
           node --check workshop/studio/cinema-denoise.mjs
+          node --check workshop/studio/cinema-wavelet-denoise.mjs
+          node --check workshop/studio/cinema-rig.mjs
+          node --check workshop/studio/cinema-path-film.mjs
+          node --check workshop/studio/cinema-video-assembly.mjs
           node --check workshop/studio/film-path.mjs
           node --check workshop/studio/path-trace-stills.mjs
           node --check workshop/studio/film-studio.mjs
@@ -67,7 +73,7 @@ jobs:
           node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
-          node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs
+          node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
         timeout-minutes: 3
         run: npm install --no-save --no-package-lock playwright@1.56.1
