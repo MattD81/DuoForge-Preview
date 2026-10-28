@@ -40,6 +40,13 @@ try{
  assert.match(glb.suggestedFilename(),/\.glb$/);
  console.log("PASS: GLB export downloads");
  const filePath=await glb.path();
+ await page.locator("#researchAudit").click();
+ assert.match(await page.locator("#researchAuditSummary").textContent(),/trianglar/);
+ assert.match(await page.locator("#researchGpuStatus").textContent(),/WebGL/);
+ const [mobileExport]=await Promise.all([page.waitForEvent("download"),page.locator("#exportMobileGLB").click()]);
+ assert.match(mobileExport.suggestedFilename(),/-mobil\.glb$/);
+ assert.ok((await mobileExport.path()),"Real mobile GLB produced");
+ console.log("PASS: research audit and non-destructive 1024px mobile GLB export");
  await page.locator("#importFile").setInputFiles({name:"roundtrip.glb",mimeType:"model/gltf-binary",buffer:readFileSync(filePath)});
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="4");
  console.log("PASS: exported GLB can be re-imported and edited");
