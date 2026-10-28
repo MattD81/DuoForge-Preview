@@ -243,7 +243,7 @@ function renderFrame(timeMs){
   const state=gpu.info();
   $("perf").textContent="◈ "+mode.toUpperCase()+" / "+(state.fps??"…")+" FPS / "+state.capabilities.backend;
  }
- if(composer&&mode!=="off"){
+ if(composer&&mode==="quality"){
   if(sharp){
    sharp.uniforms.uStrength.value=mode==="quality"?.20:.12;
    sharp.uniforms.uTexel.value.x=1/Math.max(renderer.domElement.width,1);
