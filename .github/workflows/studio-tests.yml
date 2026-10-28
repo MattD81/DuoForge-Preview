@@ -15,6 +15,8 @@ on:
       - 'tests/steering-controls-smoke.mjs'
       - 'tests/render-world-smoke.mjs'
       - 'tests/gpu-deluxe.test.mjs'
+      - 'tests/stormblade-duel-smoke.mjs'
+      - 'games/stormblade-duel/**'
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
@@ -61,6 +63,9 @@ jobs:
           node --check workshop/studio/wheel-rig.mjs
           node --check workshop/studio/render-world.mjs
           node --check workshop/studio/gpu-deluxe.mjs
+          node --check games/stormblade-duel/game.mjs
+          node --check games/stormblade-duel/world.mjs
+          node --check tests/stormblade-duel-smoke.mjs
           node --check workshop/studio/render-environments.mjs
           node --check workshop/studio/ocean-water.mjs
           node --check workshop/studio/ocean-spectrum.mjs
@@ -101,6 +106,8 @@ jobs:
         run: npx playwright install chromium --only-shell
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Test Stormblade 3D game with desktop and mobile touch
+        run: node tests/stormblade-duel-smoke.mjs
       - name: Test Film Studio cinematic video rendering, Full HD PNG and storyboard
         run: node tests/film-studio-smoke.mjs
       - name: Verify cross-origin Sites↔Cinema integration with a real GLB
@@ -131,6 +138,8 @@ jobs:
           path: |
             studio-desktop.png
             studio-mobile.png
+            stormblade-desktop.png
+            stormblade-mobile.png
             character-forge-desktop.png
             character-forge-mobile.png
             living-desktop.png
