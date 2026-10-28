@@ -169,7 +169,6 @@ function renderHud(){
  $("missionText").textContent=item?item.call:"Återvänd till hamnen.";
  $("distance").textContent=Math.round(dest.distance)+" m";
  $("direction").textContent=(Math.round(dest.difference*180/Math.PI)>0?"↗":"↖")+" "+Math.abs(Math.round(dest.difference*180/Math.PI))+"°";
- $("compassNeedle").style.transform="rotate("+dest.difference+"rad)";
  $("gear").textContent=game.auto?"AUTO":"MANUELL";
  drawRadar();
 }
@@ -215,7 +214,7 @@ function frame(now){
   playPing();message("✔ "+MISSIONS[wasRescued].name+" — besättning räddad!",4);
   if(game.won)finishGame(true);
  }
- if(game.lost&&!$("ending").hidden===false)finishGame(false);
+ if(game.lost&&$("ending").hidden)finishGame(false);
  const waterLevel=world.ocean.heightAt(game.x,game.z,elapsed);
  const slope=world.ocean.slopeAt(game.x,game.z,elapsed);
  ship.group.position.set(game.x,waterLevel+.11,game.z);
