@@ -113,12 +113,6 @@
         <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
           <option value="low">Låg</option><option value="medium" selected>Medium</option><option value="high">Hög · Bloom/AO</option>
         </select></label>
-        <label>GPU Deluxe <select id="gpuDeluxeMode" aria-label="GPU Deluxe: automatisk grafikoptimering">
-          <option value="auto" selected>Auto · smart GPU</option>
-          <option value="quality">Kvalitet · skarpast</option>
-          <option value="performance">Prestanda · jämna rutor</option>
-          <option value="off">Av · originalgrafik</option>
-        </select></label>
         <label>Kamera <select id="renderCameraSelect" aria-label="Välj kamerastyrning">
           <option value="orbit">Orbit</option><option value="follow">Följkamera</option>
           <option value="free">Fri kamera</option><option value="cinematic">Filmkamera</option>
@@ -368,6 +362,14 @@
           <div><strong id="renderTime">0.0 s</strong><small>Tid</small></div>
         </div>
         <div id="renderMissionStatus">Testläge</div>
+        <label class="gpu-deluxe-chooser">GPU Deluxe
+          <select id="gpuDeluxeMode" aria-label="GPU Deluxe: automatisk grafikoptimering">
+            <option value="auto" selected>Auto · smart GPU</option>
+            <option value="quality">Kvalitet · skarpast</option>
+            <option value="performance">Prestanda · jämna rutor</option>
+            <option value="off">Av · originalgrafik</option>
+          </select>
+        </label>
         <div id="gpuDeluxeStats" class="gpu-deluxe-stats" role="status" aria-live="off">GPU Deluxe · läser grafikkapacitet …</div>
         <button id="renderResetMission">↻ Starta om test</button>
         <div id="renderCameraTip" class="render-camera-tip">Dra för att rotera och scrolla för zoom</div>
