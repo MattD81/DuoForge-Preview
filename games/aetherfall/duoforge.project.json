@@ -17,5 +17,5 @@
     "horizon-detail-budget",
     "adaptive-resolution"
   ],
-  "notes": "Source in existing DuoForge-Preview. Bundles byte-identical local copy of workshop/studio/fusion-engine.mjs from PR #32. Three is declared as npm dependency for DuoForge isolated builder. No external CSS, paid APIs, or missing binary assets."
+  "notes": "Self-contained game with bundled Fusion Engine V1 and Three declared as npm dependency for isolated DuoForge builder. No external CSS, paid APIs, or missing binary assets. Source in existing DuoForge-Preview."
 }
