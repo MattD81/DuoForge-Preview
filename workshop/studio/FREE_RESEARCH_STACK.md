@@ -7,7 +7,7 @@ Open `/workshop/studio/` and use the **Öppen forskningsstack** panel.
 - **Read-only scene and GLB analysis**: triangle and material counts; malformed GLB checks, extensions, external buffers/images, missing decoder requirements, skinned mesh warnings.
 - **Device diagnostics**: actual studio backend, WebGPU *availability* (not rendering), canvas size and WebGL context condition. Does not claim Nvidia/AMD/Intel features.
 - **Local SHA-256 index**: deliberate click computes a SHA-256 of an exported GLB, then stores metadata (no model binary) in IndexedDB `duoforge-research-index-local`. Exact hashes are deduplicated. Same display name with a different digest is a new version. The index is origin/browser-local, not a Sites or GitHub asset cloud.
-- **Portable audit JSON**: includes GLB manifest, digest and warnings. It **does not contain the model**. Export the GLB independently, using existing 2048/1024 texture-size exporters.
+- **Experimental Gaussian Splat viewer**: reads an explicitly selected local file with Spark MIT (external code loads on demand); separate modal canvas, never writes into the editable scene, no GLB export.\n- **Portable audit JSON**: includes GLB manifest, digest and warnings. It **does not contain the model**. Export the GLB independently, using existing 2048/1024 texture-size exporters.
 - **Non-destructive health checks**: inspect invalid transforms, high triangle counts and unsupported GLB features, without editing the scene.
 - Uses browser native APIs + existing Three.js / Editor. No new server, paid API, model download, GPU rental, tokens, or Work calls.
 
@@ -16,7 +16,7 @@ Open `/workshop/studio/` and use the **Öppen forskningsstack** panel.
 - gltfpack / meshoptimizer (MIT): optimize a downloaded GLB **offline** by installing the CLI locally; animated rigs/named wheels must be checked afterward. Never replace source automatically.
   Example: `gltfpack -i input.glb -o output.glb -kn -km -ke`.
 - KTX2/Basis Universal texture export (KTX Software mainly Apache-2.0, third-party license review required): separate tools/decoder needed before loading compressed textures.
-- Gaussian Splatting: Spark (MIT) is a *candidate* renderer, **not embedded**. Supported splat formats are not ordinary GLB meshes. Verify exact dependency versions and input asset rights before integrating.
+- Gaussian Splatting: an **experimental** on-demand local preview for .spz/.splat/.ksplat/.ply/.sog is included. It dynamically loads version-pinned Spark 2.4.0 (MIT) from the official CDN **only after selecting a file**; it does not convert splats to game geometry or export GLB. The model is provided as a browser blob URL; review third-party code and splat asset rights before sharing sensitive data.
 - ONNX Runtime (MIT) and TripoSR (MIT) can run on user hardware with separately downloaded permitted model weights; do not promise free electricity/compute or hosted inference. Existing optional TripoSR endpoint remains separate.
 
 ## Cost & licensing guardrails
