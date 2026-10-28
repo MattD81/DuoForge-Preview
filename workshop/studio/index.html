@@ -108,6 +108,7 @@
           <label>Väder <select id="oceanWeatherLive" aria-label="Ändra havsväder">
             <option value="clear">Sol</option><option value="sunset">Solnedgång</option><option value="storm">Storm</option><option value="storm-sunset">⛈️🌅 Storm i solnedgång</option>
           </select></label>
+          <label>Vitt skum <input id="oceanWhitecapsLive" type="range" min="0" max="1" step=".02" value=".12" aria-label="Justera sjöskummets intensitet; 0 tar bort vita prickar"></label>
         </div>
         <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
           <option value="low">Låg</option><option value="medium" selected>Medium</option><option value="high">Hög · Bloom/AO</option>
@@ -495,7 +496,11 @@
           <option value="storm">⛈️ Storm och hög sjö</option>
           <option value="storm-sunset">🌅⛈️ Storm i solnedgång · filmiskt</option>
         </select>
-        <p class="hint">Vågorna renderas direkt på ditt grafikkort. Inga AI-anrop eller molnservrar.</p>
+        <label class="range-line">Vitt sjöskum – mindre ger renare vatten
+          <input id="oceanWhitecaps" type="range" min="0" max="1" step=".02" value=".12" aria-label="Styr sjöskum och vita vågtoppar">
+          <output id="oceanWhitecapsValue">12 %</output>
+        </label>
+        <p class="hint">Ny låg standardnivå för sjöskum. Sätt till 0 % om du vill ha helt mörkt vatten utan vita prickar. Inga AI-anrop eller molnservrar.</p>
       </div>
       <label class="field-label" for="renderQuality">Grafik</label>
       <select id="renderQuality">
@@ -528,5 +533,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=cinema-core-v1"></script>
+<script type="module" src="./studio.mjs?v=ocean-clean-v7"></script>
 </body></html>
