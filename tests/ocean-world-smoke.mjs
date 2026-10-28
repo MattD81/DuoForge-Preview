@@ -81,6 +81,26 @@ try{
  });
  assert.equal(await page.locator("#oceanWhitecaps").inputValue(),"0.18");
  console.log("PASS: clean ocean foam can be disabled and adjusted live without modifying waves");
+ await page.locator("#oceanSunLive").evaluate(el=>{
+  el.value="12";el.dispatchEvent(new Event("input",{bubbles:true}));
+ });
+ assert.equal(await page.locator("#oceanSun").inputValue(),"12");
+ assert.match(await page.locator("#oceanSunValue").textContent(),/12°/);
+ const solar=await page.evaluate(async()=>{
+  const {createEnvironment}=await import("./render-environments.mjs");
+  const env=createEnvironment({world:"ocean",quality:"low",oceanSettings:{weather:"sunset",sunElevation:7}});
+  const sky=env.group.children.find(o=>o.material?.uniforms?.uSunDir);
+  const initial=env.ocean.mesh.material.uniforms.uSunDir.value.clone();
+  env.setOceanSettings({weather:"sunset",sunElevation:50});
+  const next=env.ocean.mesh.material.uniforms.uSunDir.value;
+  const matched=sky.material.uniforms.uSunDir.value.distanceTo(next)<1e-5;
+  const changed=initial.distanceTo(next)>.1;
+  const shaderHasMie=sky.material.fragmentShader.includes("mie=");
+  env.dispose();
+  return {matched,changed,shaderHasMie};
+ });
+ assert.deepEqual(solar,{matched:true,changed:true,shaderHasMie:true});
+ console.log("PASS: solar elevation updates coupled sky and sea shading");
  await page.locator("#oceanWeatherLive").selectOption("storm");
  assert.equal(await page.locator("#oceanWeather").inputValue(),"storm");
  await page.locator("#oceanWeatherLive").selectOption("storm-sunset");
