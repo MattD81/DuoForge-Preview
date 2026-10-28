@@ -235,6 +235,26 @@ try{
  assert.ok(accumulation.px>=186&&accumulation.px<=190);
  assert.equal(accumulation.sampleTimes.length,2);
  console.log("PASS: original Cinema Engine V1 linear-light compositor blends temporal frames correctly");
+
+ const gpuBlend=await page.evaluate(async()=>{
+  const {createCinemaCompositor}=await import("/workshop/studio/cinema-gpu-engine.mjs");
+  const source=document.createElement("canvas");source.width=64;source.height=36;
+  const ctx=source.getContext("2d");
+  const engine=createCinemaCompositor({width:64,height:36});
+  ctx.fillStyle="#000";ctx.fillRect(0,0,64,36);engine.add(source);
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,64,36);engine.add(source);
+  const screen=engine.finish();
+  const out=document.createElement("canvas");out.width=64;out.height=36;
+  const oc=out.getContext("2d");oc.drawImage(screen,0,0);
+  const value=oc.getImageData(32,18,1,1).data[0];
+  const mode=engine.mode;engine.dispose();
+  return {value,mode};
+ });
+ assert.ok(gpuBlend.value>=185&&gpuBlend.value<=192,
+  "Independent GLSL float16 render pass should produce a correct ~188 sRGB average");
+ assert.ok(["webgl2-float16","cpu-linear"].includes(gpuBlend.mode));
+ console.log("PASS: Cinema Engine GPU/CPU floating-point render pipeline is operational: "+gpuBlend.mode);
+
  await page.locator("#filmEngineSamples").selectOption("2");
  await page.locator("#filmEngineShutter").selectOption("180");
  const [temporalBatch]=await Promise.all([
