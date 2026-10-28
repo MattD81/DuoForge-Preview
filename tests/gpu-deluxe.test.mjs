@@ -75,12 +75,15 @@ test("five tap shader has bounded sample count and safe valid GLSL",()=>{
  assert.match(frag,/gl_FragColor/);
  assert.match(DELUXE_SHARPEN_SHADER.vertexShader,/gl_Position/);
 });
-test("GPU Deluxe is wired to the real Studio and preview without changing GLB exports",()=>{
- const html=readFileSync(new URL("../workshop/studio/index.html",import.meta.url),"utf8");
- const world=readFileSync(new URL("../workshop/studio/render-world.mjs",import.meta.url),"utf8");
- for(const id of ["gpuDeluxeMode","gpuDeluxeStats"])assert.match(html,new RegExp('id="'+id+'"'));
- assert.match(world,/import \{createGPUDeluxe,DELUXE_SHARPEN_SHADER\}/);
- assert.match(world,/deluxeSharpenPass=new ShaderPass/);
- assert.match(world,/gpuDeluxe\.tick/);
- assert.match(world,/gpuDeluxe\.configure/);
+test("GPU Deluxe is wired to the original playable Stormblade game",()=>{
+ const html=readFileSync(new URL("../games/stormblade-duel/index.html",import.meta.url),"utf8");
+ const game=readFileSync(new URL("../games/stormblade-duel/game.mjs",import.meta.url),"utf8");
+ const world=readFileSync(new URL("../games/stormblade-duel/world.mjs",import.meta.url),"utf8");
+ assert.match(html,/id="sceneHost"/);
+ assert.match(html,/id="quality"/);
+ assert.match(game,/import \{createGPUDeluxe,DELUXE_SHARPEN_SHADER\}/);
+ assert.match(game,/gpu\.tick/);
+ assert.match(game,/new ShaderPass\(DELUXE_SHARPEN_SHADER\)/);
+ assert.match(world,/OCEAN_VERT/);
+ assert.match(world,/makeWarrior/);
 });
