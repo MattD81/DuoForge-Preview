@@ -62,6 +62,16 @@ try{
  await page.waitForFunction(()=>document.querySelector("#oceanSpeed")?.value==="1.65");
  await page.locator("#oceanWeatherLive").selectOption("storm");
  assert.equal(await page.locator("#oceanWeather").inputValue(),"storm");
+ await page.locator("#oceanWeatherLive").selectOption("storm-sunset");
+ assert.equal(await page.locator("#oceanWeather").inputValue(),"storm-sunset");
+ const enhanced=await page.evaluate(async()=>{
+  const {normalizeOceanSettings}=await import("/workshop/studio/ocean-water.mjs");
+  return normalizeOceanSettings({weather:"storm-sunset"}).weather;
+ });
+ assert.equal(enhanced,"storm-sunset");
+ await page.screenshot({path:"ocean-storm-sunset.png"});
+ await page.locator("#oceanWeatherLive").selectOption("storm");
+ console.log("PASS: physically layered ocean storm + sunset weather presets and GPU cloud sky");
  assert.match(await page.locator("#oceanHeightValue").textContent(),/1,15/);
  console.log("PASS: wave height, speed and storm toggles synchronize between viewport and panel");
 

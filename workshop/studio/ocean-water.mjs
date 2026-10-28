@@ -1,7 +1,7 @@
 // DuoForge Ocean: procedural GPU waves, deterministic CPU sampler, no external APIs.
 import * as THREE from "three";
 export const OCEAN_DEFAULTS=Object.freeze({height:.58,speed:1,weather:"clear"});
-export const OCEAN_WEATHER=Object.freeze(["clear","sunset","storm"]);
+export const OCEAN_WEATHER=Object.freeze(["clear","sunset","storm","storm-sunset"]);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function normalizeOceanSettings(value={}){
  return {height:clamp(Number.isFinite(Number(value.height))?Number(value.height):.58,.05,1.8),
@@ -9,16 +9,18 @@ export function normalizeOceanSettings(value={}){
  weather:OCEAN_WEATHER.includes(value.weather)?value.weather:"clear"};
 }
 export function oceanHeight(x,z,time,settings=OCEAN_DEFAULTS){
- const s=normalizeOceanSettings(settings),t=time*s.speed,w=s.height*(s.weather==="storm"?1.48:1);
+ const s=normalizeOceanSettings(settings),t=time*s.speed,w=s.height*((s.weather==="storm"||s.weather==="storm-sunset")?1.48:1);
  return -.38+w*(.38*Math.sin(x*.105+z*.037+t*.91)
   +.26*Math.cos(z*.16-x*.065-t*1.25)
   +.16*Math.sin(x*.32+z*.24+t*1.83)
-  +.13*Math.cos(Math.hypot(x*.7,z*.7)*.18-t*.75));
+  +.13*Math.cos(Math.hypot(x*.7,z*.7)*.18-t*.75)
+  +.055*Math.sin(x*.48-z*.21+t*3.6)
+  +.028*Math.cos(x*.93+z*.55+t*6.1));
 }
 const vertex=[
  "uniform float uTime,uHeight,uSpeed,uStorm;",
  "varying vec3 vWorld,vNormalWater; varying float vWave;",
- "float ocean(vec2 p,float t){return uHeight*uStorm*(.38*sin(p.x*.105+p.y*.037+t*.91)+.26*cos(p.y*.16-p.x*.065-t*1.25)+.16*sin(p.x*.32+p.y*.24+t*1.83)+.13*cos(length(p*.7)*.18-t*.75));}",
+ "float ocean(vec2 p,float t){return uHeight*uStorm*(.38*sin(p.x*.105+p.y*.037+t*.91)+.26*cos(p.y*.16-p.x*.065-t*1.25)+.16*sin(p.x*.32+p.y*.24+t*1.83)+.13*cos(length(p*.7)*.18-t*.75)+.055*sin(p.x*.48-p.y*.21+t*3.6)+.028*cos(p.x*.93+p.y*.55+t*6.1));}",
  "void main(){",
  " float t=uTime*uSpeed; vec3 p=position; float h=ocean(p.xz,t); p.y+=h;",
  " float dx=(ocean(p.xz+vec2(.22,0.),t)-ocean(p.xz-vec2(.22,0.),t))/.44;",
@@ -33,17 +35,21 @@ const fragment=[
  "uniform vec3 uDeep,uShallow,uSky,uSun;",
  "varying vec3 vWorld,vNormalWater; varying float vWave;",
  "void main(){",
- " vec3 N=normalize(vNormalWater),V=normalize(cameraPosition-vWorld);",
+ " vec3 N=normalize(vNormalWater+vec3(.045*sin(vWorld.x*2.6+vWorld.z*.91+uTime*4.7),0.,.05*cos(vWorld.z*2.45-vWorld.x*.88-uTime*5.5))*uStorm),V=normalize(cameraPosition-vWorld);",
  " vec3 L=normalize(vec3(.34,.88,-.35)); float ndv=max(dot(N,V),0.);",
  " float fresnel=pow(1.-ndv,4.5); float light=max(dot(N,L),0.);",
- " vec3 H=normalize(L+V);float spec=pow(max(dot(N,H),0.),uStorm>1.1?120.:220.);",
+ " vec3 H=normalize(L+V);float hdot=max(dot(N,H),0.);",
+ " float spec=.34*pow(hdot,40.)+.75*pow(hdot,uStorm>1.1?145.:210.);",
  " float level=clamp(.50+vWave/max(.18,uHeight*1.4),0.,1.);",
  " vec3 water=mix(uDeep,uShallow,level*.67);",
- " water=mix(water,uSky,.13+fresnel*.67);water+=uSun*spec*2.2;",
+ " water=mix(water,uSky,.12+fresnel*.66);water+=uSun*spec*2.2;",
  " water+=uSun*pow(light,8.)*.085;",
- " float crest=smoothstep(uHeight*.37,uHeight*.69,vWave);",
+ " float crest=smoothstep(uHeight*.54,uHeight*.81,vWave);",
  " float micro=.5+.5*sin(vWorld.x*2.2+uTime*uSpeed*2.1)*sin(vWorld.z*1.9-uTime*1.7);",
- " float foam=crest*micro*(uStorm>1.1?.71:.18);",
+ " float foam=crest*micro*(uStorm>1.1?.70:.16);",
+ " float wake=exp(-pow((abs(vWorld.x)-10.5)/2.0,2.0))*",
+ " (1.-smoothstep(29.,42.,abs(vWorld.z)))*abs(sin(vWorld.z*1.1+uTime*4.0));",
+ " foam=max(foam,wake*(uStorm>1.1?.26:.09));",
  " water=mix(water,vec3(.79,.95,.94),foam);",
  " float distanceFromCamera=distance(cameraPosition,vWorld);",
  " float haze=1.-exp(-distanceFromCamera*uHaze);",
@@ -60,7 +66,7 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
  geometry.rotateX(-Math.PI/2);
  const uniforms={
   uTime:{value:0},uHeight:{value:initial.height},uSpeed:{value:initial.speed},
-  uStorm:{value:initial.weather==="storm"?1.48:1},
+  uStorm:{value:(initial.weather==="storm"||initial.weather==="storm-sunset")?1.48:1},
   uDeep:{value:new THREE.Color("#06415a")},
   uShallow:{value:new THREE.Color("#209aa6")},
   uSky:{value:new THREE.Color("#80bfd7")},
@@ -79,8 +85,11 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
  function setSettings(raw){
   current=normalizeOceanSettings(raw);
   uniforms.uHeight.value=current.height;uniforms.uSpeed.value=current.speed;
-  uniforms.uStorm.value=current.weather==="storm"?1.48:1;
-  if(current.weather==="storm"){
+  uniforms.uStorm.value=(current.weather==="storm"||current.weather==="storm-sunset")?1.48:1;
+  if(current.weather==="storm-sunset"){
+   uniforms.uDeep.value.set("#0c2034");uniforms.uShallow.value.set("#276d79");
+   uniforms.uSky.value.set("#e29b8a");uniforms.uSun.value.set("#ffd089");uniforms.uHaze.value=.006;
+  }else if(current.weather==="storm"){
    uniforms.uDeep.value.set("#071b2c");uniforms.uShallow.value.set("#276674");
    uniforms.uSky.value.set("#586f84");uniforms.uSun.value.set("#cad8f0");uniforms.uHaze.value=.007;
   }else if(current.weather==="sunset"){
