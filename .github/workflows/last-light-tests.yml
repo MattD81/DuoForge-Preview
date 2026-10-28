@@ -32,6 +32,8 @@ jobs:
           node --check games/last-light/coastal-terrain.mjs
           node --check games/last-light/coastal-world.mjs
           node --check games/last-light/wake-trails.mjs
+          node --check games/last-light/pbr-materials.mjs
+          node --check games/last-light/raytrace.mjs
           node --test games/last-light/gameplay.test.mjs games/last-light/coastal-terrain.test.mjs
       - name: Install Playwright (test only)
         timeout-minutes: 2
