@@ -85,8 +85,8 @@ const fragment=[
  " float crest=vWave/max(.03,uHeight*uStorm);",
  " float slope=sqrt(max(0.,1.-N.y*N.y));",
  " float breaker=smoothstep(.57,.89,crest)*smoothstep(.055,.18,slope);",
- " float patch=fbm(vWorld.xz*.13+vec2(uTime*uSpeed*.18,-uTime*.09));",
- " float foam=breaker*smoothstep(.45,.68,patch)*(uStorm>1.1?.63:.14);",
+ " float foamPatch=fbm(vWorld.xz*.13+vec2(uTime*uSpeed*.18,-uTime*.09));",
+ " float foam=breaker*smoothstep(.45,.68,foamPatch)*(uStorm>1.1?.63:.14);",
  " water=mix(water,vec3(.69,.83,.84),clamp(foam,0.,.7));",
  // The reflected sky and water converge in mist without a hard horizon line.
  " float haze=1.-exp(-distanceFromCamera*uHaze);",
