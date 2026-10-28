@@ -2,6 +2,9 @@ import * as THREE from "three";
 import {createOceanSurface} from "../../workshop/studio/ocean-water.mjs?v=research-3d-v1";
 import {atmosphereState} from "../../workshop/studio/atmosphere-scattering.mjs";
 import {MISSIONS} from "./gameplay.mjs";
+import {ISLAND_SITES,terrainHeight} from "./coastal-terrain.mjs";
+import {buildCoastalWorld,enhanceLighthouse} from "./coastal-world.mjs";
+import {createWakeTrails} from "./wake-trails.mjs";
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rand=(()=>{let s=740331;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}})();
@@ -101,28 +104,20 @@ export function createWorld({scene,quality="medium"}){
  const fir=new THREE.MeshStandardMaterial({color:0x1c423e,roughness:1});
  const pale=new THREE.MeshStandardMaterial({color:0xe2ded1,roughness:.67});
  const gold=new THREE.MeshStandardMaterial({color:0xeecf94,roughness:.39,metalness:.15,emissive:0xe49a48,emissiveIntensity:.36});
- const reefPositions=[[-145,-88,25],[118,-185,39],[155,-268,32],[-160,-254,43],[-108,53,29],[159,26,45],[132,-340,34],[-131,-360,26]];
- const islands=[];
+ // A reusable, deterministic terrain system replaces the previous faceted island balls.
+ // It generates genuine triangulated heightfields, instanced granite/trees and a harbor.
+ const coast=buildCoastalWorld({world,quality});
+ const islands=coast.islands;
  const put=(geo,mat,name,x,y,z,parent=world)=>{
   const mesh=new THREE.Mesh(geo,mat);mesh.name=name;mesh.position.set(x,y,z);
   mesh.castShadow=quality!=="low";mesh.receiveShadow=true;parent.add(mesh);return mesh;
  };
- for(let i=0;i<reefPositions.length;i++){
-  const [x,z,r]=reefPositions[i];
-  const rock=put(new THREE.IcosahedronGeometry(r,2),i%2?stone:rockFace,"Weathered archipelago island",x,-r*.43-.35,z);
-  rock.scale.set(1,.60,1.24);rock.rotation.y=i*.97;islands.push(rock);
-  if(i<6){
-   for(let j=0;j<(quality==="low"?4:11);j++){
-    const dx=(rand()-.5)*r*.95,dz=(rand()-.5)*r*.95;
-    const h=5+rand()*8;
-    put(new THREE.CylinderGeometry(.33,.46,h*.42,6),stone,"Cliffside tree trunk",x+dx,h*.2,z+dz);
-    put(new THREE.ConeGeometry(h*.23,h,6),fir,"Wind-swept pine",x+dx,h*.66,z+dz);
-   }
-  }
- }
  const lighthouse=groupPos=>{
   const {x,z}=groupPos;
-  const tower=new THREE.Group();tower.position.set(x,10,z);tower.name="Lighthouse – rotating navigation light";world.add(tower);
+  const site=ISLAND_SITES.find(s=>s.x===x&&s.z===z);
+  const terrain=site?terrainHeight(0,0,site.r,site.seed):0;
+  const tower=new THREE.Group();tower.position.set(x,terrain+10.35,z);
+  tower.name="Lighthouse – rotating navigation light";world.add(tower);
   put(new THREE.CylinderGeometry(2,3.35,21,14),pale,"Lighthouse tapered stone",0,0,0,tower);
   for(let k=0;k<4;k++)put(new THREE.CylinderGeometry(3.36,3.36,.4,18),stone,"Lighthouse band",0,-7+k*4.2,0,tower);
   put(new THREE.CylinderGeometry(3.1,3.1,.45,16),stone,"Lighthouse lantern balcony",0,10.8,0,tower);
@@ -134,6 +129,7 @@ export function createWorld({scene,quality="medium"}){
   const beam=new THREE.SpotLight(0xffe3af,quality==="low"?80:180,175,.23,.75,1.2);
   beam.position.set(0,0,0);axis.add(beam);
   const target=new THREE.Object3D();target.position.set(0,-14,-100);axis.add(target);beam.target=target;
+  enhanceLighthouse(tower,quality);
   return axis;
  };
  const lightAxes=[lighthouse({x:119,z:-185}),lighthouse({x:-145,z:-88})];
@@ -156,15 +152,17 @@ export function createWorld({scene,quality="medium"}){
   const label=put(new THREE.PlaneGeometry(6.2,1.55),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide,depthWrite:false}),"Signal caption",0,5.2,0,g);
   return {g,halo,flare,light,label,raft:stem,index:i};
  });
- const maxSpray=quality==="low"?65:135;
+ const wake=createWakeTrails({world,ocean,quality});
+ const maxSpray=quality==="low"?24:92;
  const sprayPos=new Float32Array(maxSpray*3),ages=new Float32Array(maxSpray).fill(99);
  sprayPos.fill(-10000);
  const sprayGeo=new THREE.BufferGeometry();sprayGeo.setAttribute("position",new THREE.BufferAttribute(sprayPos,3));
- const spray=new THREE.Points(sprayGeo,new THREE.PointsMaterial({color:0xb0d1d0,size:quality==="low"?.7:1.1,sizeAttenuation:true,transparent:true,opacity:.45,depthWrite:false}));
+ const spray=new THREE.Points(sprayGeo,new THREE.PointsMaterial({color:0xb0d1d0,size:quality==="low"?.7:1.1,sizeAttenuation:true,transparent:true,opacity:.21,depthWrite:false}));
  spray.name="World-space wake spray";world.add(spray);
  let nextParticle=0,simulationTime=0;
  function update(time,dt,shipState,rescued){
   simulationTime=time;ocean.update(time);sky.material.uniforms.uTime.value=time;
+  wake.update(time,dt,shipState);
   for(let i=0;i<lightAxes.length;i++)lightAxes[i].rotation.y=time*.52+i*2;
   beacons.forEach((b,i)=>{
    const active=i===rescued,finished=i<rescued;
@@ -208,5 +206,5 @@ export function createWorld({scene,quality="medium"}){
   scene.fog.color.set(air.fog);
   return target;
  }
- return {world,ocean,update,setWeather,state,beacons,lightAxes,sky,scene};
+ return {world,ocean,update,setWeather,state,beacons,lightAxes,sky,scene,coast,wake};
 }
