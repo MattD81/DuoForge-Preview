@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07121c">
+<title>LAST LIGHT — GPU Ray Tracing Photo Studio</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e9f7f3;background:#08121a}
+*{box-sizing:border-box}html,body{margin:0;height:100%;width:100%}body{overflow:hidden}
+main{height:100dvh;display:grid;grid-template-columns:minmax(225px,290px) 1fr;overflow:hidden}
+aside{background:#0a1a27e9;border-right:1px solid #90ccb83c;padding:clamp(18px,3vw,32px);overflow-y:auto;z-index:2}
+a{color:#8bdeca;text-decoration:none}a:focus-visible,button:focus-visible{outline:2px solid #7bf7d7;outline-offset:4px}
+h1{font-size:clamp(28px,3vw,42px);line-height:1.03;letter-spacing:-.055em;margin:32px 0 9px}h1 em{font-style:normal;color:#ffa975}
+p{color:#bacbd0;line-height:1.55;font-size:13px}
+.eyebrow{font-size:10px;letter-spacing:.2em;color:#8ce5c7;font-weight:850}
+.badge{padding:8px 10px;border:1px solid #d1ffb240;border-radius:6px;letter-spacing:.08em;font-size:11px;color:#e9fcd2;display:block;margin:18px 0}
+label{font-size:11px;color:#bbd8d6;font-weight:700;display:block;margin:18px 0 7px}
+button,select{width:100%;border-radius:8px;border:1px solid #64baa680;background:#112e3c;color:#e9f3ed;min-height:42px;padding:8px 10px;font:inherit;font-size:12px}
+button{cursor:pointer;margin:7px 0 0;font-weight:750}button:hover{border-color:#8dfce0;background:#1d4d4c}button.primary{background:#81e5c6;color:#092b30}
+button:disabled{cursor:not-allowed;opacity:.55}
+#status{font-size:12px;padding:10px 12px;border:1px solid #78c7bc50;border-radius:9px;background:#091f2b;color:#d4f1ec;min-height:64px}
+.stat{display:flex;justify-content:space-between;margin:11px 0;font-size:12px;color:#b2d6d6}.stat strong{color:#edf8e9}
+#progress{width:100%;height:4px;background:#1d3f47;border-radius:4px;overflow:hidden;margin-top:15px}
+#progress>div{height:100%;width:0;background:#7df8bc;transition:width .3s}
+.stage{min-width:0;position:relative;background:#101a24}
+canvas#photo{display:block;height:100%;width:100%;touch-action:none}
+.overlay{position:absolute;bottom:20px;left:20px;right:20px;background:#07121bc9;border:1px solid #b6d7c038;color:#cfdfde;padding:13px;border-radius:8px;font-size:11px;pointer-events:none;backdrop-filter:blur(9px)}
+.pill{display:inline-block;padding:4px 7px;border-radius:7px;background:#254545;color:#a7f7e1;font-size:10px;font-weight:800}
+#fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;background:radial-gradient(#1b3545,#08121a)}
+#fallback.visible{display:flex}#fallback article{max-width:460px;border:1px solid #8dced750;padding:26px;border-radius:14px;background:#0d222f}
+#fallback h2{font-size:24px}
+@media(max-width:680px){main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}aside{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;padding:11px 13px;overflow:auto;max-height:38dvh}aside h1{margin:7px 0;font-size:23px}aside p{display:none}aside .badge{margin:5px 0}aside .eyebrow{font-size:8px}aside #status{grid-column:1/-1;min-height:30px;padding:6px}aside label{margin:4px 0;align-self:end}aside button{margin:0}aside .stat,aside #progress{margin:2px 0} .overlay{bottom:9px;left:9px;right:9px;padding:8px} }
+</style>
+<script type="importmap">
+{"imports":{
+ "three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+ "three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.webgpu.js",
+ "three/":"https://cdn.jsdelivr.net/npm/three@0.185.1/",
+ "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
+ "three-mesh-bvh":"https://esm.sh/three-mesh-bvh@0.9.15?external=three",
+ "three-gpu-pathtracer/webgpu":"https://esm.sh/three-gpu-pathtracer@0.0.27/webgpu?bundle&external=three",
+ "three-gpu-pathtracer":"https://esm.sh/three-gpu-pathtracer@0.0.27?bundle&external=three"
+}}
+</script>
+</head><body>
+<main>
+<aside>
+ <a href="./">← TILLBAKA TILL LAST LIGHT</a>
+ <div class="eyebrow">DUOFORGE CINEMA LAB / 2026</div>
+ <h1>PHOTO<br><em>REALITY</em></h1>
+ <span class="badge">● REAL WEBGPU PATH TRACING · MIT</span>
+ <p>Fånga vårt räddningsfartyg Aurora med fysikbaserat ljus: BVH-strålkastning, flerstudsreflektioner, skuggor, indirekt ljus och avancerade PBR-material.</p>
+ <div id="status" role="status" aria-live="polite">Kontrollerar din enhets stöd för WebGPU…</div>
+ <label for="samples">Strålar per pixel (målvärde)</label>
+ <select id="samples"><option value="16">16 – snabb förhandsvisning</option><option selected value="32">32 – balanserad</option><option value="64">64 – fina reflektioner</option><option value="128">128 – hög detalj</option></select>
+ <button id="render" class="primary" type="button" disabled>◉ STARTA STRÅLSPÅRNING</button>
+ <button id="save" type="button" disabled>↓ SPARA FOTO PNG</button>
+ <div id="progress"><div id="progressFill"></div></div>
+ <div class="stat"><span>ACKUMULERADE PROV</span><strong id="sampleCount">0</strong></div>
+ <div class="stat"><span>LJUSSTUDSAR</span><strong>6</strong></div>
+ <div class="stat"><span>MOTOR</span><strong id="engine">WebGPU: väntar</strong></div>
+ <p><small>Den här fotograferingen är ett fryst 3D-ögonblick, inte raytracing av varje spelframe. Dra för att ändra kameran – då startar provtagningen om. Ingen server- eller Work-rendering.</small></p>
+</aside>
+<div class="stage">
+ <canvas id="photo" aria-label="WebGPU strålspårat foto av DuoForges Aurora-fartyg"></canvas>
+ <div id="fallback"><article><div class="eyebrow">WEBGPU KRÄVS</div><h2>Din enhet stöder inte strålspårningsläget.</h2>
+  <p id="fallbackText">Använd en modern webbläsare med aktiverat WebGPU-stöd. Det vanliga WebGL-spelet fungerar fortfarande.</p>
+  <p><a href="./">→ Spela det vanliga LAST LIGHT-spelet</a></p></article></div>
+ <div class="overlay"><span class="pill">FYSISK LJUSSIMULERING</span> Ett separat foto av Aurora med flerstudsig strålspårning · bilden förbättras gradvis medan kameran är stilla.</div>
+</div>
+</main>
+<script type="module" src="./raytrace.mjs?v=1"></script>
+</body></html>
