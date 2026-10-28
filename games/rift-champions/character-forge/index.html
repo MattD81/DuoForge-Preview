@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DuoForge Character Forge V3 – skinnade 3D-karaktärer &amp; motion capture</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#07111f;color:#eff9ff;font:15px system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 20px;background:#102439;border-bottom:1px solid #36535e}
+header strong{font-size:18px;color:#77f9e2}a{color:#7ff1db}main{display:grid;grid-template-columns:minmax(280px,1fr) 315px;min-height:560px}
+#scene{position:relative;height:min(77vh,760px);min-height:450px;background:radial-gradient(circle at 48% 35%,#203e57,#0a111e 65%)}#scene canvas{width:100%;height:100%;display:block}
+aside{padding:17px;display:flex;flex-direction:column;gap:12px;background:#112032;border-left:1px solid #284451}
+h1{font-size:20px;margin:0}p{margin:0;color:#b0cbd6;font-size:13px;line-height:1.5}label{display:block;color:#cce8ee;font-size:13px;font-weight:650}
+button,select,input[type=file]{font:inherit;color:#ebffff;background:#1b3546;border:1px solid #4d8290;border-radius:6px;padding:10px;width:100%;min-height:44px;margin-top:4px}
+button{cursor:pointer;background:#13554b}button:hover{background:#196f60}button:disabled{opacity:.45;cursor:not-allowed}
+input[type=range]{width:100%;accent-color:#69ecda}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#status{font-size:12px;white-space:pre-wrap;line-height:1.45;padding:10px;background:#102f3d;border:1px solid #335965;border-radius:6px}
+small{font-size:11px;color:#9cbdc9}button:focus-visible,select:focus-visible{outline:2px solid #8bffec}
+@media(max-width:760px){main{display:flex;flex-direction:column}#scene{height:52vh;min-height:340px}aside{border-left:0}header{padding:12px}}
+</style></head><body>
+<header><strong>◈ DUOFORGE · CHARACTER FORGE V3</strong><nav><a href="../">← Till fightingspelet</a> · <a href="../../../workshop/">3D-verkstaden</a></nav></header>
+<main><section id="scene" aria-label="Interaktiv 3D-fighter"></section>
+<aside>
+<h1>Skinnade 3D-karaktärer</h1><p>21 skelettleder, en sammanhängande kropp, PBR och åtta riktiga ansiktsuttryck. Rotera med fingret för att se modellen från alla håll.</p>
+<label>Fighter<select id="fighter"><option value="kael">KAEL VORTEX</option><option value="vex">VEX REVENANT</option></select></label>
+<div class="row"><a id="download" href="../models/kael_skinned_v3.glb" download style="padding:12px;border:1px solid #477887;border-radius:6px;text-align:center;text-decoration:none">Hämta GLB ↓</a><button id="reset" type="button">Återställ vy</button></div>
+<label>Inbyggd animation<select id="clip"><option value="idle">Idle / andning</option><option value="jab">Snabbt slag</option><option value="heavy">Kraftslag</option><option value="kick">Spark</option><option value="block">Blockera</option><option value="victory">Seger</option></select></label>
+<div class="row"><button id="play" type="button">▶ Spela</button><button id="pause" type="button">Ⅱ Pausa</button></div>
+<label>Ansiktsuttryck<select id="face"><option value="neutral">Neutralt</option><option value="browAngry">Arg</option><option value="blinkLeft">Blink vänster</option><option value="blinkRight">Blink höger</option><option value="jawOpen">Öppen mun</option><option value="smile">Leende</option><option value="pain">Smärta</option><option value="snarl">Grimas</option><option value="surprise">Överraskad</option></select></label>
+<label>Styrka <span id="pct">80%</span><input type="range" min="0" max="100" value="80" id="strength"></label>
+<h1>BVH Motion Capture</h1><p>Importera verklig rörelsefångst till fighter-skelettet. Inbyggda animationer är handgjorda; en extern BVH är inspelad separat och kan behöva kalibrering.</p>
+<input id="file" type="file" accept=".bvh,text/plain" aria-label="Välj BVH-filen">
+<button id="import" type="button" disabled>▶ Spela importerad BVH</button>
+<button id="cmu" type="button">Prova CMU:s slagsekvens (02_05)</button>
+<div id="status" role="status" aria-live="polite">Laddar GLB-modellen…</div>
+<small>Mocap-data: <a href="https://mocap.cs.cmu.edu/">CMU Motion Capture Database</a>. Kreditering: Data obtained from mocap.cs.cmu.edu, funded by NSF EIA-0196217. Ingen betald generering.</small>
+</aside></main>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createBVHRetargeter} from './mocap-retarget.mjs';
+const $=id=>document.getElementById(id),panel=$('scene'),status=$('status');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0c1828);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;panel.appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(37,1,.1,80);camera.position.set(4.4,3.3,7.8);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,1.55,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=2.5;controls.maxDistance=13;
+scene.add(new THREE.HemisphereLight(0xe6f4ff,0x1b1f36,2.1));
+for(const [hex,pos,power] of [[0xffffff,[3,6,6],3.3],[0x46e6cc,[-4,4,0],2.5],[0xff546f,[1,3,-4],2.0]]){const l=new THREE.DirectionalLight(hex,power);l.position.set(...pos);scene.add(l);}
+const floor=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.83,.15,60),new THREE.MeshStandardMaterial({color:0x244154,metalness:.40,roughness:.44}));
+floor.position.y=-.15;floor.receiveShadow=true;scene.add(floor);
+let root=null,mixer=null,clips={},morph=null,mocap=null,bvhText='',paused=false,last=performance.now(),loadSeq=0;
+function say(message){status.textContent=message;}
+function size(){let w=panel.clientWidth,h=panel.clientHeight;if(!w||!h)return;renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(panel);else addEventListener('resize',size);size();
+async function load(){
+  const seq=++loadSeq,who=$('fighter').value;
+  if(mocap){mocap.stop();mocap=null;}mixer?.stopAllAction();if(root)scene.remove(root);
+  root=null;mixer=null;morph=null;$('download').href='../models/'+who+'_skinned_v3.glb';
+  say('Laddar '+who.toUpperCase()+' – skinnad V3 GLB…');
+  try{
+    const gltf=await new GLTFLoader().loadAsync('../models/'+who+'_skinned_v3.glb?v=3');
+    if(seq!==loadSeq)return;
+    root=gltf.scene;clips=Object.fromEntries(gltf.animations.map(c=>[c.name,c]));
+    root.traverse(o=>{if(o.isSkinnedMesh){o.castShadow=true;if(o.morphTargetInfluences?.length)morph=o;}});
+    if(!morph||!root.getObjectByName('head'))throw Error('Skelett eller ansiktsuttryck saknas');
+    scene.add(root);mixer=new THREE.AnimationMixer(root);$('clip').value='idle';play('idle');
+    say(who.toUpperCase()+' klar: '+gltf.animations.length+' animationer, '+Object.keys(morph.morphTargetDictionary).length+' ansiktsuttryck. Välj animation eller BVH.');
+  }catch(err){say('Kunde inte ladda V3: '+err.message);console.error(err);}
+}
+function play(name){if(!mixer||!clips[name])return;if(mocap){mocap.stop();mocap=null;}mixer.stopAllAction();mixer.clipAction(clips[name]).reset().play();paused=false;}
+function expression(){
+  if(!morph)return;
+  const name=$('face').value;
+  if(name==='neutral')return;
+  const index=morph.morphTargetDictionary[name];
+  if(index!==undefined){morph.morphTargetInfluences.fill(0);morph.morphTargetInfluences[index]=Number($('strength').value)/100;}
+}
+$('fighter').addEventListener('change',load);
+$('clip').addEventListener('change',e=>play(e.target.value));
+$('play').addEventListener('click',()=>{paused=false;if(!mocap)play($('clip').value);});
+$('pause').addEventListener('click',()=>{paused=!paused;say(paused?'Pausat':'Spelar');});
+$('reset').addEventListener('click',()=>{camera.position.set(4.4,3.3,7.8);controls.target.set(0,1.55,0);controls.update();});
+$('face').addEventListener('change',expression);
+$('strength').addEventListener('input',()=>{$('pct').textContent=$('strength').value+'%';expression();});
+$('file').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file)return;if(file.size>10_000_000)return say('BVH får inte vara större än 10 MB');
+  bvhText=await file.text();$('import').disabled=!bvhText;say('BVH laddad: '+file.name);
+});
+$('cmu').addEventListener('click',async()=>{
+  say('Hämtar öppet CMU-klipp 02_05…');
+  try{
+    const response=await fetch('https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/002/02_05.bvh');
+    if(!response.ok)throw Error('HTTP '+response.status);
+    const data=await response.text();
+    if(data.length>10_000_000||!data.startsWith('HIERARCHY'))throw Error('BVH-format eller storlek felaktig');
+    bvhText=data;$('import').disabled=false;say('CMU punch/strike redo. Tryck Spela importerad BVH.');
+  }catch(e){say('Hämtning blockerad: '+e.message+'. Importera en BVH-fil manuellt.');}
+});
+$('import').addEventListener('click',()=>{
+ if(!root||!bvhText)return;
+ try{mixer?.stopAllAction();mocap?.stop();mocap=createBVHRetargeter(bvhText,{root});paused=false;say('BVH spelar: '+mocap.matched.length+' leder, '+mocap.duration.toFixed(1)+' sek.');}
+ catch(e){say('BVH-problem: '+e.message);}
+});
+function tick(now){requestAnimationFrame(tick);const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;
+ if(!paused){if(mocap)mocap.update(dt);else mixer?.update(dt);}
+ expression();controls.update();renderer.render(scene,camera);
+}
+load();requestAnimationFrame(tick);
+</script></body></html>
