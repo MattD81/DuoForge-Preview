@@ -124,7 +124,7 @@ const OCEAN_VERT=[
  'void main(){vec3 p=position;float t=uTime;p.z+=wave(p.xy,t);',
  'float eps=.12;float sx=(wave(p.xy+vec2(eps,0.),t)-wave(p.xy-vec2(eps,0.),t))/(2.*eps);',
  'float sy=(wave(p.xy+vec2(0.,eps),t)-wave(p.xy-vec2(0.,eps),t))/(2.*eps);',
- 'vNormalWater=normalize(vec3(-sx,-sy,1.));vWave=p.z;',
+ 'vNormalWater=normalize(mat3(modelMatrix)*vec3(-sx,-sy,1.));vWave=p.z;',
  'vec4 world=modelMatrix*vec4(p,1.);vWorld=world.xyz;',
  'gl_Position=projectionMatrix*viewMatrix*world;}'
 ].join('\n');
