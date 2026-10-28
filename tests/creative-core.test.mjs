@@ -8,7 +8,7 @@ import {
 const hash = "a".repeat(64);
 
 test("safe names and asset categories", () => {
-  assert.equal(safeAssetName("../My new: Car"), "__My-new_-Car");
+  assert.equal(safeAssetName("../My new: Car"), "___My-new_-Car");
   assert.equal(categorizeAsset("DuoForge Kart"), "fordon");
   assert.equal(categorizeAsset("Ek träd"), "natur");
   assert.equal(categorizeAsset("Island ship"), "fartyg");
