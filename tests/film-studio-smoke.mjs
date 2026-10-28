@@ -216,6 +216,38 @@ try{
  assert.ok(frameZip.includes(Buffer.from("duoforge-frames@1")));
  assert.equal(await page.locator("#filmFrameStart").inputValue(),"1");
  console.log("PASS: offline renderer exports actual frame-exact PNG ZIP with manifest and resume index");
+ // Skeletal GLB bridge must preserve clips and support exact-timestamp bone poses.
+ const rigBridge=await page.evaluate(async()=>{
+  const THREE=await import("three");
+  const {registerRigClips,cloneRiggedModel,makeRigDirector}=await import("./workshop/studio/cinema-rig.mjs");
+  const root=new THREE.Group();
+  const bone=new THREE.Bone();bone.name="Arm";root.add(bone);
+  const clip=new THREE.AnimationClip("wave",2,[
+   new THREE.QuaternionKeyframeTrack("Arm.quaternion",[0,1,2],
+    [0,0,0,1,0,0,.382683,.92388,0,0,0,1])
+  ]);
+  registerRigClips(root,[clip]);
+  const clone=cloneRiggedModel(root);
+  const director=makeRigDirector(clone);
+  director.start("wave");
+  director.sample(.5);
+  const animated=clone.children[0].quaternion.z;
+  director.pose("Arm",[.2,0,0]);
+  const posed=clone.children[0].quaternion.x;
+  director.release();
+  return {clips:director.clips.length,bones:director.bones.length,animated,posed,
+   restored:Math.abs(clone.children[0].quaternion.x)<.0001};
+ });
+ assert.equal(rigBridge.clips,1);
+ assert.equal(rigBridge.bones,1);
+ assert.ok(rigBridge.animated>.15);
+ assert.ok(rigBridge.posed>.07);
+ assert.equal(rigBridge.restored,true);
+ console.log("PASS: imported glTF skeleton clips, animation sampling and non-destructive per-bone poses");
+ assert.equal(await page.locator("#filmRigPanel").count(),1);
+ assert.equal(await page.locator("#filmTraceMovie").count(),1);
+ assert.equal(await page.locator("#filmTraceDenoise").isChecked(),true);
+ console.log("PASS: Cinema Film rig controls and opt-in GPU path tracing frame export are present");
  await page.screenshot({path:"film-studio-desktop.png"});
  await page.locator("#filmClose").click();
  assert.equal(await page.locator("#filmStudioOverlay").isVisible(),false);
