@@ -292,6 +292,16 @@
           <button id="filmTraceCancel" type="button" hidden>■ Avbryt och spara färdiga bildrutor</button>
           <div id="filmTraceStatus" role="status">Renderas på ditt eget grafikkort. Använd dator för längre filmer.</div>
         </details>
+        <details class="film-production-panel film-export-panel" id="filmAssemblePanel">
+          <summary>🎬 Skapa film från path-tracade bilder + ljud</summary>
+          <p class="film-note">Ladda dina färdiga DuoForge PNG-ZIP-delar, inklusive alla bildrutor i rätt ordning. Systemet kodar dem till MP4 eller WebM och lägger in ljudspåret som du valt ovan. Ingen uppladdning till molnet.</p>
+          <label>Välj alla PNG-ZIP-delar (max 250 MB)
+            <input type="file" id="filmFramesFiles" accept=".zip,application/zip" multiple>
+          </label>
+          <button type="button" id="filmAssembleVideo">🎬 Koda färdig film med ljud</button>
+          <button type="button" id="filmAssembleCancel" hidden>■ Avbryt kodning</button>
+          <div id="filmAssembleStatus" role="status">Stöder upp till 30 sekunder per klipp, beroende på enhet. Video exporteras i ett av webbläsarens kompatibla format.</div>
+        </details>
         <div class="cinema-pathtrace">
           <strong>✨ Ray tracing · stillbild (beta)</strong>
           <small>Riktig ljusstrålesimulering och reflexer med flera samples. Här renderas en statisk bild, inte realtidsfilm. GPU-arbete på din enhet.</small>
