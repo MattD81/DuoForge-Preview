@@ -26,7 +26,7 @@ try{
  const water=await page.evaluate(async()=>{
   const THREE=await import("three");
   const {createEnvironment}=await import("./render-environments.mjs");
-  const {oceanHeight,normalizeOceanSettings}=await import("./ocean-water.mjs");
+  const {oceanHeight,oceanSlope,normalizeOceanSettings}=await import("./ocean-water.mjs");
   const env=createEnvironment({world:"ocean",quality:"low",oceanSettings:{height:.6,speed:1,weather:"clear"}});
   let animated=0,rocks=0,buoys=0,dock=0;
   env.group.traverse(obj=>{
@@ -37,19 +37,25 @@ try{
   });
   const values=[0,1.2,2.7,4.4].map(t=>oceanHeight(24,31,t,{height:.6,speed:1,weather:"clear"}));
   const shader=env.ocean.mesh.material;
-  const valid=shader.isShaderMaterial&&shader.vertexShader.includes("uHeight")&&shader.fragmentShader.includes("fresnel");
+  const valid=shader.isShaderMaterial&&shader.vertexShader.includes("uHeight")&&
+   shader.fragmentShader.includes("fresnel")&&shader.fragmentShader.includes("ggxD")&&
+   !shader.fragmentShader.includes("wake=exp")&&shader.uniforms.uSunDir.value.length()>.99;
+  const slope=oceanSlope(18,12,3,{height:1.2,speed:2.3,weather:"storm"});
+  const physical={roughness:shader.uniforms.uRoughness.value,slopeOk:Number.isFinite(slope.dx)&&Number.isFinite(slope.dz)};
   const divisions=env.ocean.mesh.geometry.attributes.position.count;
   env.update(3.3,.016);
   const gpuTime=shader.uniforms.uTime.value;
   env.setOceanSettings({height:1.2,speed:2.3,weather:"storm"});
   const storm={height:shader.uniforms.uHeight.value,speed:shader.uniforms.uSpeed.value,mode:shader.uniforms.uStorm.value};
   env.dispose();
-  return {animated,rocks,buoys,dock,values,valid,divisions,gpuTime,storm,clamp:normalizeOceanSettings({height:200,speed:-3,weather:"invalid"})};
+  return {animated,rocks,buoys,dock,values,valid,physical,divisions,gpuTime,storm,clamp:normalizeOceanSettings({height:200,speed:-3,weather:"invalid"})};
  });
  assert.equal(water.animated,1,"Exactly one shader-animated ocean mesh");
  assert.ok(water.divisions>4000,"Wave geometry has enough subdivisions");
  assert.ok(water.buoys>=4&&water.dock>=8&&water.rocks>=4,"Marina, floating markers and islands exist");
  assert.equal(water.valid,true);
+ assert.equal(water.physical.slopeOk,true);
+ assert.ok(water.physical.roughness>=.20&&water.physical.roughness<=.4);
  assert.equal(new Set(water.values.map(x=>x.toFixed(4))).size,4,"Waves move with time, rather than remaining static");
  assert.equal(water.gpuTime,3.3,"Uniforms update every render frame");
  assert.deepEqual(water.storm,{height:1.2,speed:2.3,mode:1.48});
