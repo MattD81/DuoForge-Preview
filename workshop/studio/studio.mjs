@@ -5,7 +5,7 @@ import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
-import {initRenderWorld} from "./render-world.mjs?v=surfaces-v1";
+import {initRenderWorld} from "./render-world.mjs?v=ocean-physical-v5";
 import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 

@@ -5,7 +5,7 @@ import * as THREE from "three";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 import {driveStep,vehicleConfig} from "./living-physics.mjs";
 import {createWheelRig} from "./wheel-rig.mjs";
-import {createEnvironment,worldNames} from "./render-environments.mjs?v=ocean-1";
+import {createEnvironment,worldNames,getOceanSun} from "./render-environments.mjs?v=ocean-physical-v5";
 import {normalizeOceanSettings} from "./ocean-water.mjs";
 import {initFilmStudio} from "./film-studio.mjs";
 import {createCinematicLighting} from "./cinematic-lighting.mjs";
@@ -151,7 +151,16 @@ export function initRenderWorld(ctx){
  }
  function updateOceanSetting(key,value){
   oceanSettings=normalizeOceanSettings({...oceanSettings,[key]:value});
-  if(active&&world==="ocean")environment?.setOceanSettings?.(oceanSettings);
+  if(active&&world==="ocean"){
+   environment?.setOceanSettings?.(oceanSettings);
+   if(key==="weather"){
+    const natural=getOceanSun(oceanSettings.weather);
+    sun.position.fromArray(natural.position);
+    sun.color.set(natural.color);
+    sun.intensity=natural.power;
+    skyLight.intensity=natural.hemisphere;
+   }
+  }
   syncOceanControls();
  }
  function syncChoices(){

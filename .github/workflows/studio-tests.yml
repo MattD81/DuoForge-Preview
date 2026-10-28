@@ -14,6 +14,7 @@ on:
       - 'tests/steering-controls-smoke.mjs'
       - 'tests/render-world-smoke.mjs'
       - 'tests/ocean-world-smoke.mjs'
+      - 'tests/ocean-spectrum.test.mjs'
       - 'tests/film-studio-smoke.mjs'
       - 'tests/film-path.test.mjs'
       - 'tests/cinema-production.test.mjs'
@@ -50,6 +51,7 @@ jobs:
           node --check workshop/studio/render-world.mjs
           node --check workshop/studio/render-environments.mjs
           node --check workshop/studio/ocean-water.mjs
+          node --check workshop/studio/ocean-spectrum.mjs
           node --check workshop/studio/ocean-scene.mjs
           node --check workshop/studio/cinematic-lighting.mjs
           node --check workshop/studio/cinema-production.mjs
@@ -73,6 +75,7 @@ jobs:
           node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
+          node --test tests/ocean-spectrum.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
         timeout-minutes: 3

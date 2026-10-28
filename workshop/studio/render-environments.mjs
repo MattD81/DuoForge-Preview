@@ -3,6 +3,13 @@ import {createSurfaceLibrary} from "./procedural-materials.mjs";
 import {buildOceanScene} from "./ocean-scene.mjs";
 import {normalizeOceanSettings} from "./ocean-water.mjs";
 
+export function getOceanSun(weather="clear"){
+ if(weather==="storm-sunset"||weather==="sunset")
+  return {position:[-22.4,5,32.8],color:0xffd6a3,power:2.65,hemisphere:1.5};
+ if(weather==="storm")
+  return {position:[-14,14,24],color:0xcbd9e8,power:1.65,hemisphere:1.25};
+ return {position:[-15,24,16],color:0xffefd1,power:2.9,hemisphere:1.85};
+}
 export const worldNames=["showroom","racetrack","forest","city","night","ocean"];
 const colors={
  showroom:{background:0x111e31,fog:0x263b51,ground:0x465d68,sunColor:0xfff4e9,hemisphere:2.2,sun:2.7},
@@ -244,9 +251,12 @@ export function createEnvironment({world="showroom",quality="medium",oceanSettin
   sky.material.uniforms.bottom.value.set(palette[1]);fog.color.set(palette[2]);background.set(palette[1]);
  }
  return {
-  group,door,world,ocean,background,fog,hemisphere:theme.hemisphere,
-  sun:theme.sun,sunColor:theme.sunColor,
-  sunPosition:world==="night"?[4,9,-7]:[-15,24,16],
+  group,door,world,ocean,background,fog,
+  hemisphere:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).hemisphere:theme.hemisphere,
+  sun:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).power:theme.sun,
+  sunColor:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).color:theme.sunColor,
+  sunPosition:world==="ocean"?getOceanSun(normalizeOceanSettings(oceanSettings).weather).position:
+   world==="night"?[4,9,-7]:[-15,24,16],
   setOceanSettings(next){
    if(!ocean)return null;
    const settings=ocean.setSettings(normalizeOceanSettings(next));
