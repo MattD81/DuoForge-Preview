@@ -26,7 +26,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
  let format=normalizeFilmSettings(),movieShot="orbit",pendingCleanup=false;
  let cuts=[],cutPaths=[],activeCut=-1,frameExporting=false,frameAborted=false;
- let soundURL=null,audioContext=null,audioSource=null,audioDestination=null;
+ let soundURL=null,audioContext=null,audioSource=null,audioDestination=null,audioMonitoring=false;
  const ui=$("filmStudioOverlay"),status=$("filmStatus"),progress=$("filmProgress"),seek=$("filmSeek");
  const pathTrace=createPathTraceStills({
   getAnchor:getPreviewAnchor,getCamera:()=>camera,onStatus:message=>{status.textContent=message;},filename
@@ -217,7 +217,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   setCinematicEffects({dof:false,reflections:false});
   if(soundURL){URL.revokeObjectURL(soundURL);soundURL=null;}
   $("filmAudioPlayer").pause();
-  if(audioContext){audioContext.close().catch(()=>{});audioContext=null;audioSource=null;}
+  if(audioContext){audioContext.close().catch(()=>{});audioContext=null;audioSource=null;audioMonitoring=false;}
   $("filmAudioPlayer").removeAttribute("src");
   $("filmAudioPlayer").hidden=true;
   restoreOutputSize();restoreCamera();
@@ -225,6 +225,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   opened=false;ui.hidden=true;document.body.classList.remove("film-studio-active");
  }
  function onPreviewExit(){
+  pathMovie.stop();
   if(recording)finishRecorder({cancel:true});
   close();
  }
@@ -269,7 +270,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
     await audioContext.resume();
     audioDestination=audioContext.createMediaStreamDestination();
     audioSource.connect(audioDestination);
-    audioSource.connect(audioContext.destination);
+    if(!audioMonitoring){audioSource.connect(audioContext.destination);audioMonitoring=true;}
     const tracks=audioDestination.stream.getAudioTracks();
     if(!tracks.length)throw Error("Ingen ljudkanal skapades för filmen.");
     stream=new MediaStream([...stream.getVideoTracks(),...tracks]);
