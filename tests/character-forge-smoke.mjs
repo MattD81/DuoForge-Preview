@@ -10,6 +10,7 @@ try {
  await page.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
  assert.equal(await page.locator("#characterForge").count(),1);
+ assert.equal(await page.locator("#forgeAIStart").count(),1,"optional real image-to-3D control is wired");
  await page.locator("#forgeDetail").selectOption("3");
  await page.locator("#forgeCreate").click();
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
