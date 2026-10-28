@@ -17,6 +17,7 @@ on:
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/research-3d.test.mjs'
+      - 'tests/research-stack.test.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
       - 'tests/sites-cinema-bridge-smoke.mjs'
       - 'tests/film-studio-smoke.mjs'
@@ -50,6 +51,9 @@ jobs:
           node --check workshop/studio/studio.mjs
           node --check workshop/studio/research-ui.mjs
           node --check workshop/studio/research-performance.mjs
+          node --check workshop/studio/research-stack-core.mjs
+          node --check workshop/studio/research-stack-ui.mjs
+          node --check tests/research-stack.test.mjs
           node --check workshop/studio/atmosphere-scattering.mjs
           node --check tests/research-3d.test.mjs
           node --check workshop/studio/sites-cinema-bridge.mjs
@@ -94,7 +98,7 @@ jobs:
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
           node --test tests/sites-cinema-bridge.test.mjs
-          node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs
+          node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs tests/research-stack.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
         timeout-minutes: 3
