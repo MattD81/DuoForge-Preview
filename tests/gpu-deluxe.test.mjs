@@ -70,6 +70,8 @@ test("five tap shader has bounded sample count and safe valid GLSL",()=>{
  const frag=DELUXE_SHARPEN_SHADER.fragmentShader;
  assert.equal((frag.match(/texture2D\(/g)||[]).length,5);
  assert.match(frag,/haloGate/);
+ assert.match(frag,/max\(center\.rgb\+detail\*uStrength\*haloGate,vec3\(0\.\)\)/);
+ assert.doesNotMatch(frag,/clamp\(center\.rgb.*0\.,1\./);
  assert.match(frag,/gl_FragColor/);
  assert.match(DELUXE_SHARPEN_SHADER.vertexShader,/gl_Position/);
 });
