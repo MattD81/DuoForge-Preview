@@ -8,6 +8,7 @@ import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=surfaces-v1";
 import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
+import {initCreativeHub} from "./creative-hub.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -561,6 +562,8 @@ livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSel
 initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,dirty,fitScene,notify,select});
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
+initCreativeHub({root,renderer,canvas,camera,getSelected:()=>selected,getProjectId:()=>projectId,
+ getProjectName:()=>document.getElementById("projectName").value,exporter,toGLB,loadGLB,renderWorld,notify});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);

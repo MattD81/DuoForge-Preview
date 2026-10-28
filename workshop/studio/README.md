@@ -15,6 +15,10 @@ A self-contained, browser-based 3D editor at `/workshop/studio/`. It works with 
 - Undo/redo (up to 35 steps), duplication, deletion and place object on ground.
 - Desktop and mobile layout, keyboard shortcuts.
 
+## Creative Studio: gemensamt resursflöde (utvecklingsgren)
+
+En ny panel binder ihop lokalt GLB-bibliotek, grafikprofiler, ZIP-export till spel, Render World/Film Studio och en regelbaserad resursassistent utan att ersätta den befintliga redigeraren. **Sites-lagring och automatisk direktimport är ännu inte anslutna.** Se [integrationsplanen](./CREATIVE_STUDIO_INTEGRATION.md) för teststatus, säkerhetskrav och återstående arbete.
+
 ## Render World Preview (free, three stages)
 
 The **🌍 Testa i renderad värld** button runs a *non-destructive cloned asset* in an ephemeral procedural environment. The original editable model, transform and GLB exports are unaffected.
