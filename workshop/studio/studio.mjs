@@ -10,6 +10,7 @@ import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
+import {initResearchPanel} from "./research-ui.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -443,9 +444,9 @@ function download(filename,blob){
  link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),6000);
 }
-async function toGLB(){
+async function toGLB(maxTextureSize=2048){
  if(!root.children.length)throw Error("Scenen är tom.");
- return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,maxTextureSize:2048})],{type:"model/gltf-binary"});
+ return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,maxTextureSize:maxTextureSize===1024?1024:2048})],{type:"model/gltf-binary"});
 }
 $("exportGLB").onclick=async()=>{
  try{notify("Skapar GLB …",7000);const blob=await toGLB();download(safeFilename()+".glb",blob);notify("GLB nedladdad ("+(blob.size/1024).toFixed(0)+" kB)");}
@@ -565,6 +566,7 @@ renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axe
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initLocalImageTo3D({loadGLB,notify});
+initResearchPanel({root,toGLB,download,safeFilename,notify});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
