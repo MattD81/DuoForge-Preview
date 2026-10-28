@@ -11,6 +11,7 @@ import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
+import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 
 const $=id=>document.getElementById(id);
@@ -568,6 +569,7 @@ materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,r
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
+initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
