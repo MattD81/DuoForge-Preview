@@ -6,6 +6,8 @@ on:
       - 'index.html'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
+      - 'tests/creative-core.test.mjs'
+      - 'tests/creative-hub-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
       - 'tests/living-physics.test.mjs'
       - 'tests/world-builder-smoke.mjs'
@@ -42,6 +44,10 @@ jobs:
       - name: JavaScript syntax check
         run: |
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/creative-core.mjs
+          node --check workshop/studio/creative-hub.mjs
+          node --check tests/creative-hub-smoke.mjs
+          node --test tests/creative-core.test.mjs
           node --check workshop/studio/living-objects.mjs
           node --check workshop/studio/living-physics.mjs
           node --check workshop/studio/world-planner.mjs
@@ -82,6 +88,8 @@ jobs:
         run: npx playwright install chromium --only-shell
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Test Creative Studio local library and game package in Chromium
+        run: node tests/creative-hub-smoke.mjs
       - name: Test Film Studio cinematic video rendering, Full HD PNG and storyboard
         run: node tests/film-studio-smoke.mjs
       - name: Test Ocean Render World waves, storm, preview, desktop and mobile
