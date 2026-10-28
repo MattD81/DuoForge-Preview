@@ -109,6 +109,7 @@
             <option value="clear">Sol</option><option value="sunset">Solnedgång</option><option value="storm">Storm</option><option value="storm-sunset">⛈️🌅 Storm i solnedgång</option>
           </select></label>
           <label>Vitt skum <input id="oceanWhitecapsLive" type="range" min="0" max="1" step=".02" value=".12" aria-label="Justera sjöskummets intensitet; 0 tar bort vita prickar"></label>
+          <label>Solhöjd <input id="oceanSunLive" type="range" min="1" max="80" step="1" value="42" aria-label="Solens höjd över horisonten i grader"></label>
         </div>
         <label>Kvalitet <select id="renderQualitySelect" aria-label="Välj grafikkvalitet">
           <option value="low">Låg</option><option value="medium" selected>Medium</option><option value="high">Hög · Bloom/AO</option>
@@ -500,6 +501,10 @@
           <input id="oceanWhitecaps" type="range" min="0" max="1" step=".02" value=".12" aria-label="Styr sjöskum och vita vågtoppar">
           <output id="oceanWhitecapsValue">12 %</output>
         </label>
+        <label class="range-line">Solhöjd över horisonten
+          <input id="oceanSun" type="range" min="1" max="80" step="1" value="42" aria-label="Solens höjd över havet">
+          <output id="oceanSunValue">42°</output>
+        </label>
         <p class="hint">Ny låg standardnivå för sjöskum. Sätt till 0 % om du vill ha helt mörkt vatten utan vita prickar. Inga AI-anrop eller molnservrar.</p>
       </div>
       <label class="field-label" for="renderQuality">Grafik</label>
@@ -517,6 +522,18 @@
       <button id="filmOpenPanel" class="film-panel-launch">🎬 Film Studio – skapa 3D-film</button>
       <p class="hint">Välj kamerabana, längd, objekt eller havsmiljö. Spela in 1080p WebM/MP4 där webbläsaren stöder det, eller spara en 4K-bild.</p>
     </section>
+    <section class="panel-section" id="researchPerfPanel">
+      <div class="section-heading"><h2>🔬 3D-forskning & prestanda</h2><span class="mini-pill">Lokalt</span></div>
+      <p class="hint">Analysera trianglar, rigg, material och texturer inför spel. Ursprunglig modell ändras aldrig.</p>
+      <p class="hint" id="researchGpuStatus" role="status">Kontrollerar grafikkapacitet …</p>
+      <div class="save-indicator" id="researchAuditSummary" aria-live="polite">Analyserar scenen …</div>
+      <p class="hint" id="researchAuditWarnings"></p>
+      <div class="row two">
+        <button id="researchAudit">🔍 Analysera</button>
+        <button id="exportMobileGLB" class="accent-outline">📱 Mobil-GLB ↓</button>
+      </div>
+      <p class="hint">Mobil-GLB begränsar exporterade texturer till 1024 px. Geometrin/riggen bevaras. WebGPU visas som möjlig hårdvarufunktion, inte som aktiv renderare.</p>
+    </section>
     <section class="panel-section">
       <div class="section-heading"><h2>Scen & export</h2></div>
       <div class="row two"><button id="screenshot">Spara PNG-bild</button><button id="downloadProject">Projektfil (.json)</button></div>
@@ -533,5 +550,5 @@
   <div class="dialog-actions"><button value="cancel">Stäng</button></div>
 </form></dialog>
 </div>
-<script type="module" src="./studio.mjs?v=ocean-clean-v7"></script>
+<script type="module" src="./studio.mjs?v=research-3d-v1"></script>
 </body></html>
