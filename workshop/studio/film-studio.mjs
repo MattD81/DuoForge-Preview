@@ -7,6 +7,8 @@ import {createPathTraceStills} from "./path-trace-stills.mjs";
 import {createPathFilm} from "./cinema-path-film.mjs";
 import {createCinemaVideoAssembler} from "./cinema-video-assembly.mjs";
 import {normalizeCuts,movieDuration,locateCut,frameBatch,FrameZip} from "./cinema-production.mjs";
+import {filmClock,ENGINE_VERSION} from "./cinema-engine-core.mjs";
+import {createCinemaCompositor} from "./cinema-gpu-engine.mjs";
 
 const $=id=>document.getElementById(id);
 const safe=(name)=>String(name||"DuoForge").replace(/[^\p{L}\p{N}_. -]/gu,"").trim().replace(/\s+/g,"-").slice(0,70)||"DuoForge";
@@ -102,7 +104,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   $("filmClose").disabled=busy;
   $("filmStill").disabled=busy;
   $("filmRecord").disabled=frameExporting;
-  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll","filmDof","filmSSR","filmAperture","filmFocusScale","filmAddCut","filmRemoveCut","filmFrameStart","filmFrameCount","filmFrameResolution","filmAudioFile","filmHdriFile","filmHdriIntensity"])
+  for(const id of ["filmShot","filmDuration","filmResolution","filmFps","filmFov","filmSeek","filmAddKeyframe","filmRemoveKeyframe","filmLook","filmFinish","filmBroll","filmDof","filmSSR","filmAperture","filmFocusScale","filmAddCut","filmRemoveCut","filmFrameStart","filmFrameCount","filmFrameResolution","filmAudioFile","filmHdriFile","filmHdriIntensity","filmEngineSamples","filmEngineShutter"])
    $(id).disabled=recording;
   $("filmKeyframes").textContent=String(keyframes.length);
  }
@@ -520,6 +522,15 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   const resolution=$("filmFrameResolution").value;
   const [width,height]=resolution==="4k"?[3840,2160]:resolution==="1080"?[1920,1080]:[1280,720];
   const countLimit=resolution==="4k"?8:48;
+  const samples=Number($("filmEngineSamples").value)||1;
+  const shutterAngle=Number($("filmEngineShutter").value)||180;
+  const platform=window.matchMedia("(max-width:700px)").matches?"mobile":"desktop";
+  let clock;
+  try{
+   clock=filmClock({duration:format.duration,fps:format.fps,samples,shutterAngle,platform});
+   if(samples>1&&(platform==="mobile"&&(width>1280||height>720)))
+    throw Error("Välj 720p för flerprovsrendering på mobilen.");
+  }catch(e){$("filmFrameStatus").textContent="Cinema Engine: "+e.message;return;}
   const plan=frameBatch({duration:format.duration,fps:format.fps,
    start:Number($("filmFrameStart").value),count:Number($("filmFrameCount").value),maxFrames:countLimit});
   frameExporting=true;frameAborted=false;playing=false;
@@ -529,19 +540,36 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    target:orbit.target.clone(),fov:camera.fov,orbit:orbit.enabled,elapsed};
   orbit.enabled=false;
   const zip=new FrameZip();let done=0;
+  let compositor=null;
   try{
    setOutputSize(width,height);
+   if(samples>1)compositor=createCinemaCompositor({width,height,platform});
    for(const f of plan.frames){
     if(frameAborted)break;
-    elapsed=f.time;applyAt(clamp(elapsed/format.duration,0,1));
-    setWorldTime(elapsed,0);renderFrame();
-    const png=await new Promise((resolve,reject)=>{
-     canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-bildruta kunde inte exporteras.")),"image/png");
-    });
+    let png;
+    if(compositor){
+     compositor.reset();
+     for(const time of clock.shutterTimes(f.number)){
+      if(frameAborted)break;
+      elapsed=time;applyAt(clamp(time/format.duration,0,1));
+      setWorldTime(time,0);
+      renderFrame();
+      compositor.add(canvas);
+      await new Promise(r=>requestAnimationFrame(r));
+     }
+     if(frameAborted)break;
+     png=await compositor.png();
+    }else{
+     elapsed=f.time;applyAt(clamp(elapsed/format.duration,0,1));
+     setWorldTime(elapsed,0);renderFrame();
+     png=await new Promise((resolve,reject)=>{
+      canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-bildruta kunde inte exporteras.")),"image/png");
+     });
+    }
     await zip.add("frame_"+String(f.number).padStart(6,"0")+".png",png);
     done++;
-    $("filmFrameStatus").textContent="Renderat "+done+"/"+plan.frames.length+" bildrutor · "+
-     (f.time).toFixed(2)+" s film · "+width+"×"+height;
+    $("filmFrameStatus").textContent="Cinema Engine · "+done+"/"+plan.frames.length+" bildrutor · "+
+     samples+" prover/ruta · "+(f.time).toFixed(2)+" s · "+width+"×"+height;
     // Yield to UI between every frame. Actual render time never changes film timing.
     await new Promise(r=>requestAnimationFrame(r));
    }
@@ -550,7 +578,9 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
     const manifest={format:"duoforge-frames@1",fps:format.fps,width,height,
      duration:format.duration,start:plan.first,end:plan.first+done,total:plan.total,
      next:resume,cuts:normalizeCuts(cuts),look:$("filmLook").value,
-     note:"Frame exact PNG sequence. Assemble with FFmpeg. Soundtrack not embedded."};
+     renderer:ENGINE_VERSION,temporalSamples:samples,shutterAngle,
+     accumulation:compositor?.mode||"native-webgl-png",
+     note:"Frame-exact PNG sequence. Optional linear-light motion blur. Source GLB renders through Three.js/WebGL. ZIP contains no soundtrack."};
     await zip.add("manifest.json",new Blob([JSON.stringify(manifest,null,2)],{type:"application/json"}));
     saveBlob(zip.finish(),safe(filename())+"-frames-"+plan.first+"-"+(plan.first+done-1)+".zip");
    }
@@ -563,6 +593,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    console.warn("Offline film render",e);
    $("filmFrameStatus").textContent="Exporten misslyckades: "+e.message;
   }finally{
+   compositor?.dispose();
    restoreOutputSize();
    camera.position.copy(prev.pos);camera.quaternion.copy(prev.rotation);
    camera.fov=prev.fov;camera.updateProjectionMatrix();

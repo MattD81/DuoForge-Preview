@@ -216,6 +216,57 @@ try{
  assert.ok(frameZip.includes(Buffer.from("duoforge-frames@1")));
  assert.equal(await page.locator("#filmFrameStart").inputValue(),"1");
  console.log("PASS: offline renderer exports actual frame-exact PNG ZIP with manifest and resume index");
+
+ // Independent new engine core blends samples in linear light, not a fake
+ // screen-space white-dot overlay. 50% black + 50% white ~= 188 sRGB.
+ const accumulation=await page.evaluate(async()=>{
+  const {TemporalFilmCompositor,filmClock}=await import("/workshop/studio/cinema-engine-core.mjs");
+  const source=document.createElement("canvas");
+  source.width=64;source.height=36;
+  const ctx=source.getContext("2d");
+  const engine=new TemporalFilmCompositor({width:64,height:36});
+  ctx.fillStyle="#000000";ctx.fillRect(0,0,64,36);engine.add(source);
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,64,36);engine.add(source);
+  const px=engine.finish().getContext("2d").getImageData(32,18,1,1).data[0];
+  const sampleTimes=filmClock({duration:20,fps:24,samples:2}).shutterTimes(95);
+  engine.dispose();
+  return {px,sampleTimes};
+ });
+ assert.ok(accumulation.px>=186&&accumulation.px<=190);
+ assert.equal(accumulation.sampleTimes.length,2);
+ console.log("PASS: original Cinema Engine V1 linear-light compositor blends temporal frames correctly");
+
+ const gpuBlend=await page.evaluate(async()=>{
+  const {createCinemaCompositor}=await import("/workshop/studio/cinema-gpu-engine.mjs");
+  const source=document.createElement("canvas");source.width=64;source.height=36;
+  const ctx=source.getContext("2d");
+  const engine=createCinemaCompositor({width:64,height:36});
+  ctx.fillStyle="#000";ctx.fillRect(0,0,64,36);engine.add(source);
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,64,36);engine.add(source);
+  const screen=engine.finish();
+  const out=document.createElement("canvas");out.width=64;out.height=36;
+  const oc=out.getContext("2d");oc.drawImage(screen,0,0);
+  const value=oc.getImageData(32,18,1,1).data[0];
+  const mode=engine.mode;engine.dispose();
+  return {value,mode};
+ });
+ assert.ok(gpuBlend.value>=185&&gpuBlend.value<=192,
+  "Independent GLSL float16 render pass should produce a correct ~188 sRGB average");
+ assert.ok(["webgl2-float16","cpu-linear"].includes(gpuBlend.mode));
+ console.log("PASS: Cinema Engine GPU/CPU floating-point render pipeline is operational: "+gpuBlend.mode);
+
+ await page.locator("#filmEngineSamples").selectOption("2");
+ await page.locator("#filmEngineShutter").selectOption("180");
+ const [temporalBatch]=await Promise.all([
+  page.waitForEvent("download",{timeout:45000}),
+  page.locator("#filmFrameRender").click()
+ ]);
+ const temporalZip=readFileSync(await temporalBatch.path());
+ assert.ok(temporalZip.includes(Buffer.from('"renderer": "duoforge-cinema-core@1"')));
+ assert.ok(temporalZip.includes(Buffer.from('"temporalSamples": 2')));
+ assert.equal(await page.locator("#filmFrameStart").inputValue(),"2");
+ console.log("PASS: GPU scene renders through new Cinema Core's shutter-sampled offline PNG ZIP exporter");
+
  // Skeletal GLB bridge must preserve clips and support exact-timestamp bone poses.
  const rigBridge=await page.evaluate(async()=>{
   const THREE=await import("three");
