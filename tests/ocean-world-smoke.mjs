@@ -41,7 +41,10 @@ try{
    shader.fragmentShader.includes("fresnel")&&shader.fragmentShader.includes("ggxD")&&
    !shader.fragmentShader.includes("wake=exp")&&shader.uniforms.uSunDir.value.length()>.99;
   const slope=oceanSlope(18,12,3,{height:1.2,speed:2.3,weather:"storm"});
-  const physical={roughness:shader.uniforms.uRoughness.value,slopeOk:Number.isFinite(slope.dx)&&Number.isFinite(slope.dz)};
+  const physical={roughness:shader.uniforms.uRoughness.value,slopeOk:Number.isFinite(slope.dx)&&Number.isFinite(slope.dz),
+   whitecaps:shader.uniforms.uWhitecaps.value,
+   foamControlled:shader.fragmentShader.includes("uWhitecaps")&&
+    shader.fragmentShader.includes("distanceFromCamera")};
   const divisions=env.ocean.mesh.geometry.attributes.position.count;
   env.update(3.3,.016);
   const gpuTime=shader.uniforms.uTime.value;
@@ -55,6 +58,8 @@ try{
  assert.ok(water.buoys>=4&&water.dock>=8&&water.rocks>=4,"Marina, floating markers and islands exist");
  assert.equal(water.valid,true);
  assert.equal(water.physical.slopeOk,true);
+ assert.equal(water.physical.whitecaps,.12);
+ assert.equal(water.physical.foamControlled,true);
  assert.ok(water.physical.roughness>=.20&&water.physical.roughness<=.4);
  assert.equal(new Set(water.values.map(x=>x.toFixed(4))).size,4,"Waves move with time, rather than remaining static");
  assert.equal(water.gpuTime,3.3,"Uniforms update every render frame");
@@ -66,6 +71,16 @@ try{
  await page.waitForFunction(()=>document.querySelector("#oceanHeight")?.value==="1.15");
  await page.locator("#oceanSpeedLive").evaluate(el=>{el.value="1.65";el.dispatchEvent(new Event("input",{bubbles:true}))});
  await page.waitForFunction(()=>document.querySelector("#oceanSpeed")?.value==="1.65");
+ await page.locator("#oceanWhitecapsLive").evaluate(el=>{
+  el.value="0";el.dispatchEvent(new Event("input",{bubbles:true}));
+ });
+ assert.equal(await page.locator("#oceanWhitecaps").inputValue(),"0");
+ assert.match(await page.locator("#oceanWhitecapsValue").textContent(),/0 %/);
+ await page.locator("#oceanWhitecapsLive").evaluate(el=>{
+  el.value=".18";el.dispatchEvent(new Event("input",{bubbles:true}));
+ });
+ assert.equal(await page.locator("#oceanWhitecaps").inputValue(),"0.18");
+ console.log("PASS: clean ocean foam can be disabled and adjusted live without modifying waves");
  await page.locator("#oceanWeatherLive").selectOption("storm");
  assert.equal(await page.locator("#oceanWeather").inputValue(),"storm");
  await page.locator("#oceanWeatherLive").selectOption("storm-sunset");
