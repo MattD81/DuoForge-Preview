@@ -15,14 +15,22 @@ try{
  await page.locator("#start").click();
  assert.equal((await page.evaluate(()=>window.__stormblade.state())).running,true);
  const first=await page.evaluate(()=>window.__stormblade.state());
- await page.keyboard.down("d");await page.waitForTimeout(1150);await page.keyboard.up("d");
+ await page.screenshot({path:"stormblade-desktop.png"});
+ await page.keyboard.down("d");
+ // Software Chromium can render only a handful of 3D frames per second.
+ // Wait for simulation progress instead of assuming wall-time equals game-time.
+ await page.waitForFunction(arg=>{const s=window.__stormblade.state();
+  return s.playerX>arg.firstX+.4&&Math.abs(s.enemyX-s.playerX)<1.8;
+ },{firstX:first.playerX},{timeout:20000}).catch(async()=>{
+  throw Error("Fighters did not approach: "+JSON.stringify(await page.evaluate(()=>window.__stormblade.state())));
+ });
+ await page.keyboard.up("d");
  const second=await page.evaluate(()=>window.__stormblade.state());
- assert.ok(second.playerX>first.playerX+.25,JSON.stringify({first,second}));
+ assert.ok(second.playerX>first.playerX+.4,JSON.stringify({first,second}));
  await page.keyboard.press("j");
- await page.waitForTimeout(650);
- // Enemy AI can intercept an attack: verify that combat changes HP on either side.
+ await page.waitForFunction(()=>{const s=window.__stormblade.state();return s.enemyHp<100||s.playerHp<100},null,{timeout:16000});
  const fight=await page.evaluate(()=>window.__stormblade.state());
- assert.ok(fight.playerHp<100||fight.enemyHp<100,JSON.stringify(fight));
+ assert.ok(fight.enemyHp<100||fight.playerHp<100,JSON.stringify(fight));
  await page.locator("#quality").click();
  assert.equal((await page.evaluate(()=>window.__stormblade.state())).mode,"quality");
  await page.locator("#quality").click();
