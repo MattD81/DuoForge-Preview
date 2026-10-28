@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 :root{font-family:Inter,system-ui,sans-serif;color:#edf8ff;background:#050b17;--cyan:#72f7ee;--gold:#f5c57c;--glass:rgba(7,17,35,.75)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
