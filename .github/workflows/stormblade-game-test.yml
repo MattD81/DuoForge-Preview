@@ -6,6 +6,9 @@ on:
       - 'workshop/studio/gpu-deluxe.mjs'
       - 'tests/gpu-deluxe.test.mjs'
       - 'tests/stormblade-duel-smoke.mjs'
+      - 'tests/stormblade-play-director.test.mjs'
+      - 'tests/stormblade-duopad.test.mjs'
+      - 'workshop/studio/cinematic-lighting.mjs'
       - '.github/workflows/stormblade-game-test.yml'
   workflow_dispatch:
 permissions:
@@ -23,8 +26,11 @@ jobs:
         run: |
           node --check games/stormblade-duel/game.mjs
           node --check games/stormblade-duel/world.mjs
+          node --check games/stormblade-duel/play-director.mjs
+          node --check games/stormblade-duel/duopad-input.mjs
+          node --check games/stormblade-duel/character-forge-bridge.mjs
           node --check workshop/studio/gpu-deluxe.mjs
-          node --test tests/gpu-deluxe.test.mjs
+          node --test tests/gpu-deluxe.test.mjs tests/stormblade-play-director.test.mjs tests/stormblade-duopad.test.mjs
       - name: Install lightweight browser for actual WebGL smoke test
         timeout-minutes: 4
         run: |

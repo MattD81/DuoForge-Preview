@@ -41,3 +41,14 @@ WebGPU/WGSL-compute, tränad neural upscaling, ReSTIR/path tracing, 3D Gaussian 
 ### V2-regression
 
 `node tests/stormblade-duel-smoke.mjs` ska visa spelets Ocean Cinema v5-status och att Character Forge-knappen är tillgänglig. Testa i publicerad Pages-miljö för att säkerställa att de faktiska GLB-filerna går att ladda: lokala GitHub CI-kloner innehåller inte de bygggenererade 11–20 MB V3-modellerna.
+
+## V3 – DuoForge Play Director & Studio-filmlook
+
+- **Play Director V1:** återanvändbar, framerate-oberoende kameraregi som följer båda krigarna, arbetar i mobil/porträtt och widescreen, bevarar geografiska spelgränser och lägger till kort, dämpad kamerareaktion vid träff. Stridens faktiska positioner/HP påverkas inte.
+- **Delad Studio-belysning:** `createCinematicLighting` från befintliga `workshop/studio/cinematic-lighting.mjs` är nu inkopplad. Knappen `Film av/Film noir/Naturligt/Gyllene` byter ljusregi, bevarar materialkartor och kan aktivera PCF-skuggor på större skärmar eller explicita kvalitetsläget.
+- **Opt-in för renderingstunga effekter:** Filmlook är avstängd från början, och GPU Deluxe Auto fungerar utan dess extra skuggpass. Inget påstående om path tracing, Dolby Vision, DLSS eller neural uppskalning.
+- **Verifiering:** `node --test tests/stormblade-play-director.test.mjs` kontrollerar mobilkomposition, kamera, bounds och dämpning; browser smoke kontrollerar hela filmlook-cykeln.
+- **Drift:** publiceras enbart i GitHub Pages Preview efter grön CI, inte i den separata Sites-kodbasen.
+
+### Nästa utvecklingsbehov
+Riktiga skulpterade och vikingspecifika skinnade GLB-karaktärer med specialskrivna animationer, hår/tyg-fysik, shadow-quality device profiler, bättre animation timing och filmrendering med inspelningsbart output. Ingen av dessa är verifierad som färdig i V3.
