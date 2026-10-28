@@ -134,6 +134,38 @@ jobs:
           else
             echo "HD MakeHuman unavailable: game will use its verified V3/V2 fallback."
           fi
+      - name: Share generated premium fighters with the 3D workshop library
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, shutil
+          from pathlib import Path
+          sources = {
+            'kael': Path('games/rift-champions/models/kael_ara.glb'),
+            'vex': Path('games/rift-champions/models/vex_ara.glb'),
+          }
+          if not all(p.is_file() and p.stat().st_size > 1000000 for p in sources.values()):
+              print('Real premium GLBs unavailable; leave existing workshop catalog untouched.')
+          else:
+              directory = Path('workshop/models')
+              directory.mkdir(parents=True,exist_ok=True)
+              for who, path in sources.items():
+                  shutil.copyfile(path, directory / f'rift-{who}-ara-hd.glb')
+              index = Path('workshop/models.json')
+              catalog = json.loads(index.read_text())
+              items = catalog.setdefault('models', [])
+              for who, label in [('kael','Kael Vortex'), ('vex','Vex Revenant')]:
+                  ident = f'rift-{who}-ara-hd'
+                  items[:] = [m for m in items if m.get('id') != ident]
+                  items.append({
+                      'id': ident,
+                      'name': f'{label} – verklighetstrogen MakeHuman HD, skinnad rigg och ansiktsanimation',
+                      'kind': 'glb',
+                      'path': f'./models/{ident}.glb',
+                  })
+              index.write_text(json.dumps(catalog, ensure_ascii=False, indent=2)+'\n')
+              print('Two generated premium fighters are available in existing workshop/model archive.')
+          PY
       - uses: actions/configure-pages@v5
         with:
           enablement: true
