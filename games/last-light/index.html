@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08131d"><meta name="description" content="LAST LIGHT – ett riktigt spelbart filmiskt 3D-räddningsuppdrag byggt med DuoForges havs-, atmosfärs-, PBR- och fysikmotorer.">
+<title>LAST LIGHT — DuoForge 3D Cinema Game</title>
+<link rel="stylesheet" href="./style.css?v=1">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+</head><body>
+<div id="game">
+<canvas id="scene" aria-label="Interaktiv 3D-skärgård med Aurora räddningsfartyg"></canvas>
+<div id="vignette" aria-hidden="true"></div>
+<header id="topbar">
+ <a class="brand" href="../../" aria-label="Till DuoForge"><span class="mark">◈</span><span>DUOFORGE <b>STUDIOS</b></span></a>
+ <span class="top-tag">INTERACTIVE CINEMA <span class="dot">●</span> LIVE 3D</span>
+ <span class="performance">GPU: WebGL <span id="fps">– FPS</span></span>
+</header>
+<section id="hud" aria-label="Uppdragsstatus">
+ <div class="hud-cell"><span class="eyebrow">RÄDDNINGSUPPDRAG</span><strong id="rescues">0 / 4</strong><small>BESÄTTNINGAR</small></div>
+ <div class="hud-cell"><span class="eyebrow">TID KVAR</span><strong id="timer">04:50</strong><small>INNAN STORMEN</small></div>
+ <div class="hud-cell"><span class="eyebrow">HASTIGHET</span><strong><span id="speed">0</span> <em>km/h</em></strong><small id="gear">MANUELL</small></div>
+ <div class="progress"><div id="progressFill"></div></div>
+</section>
+<div id="rightTop">
+ <div id="radarPanel"><span class="eyebrow">NAVIGERING <span class="pulse">●</span></span>
+ <canvas id="radar" width="128" height="128" aria-label="Radar som visar räddningsmål"></canvas>
+ <div class="radar-foot"><b id="direction">↗ 0°</b><b id="distance">0 m</b></div></div>
+ <nav id="options" aria-label="Kamera och simulering">
+  <button type="button" id="view">◉ FÖLJKAMERA</button>
+  <button type="button" id="weather">🌅 SOLNEDGÅNG</button>
+  <button type="button" id="auto">✦ AUTOPILOT AV</button>
+  <button type="button" id="sound">♫ LJUD AV</button>
+  <button type="button" id="exportShip">⬇ HÄMTA FARTYG GLB</button>
+  <button type="button" id="reset">↻ STARTA OM</button>
+ </nav>
+</div>
+<div id="missionCard">
+ <span class="eyebrow">◈ AKTUELL NÖDSIGNAL</span><h2 id="missionName">SIGNAL ALPHA</h2>
+ <p id="missionText">Hitta den försvunna fiskebåten</p><div class="missionFoot">Följ det orange ljuset. Sakta ned nära flotten.</div>
+</div>
+<div id="controls" aria-label="Körkontroller">
+ <div class="steering"><button id="left" type="button" aria-label="Sväng vänster">◀</button><button id="right" type="button" aria-label="Sväng höger">▶</button></div>
+ <span class="control-hint">A / D · W / S</span>
+ <div class="throttle"><button id="brake" type="button">BROMS</button><button id="gas" type="button">GAS</button></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="intro" class="modal">
+ <div class="intro-content">
+  <span class="kicker">DUOFORGE ORIGINAL · CINEMATIC PLAYABLE EXPERIENCE</span>
+  <h1>LAST <span>LIGHT</span></h1>
+  <div class="tagline">THE STORM HAS A VOICE.</div>
+  <p>Fyra nödsignaler. Ett fartyg. En mörknande skärgård. Styr <strong>Aurora</strong> genom levande vågor och rädda besättningarna före stormens ankomst.</p>
+  <div class="feature-tags"><span>REAL-TIME 3D</span><span>PROCEDURAL OCEAN</span><span>PBR • ATMOSPHERE</span><span>GLB EXPORT</span></div>
+  <button id="start" type="button" class="launch">▶ GE DIG UT PÅ HAVET <span>→</span></button>
+  <small>WASD eller piltangenter · touchkontroller på mobilen · P = autopilot · C = kamera</small>
+ </div>
+</div>
+<div id="ending" class="modal" hidden>
+ <div class="intro-content">
+  <span id="endTag" class="kicker">UPPDRAG SLUTFÖRT</span>
+  <h1 id="endTitle">Du räddade alla.</h1>
+  <p id="endDescription"></p><p id="endStats" class="end-stats"></p>
+  <button id="again" type="button" class="launch">↻ SPELA IGEN <span>→</span></button>
+ </div>
+</div>
+<div id="boot" class="loading" role="status"><div class="loader"></div><span id="bootMessage">Startar DuoForge Ocean & Cinema Engine …</span></div>
+</div>
+<script type="module" src="./main.mjs?v=1"></script>
+</body></html>
