@@ -6,6 +6,7 @@ on:
       - 'index.html'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
+      - 'tests/character-forge-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
       - 'tests/living-physics.test.mjs'
       - 'tests/world-builder-smoke.mjs'
@@ -44,6 +45,8 @@ jobs:
       - name: JavaScript syntax check
         run: |
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/character-forge.mjs
+          node --check tests/character-forge-smoke.mjs
           node --check workshop/studio/living-objects.mjs
           node --check workshop/studio/living-physics.mjs
           node --check workshop/studio/world-planner.mjs
@@ -101,6 +104,8 @@ jobs:
         run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
+      - name: Test Character Forge volumetric GLB and image silhouettes
+        run: node tests/character-forge-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
         run: node tests/living-objects-smoke.mjs
       - name: Test free Swedish text-to-world generation in Chromium
@@ -115,6 +120,8 @@ jobs:
           path: |
             studio-desktop.png
             studio-mobile.png
+            character-forge-desktop.png
+            character-forge-mobile.png
             living-desktop.png
             living-mobile.png
             world-builder-desktop.png
