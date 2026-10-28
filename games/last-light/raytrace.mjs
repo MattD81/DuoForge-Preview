@@ -69,6 +69,20 @@ function photoScene(){
  boat.group.name="Aurora: ray traced exportable PBR rescue vessel";
  boat.group.position.set(0,.45,0);
  boat.group.rotation.set(-.026,.2,.04);
+ // Path tracer supports MeshStandard / MeshPhysical; convert real-time
+ // unlit placards and searchlight lenses to emissive PBR before BVH capture.
+ boat.group.traverse(obj=>{
+  if(!obj.isMesh)return;
+  const materials=Array.isArray(obj.material)?obj.material:[obj.material];
+  const converted=materials.map(mat=>mat?.isMeshBasicMaterial?
+   new THREE.MeshStandardMaterial({name:"Ray traced emissive "+mat.name,
+    color:mat.color?.clone()||new THREE.Color(0xffffff),
+    map:mat.map||null,emissive:mat.color?.clone()||new THREE.Color(0xffffff),
+    emissiveIntensity:.65,roughness:.4,metalness:0,
+    transparent:mat.transparent,opacity:mat.opacity,side:mat.side})
+   :mat);
+  obj.material=Array.isArray(obj.material)?converted:converted[0];
+ });
  // Keep radar and lamps static during progressive accumulation.
  s.add(boat.group);
  s.add(createFrozenOcean());
