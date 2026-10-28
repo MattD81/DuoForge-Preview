@@ -2,6 +2,14 @@
 
 A playable, original storm rescue experience under `/games/last-light/` on **existing** DuoForge GitHub Pages. No new platform, server, model API, work credits or private content.
 
+## V3 — PBR surfaces and opt-in ray-traced photography
+
+The real-time WebGL game now uses material-specific base-color, tangent-space normal and packed roughness/metalness texture maps (glTF ORM). Metal paint has clearcoat, timber has procedural grain, rocks have microstructure and ship's material maps survive GLB export.
+
+The separate [PHOTO REALITY](./raytrace.html) page is an opt-in progressive WebGPU photo renderer using the open-source MIT-licensed three-gpu-pathtracer version 0.0.27 and three.js r185. A frozen 3D snapshot reuses the same Aurora ship and spectral water equations. It supports multiple bounces, physically based reflections, controllable samples and PNG export on supported hardware.
+
+**Scope:** Ray tracing is used only for the optional still-photo renderer, not gameplay. The game remains on WebGL r180 for compatibility. The static ray-traced water mesh is not a live ray-traced version of the game's animated shader. Unsupported WebGPU devices display a clear fallback message. Free CDN dependencies require network access; no paid APIs or Work usage.
+
 ## V2 – more detailed scenery, same original game
 
 - Eight genuinely **triangulated coastal heightfields** with stratified granite, wet shoreline and moss vertex colors, replacing the prior faceted sphere-shaped islands. Landscape is procedural with deterministic saved seeds, not satellite topography or photogrammetry.
