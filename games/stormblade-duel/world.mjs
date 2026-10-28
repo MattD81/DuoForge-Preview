@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {createOceanSurface} from "../../workshop/studio/ocean-water.mjs";
 const PI=Math.PI, sin=Math.sin,cos=Math.cos;
 const rand=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -118,32 +119,8 @@ function makeWarrior(primary,accent,enemy=false){
   }
  };
 }
-const OCEAN_VERT=[
- 'uniform float uTime;varying vec3 vNormalWater;varying vec3 vWorld;varying float vWave;',
- 'float wave(vec2 p,float t){return .42*sin(p.x*.22+p.y*.11-t*.92)+.27*sin(p.y*.38-p.x*.13-t*1.45)+.1*sin(p.x*.8+p.y*.4-t*2.2);}',
- 'void main(){vec3 p=position;float t=uTime;p.z+=wave(p.xy,t);',
- 'float eps=.12;float sx=(wave(p.xy+vec2(eps,0.),t)-wave(p.xy-vec2(eps,0.),t))/(2.*eps);',
- 'float sy=(wave(p.xy+vec2(0.,eps),t)-wave(p.xy-vec2(0.,eps),t))/(2.*eps);',
- 'vNormalWater=normalize(mat3(modelMatrix)*vec3(-sx,-sy,1.));vWave=p.z;',
- 'vec4 world=modelMatrix*vec4(p,1.);vWorld=world.xyz;',
- 'gl_Position=projectionMatrix*viewMatrix*world;}'
-].join('\n');
-const OCEAN_FRAG=[
- 'precision highp float;uniform float uTime;uniform vec3 uCamera,uMoon;',
- 'varying vec3 vNormalWater;varying vec3 vWorld;varying float vWave;',
- 'void main(){vec3 V=normalize(uCamera-vWorld);vec3 N=normalize(vNormalWater);',
- 'float fresnel=.025+.975*pow(1.-max(.0,dot(N,V)),5.);',
- 'float glint=pow(max(.0,dot(reflect(-normalize(uMoon),N),V)),22.);',
- 'vec3 deep=vec3(.012,.077,.112);vec3 sky=vec3(.14,.32,.42);',
- 'float sweep=.5+.5*sin(vWorld.x*.13+vWorld.z*.04-uTime*.3);',
- 'vec3 color=mix(deep,sky,fresnel*.62+sweep*.04);',
- 'color+=vec3(.67,.78,.79)*glint*.33;',
- 'float foam=smoothstep(.60,.82,vWave)*smoothstep(.19,.45,1.-N.y);',
- 'color=mix(color,vec3(.28,.43,.46),foam*.11);',
- 'float haze=1.-exp(-distance(vWorld,uCamera)*.006);',
- 'color=mix(color,vec3(.045,.11,.16),haze*.72);',
- 'gl_FragColor=vec4(color,1.);}'
-].join('\n');
+// Ocean Cinema and Stormblade now use the SAME tested 7-band spectrum,
+// GGX reflection and atmosphere model. Keep the ocean in one shared source.
 export function createWorld(scene,camera,renderer){
  scene.background=new THREE.Color(0x081b2a);
  scene.fog=new THREE.FogExp2(0x081b2a,.009);
@@ -151,10 +128,15 @@ export function createWorld(scene,camera,renderer){
  const moon=new THREE.DirectionalLight(0xb8dbe4,2.55);moon.position.set(-15,25,-20);scene.add(moon);
  const rim=new THREE.DirectionalLight(0xd8a065,1.8);rim.position.set(9,11,12);scene.add(rim);
  const storm=new THREE.PointLight(0x6aebf7,0,45);storm.position.set(0,13,-10);scene.add(storm);
- const water=new THREE.Mesh(new THREE.PlaneGeometry(850,850,145,145),
-  new THREE.ShaderMaterial({vertexShader:OCEAN_VERT,fragmentShader:OCEAN_FRAG,uniforms:{uTime:{value:0},uCamera:{value:camera.position},uMoon:{value:new THREE.Vector3(-.4,.85,-.2)}}}));
- water.rotation.x=-PI/2;water.position.y=-1.42;water.frustumCulled=false;scene.add(water);
- // Procedural moon halo and distant mountainous silhouettes give scale.
+ const ocean=createOceanSurface({
+  quality:typeof window!=="undefined"&&window.matchMedia("(max-width:700px)").matches?"low":"medium",
+  settings:{height:.87,speed:1.3,weather:"storm",whitecaps:.07,sunElevation:24}
+ });
+ const water=ocean.mesh;
+ // Match previous waterline. Geometry+normal+foam are evaluated on GPU by
+ // the exact same shader used by the existing 3D Studio / Ocean Cinema.
+ water.position.y=-1.42;
+ scene.add(water);
  const moonDisk=new THREE.Mesh(new THREE.SphereGeometry(7,24,12),new THREE.MeshBasicMaterial({color:0x9ec7d4,fog:false}));
  moonDisk.position.set(-90,48,-150);scene.add(moonDisk);
  const halo=new THREE.Mesh(new THREE.SphereGeometry(10,24,12),new THREE.MeshBasicMaterial({color:0x397283,transparent:true,opacity:.22,depthWrite:false,fog:false}));
@@ -274,11 +256,16 @@ export function createWorld(scene,camera,renderer){
  add(ship,opponent.root,2.2,.57,1.2);
  player.root.rotation.y=-PI/2;opponent.root.rotation.y=PI/2;
  function update(time,dt){
-  water.material.uniforms.uTime.value=time;
+  ocean.update(time);
   // Rock the whole ship and all attached fighters, instead of desynchronizing floor.
-  ship.rotation.z=sin(time*.72)*.014+sin(time*1.38)*.009;
-  ship.rotation.x=sin(time*.67)*.021;
-  ship.position.y=sin(time*.95)*.11+sin(time*1.38)*.05;
+  // Reuse matching CPU reference height/slopes: boat heave and roll now
+  // follow the *same* storm waves visible in the GPU ocean, not an
+  // unrelated sine wave (damped, arcade-friendly).
+  const wave=ocean.heightAt(0,0,time)+.38;
+  const slope=ocean.slopeAt(0,0,time);
+  ship.rotation.z=clamp(-slope.dx*.54,-.075,.075)+sin(time*.72)*.009;
+  ship.rotation.x=clamp(slope.dz*.50,-.07,.07)+sin(time*.67)*.008;
+  ship.position.y=clamp(wave*.40,-.3,.3);
   for(const f of flames){f.scale.y=.68+.4*sin(time*11+f.position.z);f.rotation.z=sin(time*8)*.16;}
   const attr=sailGeo.attributes.position;
   for(let i=0;i<attr.count;i++)attr.setZ(i,.20*sin(time*1.5+attr.getX(i)*.8+attr.getY(i)*.5));
@@ -306,7 +293,7 @@ export function createWorld(scene,camera,renderer){
  }
  function dispose(){
   scene.remove(water,moonDisk,halo,rain,ship,ambient,moon,rim,storm);
-  rainGeo.dispose();sailGeo.dispose();water.geometry.dispose();water.material.dispose();rain.material.dispose();
+  rainGeo.dispose();sailGeo.dispose();ocean.dispose();rain.material.dispose();
  }
- return {ship,player,opponent,update,spark,dispose};
+ return {ship,player,opponent,update,spark,dispose,oceanVersion:"Ocean Cinema V5",sharedOcean:ocean};
 }

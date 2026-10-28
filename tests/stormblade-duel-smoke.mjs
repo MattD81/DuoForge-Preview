@@ -14,6 +14,10 @@ try{
  assert.equal(await page.locator("#modal").isVisible(),true);
  await page.locator("#start").click();
  assert.equal((await page.evaluate(()=>window.__stormblade.state())).running,true);
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).ocean,"Ocean Cinema V5");
+ assert.equal((await page.evaluate(()=>window.__stormblade.state())).characterModel,"procedural");
+ assert.equal(await page.locator("#models").isVisible(),true);
+ console.log("PASS: Stormblade renders the same Ocean Cinema V5 as 3D Studio, with V3 rig upgrade available");
  const first=await page.evaluate(()=>window.__stormblade.state());
  await page.screenshot({path:"stormblade-desktop.png"});
  await page.keyboard.down("d");
@@ -51,6 +55,11 @@ try{
  await mobile.waitForFunction(()=>typeof window.__stormblade?.state==="function",{timeout:30000});
  await mobile.locator("#start").click();
  assert.equal(await mobile.locator('[data-action="attack"]').isVisible(),true);
+ assert.equal((await mobile.evaluate(()=>window.__stormblade.state())).ocean,"Ocean Cinema V5");
+ assert.equal(await mobile.locator("#models").isVisible(),true);
+ const box=await mobile.locator("#models").boundingBox();
+ assert.ok(box&&box.x>=0&&box.x+box.width<=390,
+   "V3-lägesknappen ska ligga inom mobilskärmen");
  const before=await mobile.evaluate(()=>window.__stormblade.state());
  await mobile.bringToFront();
  await mobile.locator('[data-move="right"]').dispatchEvent("pointerdown",{pointerType:"touch",pointerId:45,button:0});

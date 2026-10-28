@@ -1,11 +1,12 @@
 import * as THREE from "three";
 import {createWorld} from "./world.mjs";
+import {createFighterUpgrade} from "./character-forge-bridge.mjs";
 import {createGPUDeluxe,DELUXE_SHARPEN_SHADER} from "../../workshop/studio/gpu-deluxe.mjs";
 
 const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const host=$("sceneHost");
-let renderer,scene,camera,world,gpu,composer=null,sharp=null;
+let renderer,scene,camera,world,gpu,composer=null,sharp=null,fighterUpgrade=null;
 let running=false,finished=false,round=90,last=0,now=0,screenFlash=0,frame=0,noticeTime=0;
 let mode="auto",soundEnabled=false,audio=null;
 const held={up:false,down:false,left:false,right:false,block:false};
@@ -26,6 +27,7 @@ function initRenderer(){
  gpu=createGPUDeluxe({renderer,canvas:renderer.domElement});
  gpu.configure({mode,quality:"high"});
  world=createWorld(scene,camera,renderer);
+ fighterUpgrade=createFighterUpgrade(world,{onStatus:message=>setNotice(message,3.5)});
  resize();addEventListener("resize",resize,{passive:true});
  document.addEventListener("visibilitychange",()=>{last=performance.now()*.001;});
  setupPost();
@@ -222,8 +224,17 @@ function tick(dt){
  }
  updateAttack(player,world.player,world.opponent,dt);
  updateAttack(enemy,world.opponent,world.player,dt);
- world.player.animate(now,{walk,block:held.block?1:0,swing:player.attack?1-player.attack.remaining/player.attack.total:0,hurt:player.stun,groundY:.57});
- world.opponent.animate(now+.47,{walk:enemyWalk,swing:enemy.attack?1-enemy.attack.remaining/enemy.attack.total:0,hurt:enemy.stun,groundY:.57});
+ const poses=[
+  {walk,block:held.block?1:0,swing:player.attack?1-player.attack.remaining/player.attack.total:0,
+   heavy:!!player.attack?.heavy,hurt:player.stun,groundY:.57},
+  {walk:enemyWalk,block:0,swing:enemy.attack?1-enemy.attack.remaining/enemy.attack.total:0,
+   heavy:!!enemy.attack?.heavy,hurt:enemy.stun,groundY:.57}
+ ];
+ if(!fighterUpgrade?.enabled){
+  world.player.animate(now,poses[0]);
+  world.opponent.animate(now+.47,poses[1]);
+ }
+ fighterUpgrade?.update(dt,now,poses);
  if(frame%13===0)syncHUD();
  if(noticeTime>0){noticeTime-=dt;if(noticeTime<=0)$("notice").textContent="⚔ STORMBLADE / THE LAST LONGSHIP";}
 }
@@ -278,6 +289,16 @@ for(const el of document.querySelectorAll("[data-move],[data-action]")){
 }
 $("start").onclick=startDemo;$("restart").onclick=resetState;$("endRestart").onclick=resetState;
 $("sound").onclick=toggleSound;
+$("models").onclick=async()=>{
+ const button=$("models");
+ if(!fighterUpgrade||button.disabled)return;
+ button.disabled=true;
+ button.textContent="◎ Laddar V3…";
+ try{
+  const enabled=await fighterUpgrade.toggle();
+  button.textContent=enabled?"◎ Original":"◎ V3-riggar";
+ }finally{button.disabled=false}
+};
 $("quality").onclick=()=>{
  const modes=["auto","quality","performance","off"];
  mode=modes[(modes.indexOf(mode)+1)%modes.length];
@@ -292,7 +313,8 @@ try{
   start:startDemo,
   state:()=>({playerHp:player.hp,enemyHp:enemy.hp,running,finished,round,mode,
    playerX:world?.player.root.position.x,enemyX:world?.opponent.root.position.x,
-   backend:gpu?.info().capabilities.backend}),
+   backend:gpu?.info().capabilities.backend,
+   ocean:world?.oceanVersion,characterModel:fighterUpgrade?.status}),
   restart:resetState
  });
  Object.defineProperty(window,"__stormblade",{value:qa,configurable:false});
