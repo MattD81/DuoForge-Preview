@@ -189,7 +189,7 @@ function prepare(){
  camera=new THREE.PerspectiveCamera(isPhone?66:61,1,.1,1250);
  camera.position.set(10,12,29);
  // Lightweight local reflection probe improves PBR without any cloud/AI API.
- try{
+ if(!software)try{
   const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
   const result=pmrem.fromScene(room,.04);
   scene.environment=result.texture;room.dispose();pmrem.dispose();
