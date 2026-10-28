@@ -84,6 +84,10 @@ test("GPU Deluxe is wired to the original playable Stormblade game",()=>{
  assert.match(game,/import \{createGPUDeluxe,DELUXE_SHARPEN_SHADER\}/);
  assert.match(game,/gpu\.tick/);
  assert.match(game,/new ShaderPass\(DELUXE_SHARPEN_SHADER\)/);
- assert.match(world,/OCEAN_VERT/);
+ assert.match(world,/import \{createOceanSurface\} from "\.\.\/\.\.\/workshop\/studio\/ocean-water\.mjs"/);
+ assert.match(world,/ocean\.heightAt\(0,0,time\)/);
+ assert.match(world,/ocean\.slopeAt\(0,0,time\)/);
+ const ocean=readFileSync(new URL("../workshop/studio/ocean-water.mjs",import.meta.url),"utf8");
+ assert.match(ocean,/spectralGLSL/);
  assert.match(world,/makeWarrior/);
 });
