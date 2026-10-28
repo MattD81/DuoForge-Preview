@@ -26,3 +26,18 @@ Filmklipp/GLB-export, avancerad motion capture, fotorealistiska PBR-skinn, ray-t
 
 ## Kvalitetssäkring
 `node --check games/stormblade-duel/{game,world}.mjs`, `node tests/stormblade-duel-smoke.mjs` med statisk server och Playwright. Testa särskilt Safari/iPhone och faktiska GPU:er före produktionsanvändning. Spelet publiceras inte automatiskt till ChatGPT Sites.
+
+## Phase 2: faktisk delning av befintlig teknik
+
+- **Ocean Cinema V5 från riktiga 3D Studio:** spelet importerar nu `createOceanSurface` från `workshop/studio/ocean-water.mjs`. Samma sju vågkomponenter, GGX/reflexionsshader, atmosfärsberäkning och diskret sjöskum används i både havsstudio och Stormblade. Skeppet får sin höjd och lutning från samma havsfunktioners CPU-referens i stället för en separat vågloop.
+- **Character Forge V3 från Rift Champions:** en ny frivillig `V3-riggar`-knapp provar att läsa två riktiga publicerade GLB-modeller från det befintliga modellbiblioteket (`workshop/models/rift-kael-skinned-v3.glb` och `rift-vex-skinned-v3.glb`). Den återanvänder verifierings-/glTF-assetloader, AnimationMixer, skelettklipp och ansiktsmorpher från Rift Champions. Detta är *Kael/Vex*-modeller, inte nygjorda Ragnar/Skadi-modeller. Därför sker bytet bara på uttrycklig begäran.
+- **Robust fallback:** om GLB saknas eller är inkompatibla fortsätter det spelbara stridssystemet med originalkrigarna. Ingen remote AI eller servergenerering startar.
+- **Mobil och GPU:** ursprunglig GPU Deluxe, touchknappar och GPU-profilstyrning är kvar; V3-modeller laddas bara när användaren väljer dem.
+
+### Ännu INTE integrerat i Stormblade
+
+WebGPU/WGSL-compute, tränad neural upscaling, ReSTIR/path tracing, 3D Gaussian Splatting, Cinema-filmexport, fullständig filmregi och ett live prompt-till-spel-arbetsflöde i produktions-Sites. De finns antingen som separata prototyper, är delvis implementerade i andra verktyg eller är planerade. Använd dem inte som bevis för att allt redan är kopplat.
+
+### V2-regression
+
+`node tests/stormblade-duel-smoke.mjs` ska visa spelets Ocean Cinema v5-status och att Character Forge-knappen är tillgänglig. Testa i publicerad Pages-miljö för att säkerställa att de faktiska GLB-filerna går att ladda: lokala GitHub CI-kloner innehåller inte de bygggenererade 11–20 MB V3-modellerna.
