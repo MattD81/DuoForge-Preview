@@ -19,6 +19,16 @@ try{
  await page.locator("#openRenderWorld").click();
  await page.waitForFunction(()=>document.body.classList.contains("render-world-active"),{timeout:15000});
  assert.equal(await page.locator("#renderWorldOverlay").isVisible(),true);
+ assert.equal(await page.locator("#gpuDeluxeMode").inputValue(),"auto");
+ await page.waitForFunction(()=>document.querySelector("#gpuDeluxeStats")?.textContent.includes("GPU Deluxe AUTO"));
+ await page.locator("#gpuDeluxeMode").selectOption("performance");
+ await page.waitForFunction(()=>document.querySelector("#gpuDeluxeStats")?.textContent.includes("PERFORMANCE"));
+ await page.locator("#gpuDeluxeMode").selectOption("quality");
+ await page.waitForFunction(()=>document.querySelector("#gpuDeluxeStats")?.textContent.includes("QUALITY"));
+ await page.locator("#gpuDeluxeMode").selectOption("off");
+ await page.waitForFunction(()=>document.querySelector("#gpuDeluxeStats")?.textContent.includes("OFF"));
+ await page.locator("#gpuDeluxeMode").selectOption("auto");
+ console.log("PASS: GPU Deluxe presets, live diagnostics and original-graphics opt out");
  assert.equal(await page.locator("#previewAssetName").textContent(),"DuoForge Kart – startmodell");
  assert.equal(await page.locator("#renderCheckpointCount").textContent(),"0/0");
  console.log("PASS: showroom loads the selected model as an isolated test copy");

@@ -93,6 +93,7 @@
 .render-hud-stats>div{min-width:56px}.render-hud-stats strong{display:block;font-size:15px;font-variant-numeric:tabular-nums;color:white}
 .render-hud-stats small{font-size:9px;color:#9bb8c5}
 #renderMissionStatus{font-size:11px;margin:8px 0;color:#86f4be}
+.gpu-deluxe-stats{font:600 10px/1.5 ui-sans-serif,system-ui,sans-serif;color:#c5f4ff;border:1px solid #3d738a;background:#0a2939c9;border-radius:8px;padding:5px 8px;margin:7px 0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 #renderResetMission{padding:6px 9px;font-size:11px}
 .render-camera-tip{margin-top:8px;font-size:10px;color:#abc3d6}
 .render-interact-hint{position:absolute;top:60%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#d3ffe8;text-shadow:0 2px 5px #000}

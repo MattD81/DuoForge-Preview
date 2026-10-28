@@ -14,6 +14,7 @@ on:
       - 'tests/wheel-rig-smoke.mjs'
       - 'tests/steering-controls-smoke.mjs'
       - 'tests/render-world-smoke.mjs'
+      - 'tests/gpu-deluxe.test.mjs'
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/research-3d.test.mjs'
@@ -64,6 +65,7 @@ jobs:
           node --check workshop/studio/world-builder.mjs
           node --check workshop/studio/wheel-rig.mjs
           node --check workshop/studio/render-world.mjs
+          node --check workshop/studio/gpu-deluxe.mjs
           node --check workshop/studio/render-environments.mjs
           node --check workshop/studio/ocean-water.mjs
           node --check workshop/studio/ocean-spectrum.mjs
@@ -92,7 +94,7 @@ jobs:
           node --check tests/steering-controls-smoke.mjs
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
-          node --test tests/cinema-engine-core.test.mjs
+          node --test tests/cinema-engine-core.test.mjs tests/gpu-deluxe.test.mjs
           node --test tests/sites-cinema-bridge.test.mjs
           node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs

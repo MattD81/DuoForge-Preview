@@ -12,6 +12,7 @@ import {initFilmStudio} from "./film-studio.mjs";
 import {createCinematicLighting} from "./cinematic-lighting.mjs";
 import {cloneRiggedModel,makeRigDirector} from "./cinema-rig.mjs";
 import {checkpointProgress} from "./render-missions.mjs";
+import {createGPUDeluxe,DELUXE_SHARPEN_SHADER} from "./gpu-deluxe.mjs";
 
 const $=id=>document.getElementById(id);
 const KEY_ACTIONS={KeyW:"gas",ArrowUp:"gas",KeyS:"brake",ArrowDown:"brake",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",Space:"handbrake",KeyE:"interact"};
@@ -41,6 +42,9 @@ export function initRenderWorld(ctx){
  let filmRest=null,rigDirector=null;
  let frame=0,cinematicAngle=0,interactionHeld=false,doorOpen=false;
  let recording=null,recordTimer=null,filmStudio=null;
+ const gpuDeluxe=createGPUDeluxe({renderer,canvas});
+ let deluxeSharpenPass=null;
+ const drawingBufferSize=new THREE.Vector2();
  const cinemaLighting=createCinematicLighting({scene,renderer,getAnchor:()=>anchor,getQuality:()=>quality});
  let freeMoving={forward:false,backward:false,left:false,right:false,up:false,down:false};
  const previewPane=$("renderWorldOverlay"),controlsPanel=$("renderWorldControls");
@@ -170,6 +174,15 @@ export function initRenderWorld(ctx){
   }
   syncOceanControls();
  }
+ function updateGPUDeluxeHUD(){
+  const state=gpuDeluxe.info(),hud=$("gpuDeluxeStats");
+  if(!hud)return;
+  const fps=state.fps===null?"…":state.fps;
+  const p95=state.p95Ms===null?"…":state.p95Ms;
+  hud.textContent="GPU Deluxe "+state.mode.toUpperCase()+" · "+fps+" FPS · p95 "+p95+
+   " ms · DPR "+renderer.getPixelRatio().toFixed(2)+" · "+state.capabilities.backend+
+   (state.enhancement==="spatial-edge-aware"?" · adaptiv skärpa":"");
+ }
  function syncChoices(){
   syncOceanControls();
   $("renderWorldSelect").value=world;$("renderQualitySelect").value=quality;
@@ -181,6 +194,8 @@ export function initRenderWorld(ctx){
   const previousLook=cinemaLighting.settings();
   cinemaLighting.clear();
   quality=["low","medium","high"].includes(value)?value:"medium";
+  gpuDeluxe.configure({mode:$("gpuDeluxeMode").value,quality});
+  updateGPUDeluxeHUD();
   const isPhone=window.matchMedia("(max-width: 600px)").matches;
   if(quality==="high"&&isPhone)notify("Hög kvalitet kan vara tung på mobilen. Välj Medium om bilden hackar.",4000);
   renderer.setPixelRatio(previewPixelRatio(quality));
@@ -190,16 +205,18 @@ export function initRenderWorld(ctx){
   renderer.toneMappingExposure=quality==="high"?1.25:quality==="low"?1.06:1.16;
   renderer.shadowMap.needsUpdate=true;
   composer?.dispose?.();composer=null;dofPass=null;dofFocusCenter=null;
+  deluxeSharpenPass=null;gpuDeluxe.setSharpen(false);
   if(quality==="high"){
    try{
     // High-only deferred post processing: avoids download/GPU overhead by default.
-    const [{EffectComposer},{RenderPass},{UnrealBloomPass},{OutputPass},{SSAOPass},{SMAAPass}]=await Promise.all([
+    const [{EffectComposer},{RenderPass},{UnrealBloomPass},{OutputPass},{SSAOPass},{SMAAPass},{ShaderPass}]=await Promise.all([
      import("three/addons/postprocessing/EffectComposer.js"),
      import("three/addons/postprocessing/RenderPass.js"),
      import("three/addons/postprocessing/UnrealBloomPass.js"),
      import("three/addons/postprocessing/OutputPass.js"),
      import("three/addons/postprocessing/SSAOPass.js"),
-     import("three/addons/postprocessing/SMAAPass.js")
+     import("three/addons/postprocessing/SMAAPass.js"),
+     import("three/addons/postprocessing/ShaderPass.js")
     ]);
     if(!active||quality!=="high")return;
     const w=Math.max(canvas.clientWidth,1),h=Math.max(canvas.clientHeight,1);
@@ -237,6 +254,12 @@ export function initRenderWorld(ctx){
     }
     // Composer render targets do not inherit WebGL canvas MSAA: smooth their edges.
     composer.addPass(new SMAAPass());
+    if(gpuDeluxe.mode!=="off"){
+     deluxeSharpenPass=new ShaderPass(DELUXE_SHARPEN_SHADER);
+     deluxeSharpenPass.uniforms.uStrength.value=gpuDeluxe.mode==="quality"?.18:.12;
+     composer.addPass(deluxeSharpenPass);
+     gpuDeluxe.setSharpen(true);
+    }
     composer.addPass(new OutputPass());
     composer.setSize(w,h);
    }catch(err){console.warn("Postprocessing unavailable",err);
@@ -446,6 +469,7 @@ export function initRenderWorld(ctx){
   finishRecording();
   active=false;clearKeys();wheelRig?.dispose();wheelRig=null;
   composer?.dispose?.();composer=null;dofPass=null;dofFocusCenter=null;
+  deluxeSharpenPass=null;gpuDeluxe.setSharpen(false);
   if(environment){environment.dispose();environment=null;}
   group.clear();model=null;anchor=null;simulation=null;mission=[];doorOpen=false;
   document.body.classList.remove("render-world-active");
@@ -457,9 +481,20 @@ export function initRenderWorld(ctx){
   if(filmStudio?.isRecording())return; // Keep full-HD recording dimensions stable.
   if(composer)composer.setSize(Math.max(canvas.clientWidth,1),Math.max(canvas.clientHeight,1));
  }
+ function syncDeluxeOutputSize(){
+  if(composer){
+   composer.setPixelRatio(renderer.getPixelRatio());
+   composer.setSize(Math.max(canvas.clientWidth,1),Math.max(canvas.clientHeight,1));
+  }
+ }
  function render(){
   if(!active||!composer)return false;
   updateDofFocus();
+  if(deluxeSharpenPass){
+   renderer.getDrawingBufferSize(drawingBufferSize);
+   deluxeSharpenPass.uniforms.uTexel.value.x=1/Math.max(1,drawingBufferSize.x);
+   deluxeSharpenPass.uniforms.uTexel.value.y=1/Math.max(1,drawingBufferSize.y);
+  }
   composer.render();return true;
  }
  function isActive(){return active;}
@@ -484,6 +519,8 @@ export function initRenderWorld(ctx){
    return;
   }
   sessionTime+=step;gameTime+=step;
+  gpuDeluxe.tick(dt,{recording:Boolean(recording)||filmStudio?.isRecording(),onResize:syncDeluxeOutputSize});
+  if(frame%30===0)updateGPUDeluxeHUD();
   const pad=readPad();
   $("renderInputType").textContent=pad?"🎮 Gamepad":"⌨️ Tangentbord · touch";
   const car=simulation.kind==="vehicle";
@@ -611,6 +648,7 @@ export function initRenderWorld(ctx){
   ["renderWorldSelect",value=>applyWorld(value)],
   ["renderQuality",value=>{if(active)applyQuality(value);else{quality=value;syncChoices()}}],
   ["renderQualitySelect",value=>{if(active)applyQuality(value);else{quality=value;syncChoices()}}],
+  ["gpuDeluxeMode",value=>{if(active)applyQuality(quality);else{gpuDeluxe.configure({mode:value,quality});updateGPUDeluxeHUD()}}],
   ["renderCamera",chooseCamera],
   ["renderCameraSelect",chooseCamera]
  ])$(id).onchange=event=>{handler(event.target.value);event.target.blur();};
@@ -645,7 +683,7 @@ export function initRenderWorld(ctx){
   setCinematicEffects,
   getPreviewAnchor:()=>anchor
  });
- syncChoices();
+ syncChoices();updateGPUDeluxeHUD();
  // Film/demo deep links start Render World and optionally open the director UI.
  if(query.get("preview")==="1"||query.get("film")==="1")requestAnimationFrame(()=>{
   start();if(query.get("film")==="1"&&active)filmStudio?.open();
