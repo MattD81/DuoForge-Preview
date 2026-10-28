@@ -4,13 +4,19 @@ const browser=await chromium.launch({headless:true,args:["--no-sandbox","--use-g
 const errors=[];
 const watch=page=>{
  page.on("pageerror",e=>errors.push("pageerror: "+e.message));
+ page.on("requestfailed",req=>errors.push("requestfailed: "+req.url()+" "+req.failure()?.errorText));
  page.on("console",m=>{if(m.type()==="error")errors.push("console: "+m.text());});
 };
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1,acceptDownloads:true});
  watch(page);
  await page.goto("http://127.0.0.1:8080/games/last-light/",{waitUntil:"domcontentloaded"});
- await page.waitForFunction(()=>document.getElementById("boot")?.hidden===true,{timeout:45000});
+ await page.waitForTimeout(2500);
+ if(!(await page.locator("#boot").evaluate(el=>el.hidden))){
+  const note=await page.locator("#bootMessage").textContent();
+  console.log("BOOT STATE",note,"ERRORS",errors.slice(0,15));
+ }
+ await page.waitForFunction(()=>document.getElementById("boot")?.hidden===true,{timeout:13000});
  assert.equal(await page.locator("#intro").isVisible(),true);
  assert.equal(await page.locator("#scene").isVisible(),true);
  assert.match(await page.locator(".performance").textContent(),/WebGL/);
