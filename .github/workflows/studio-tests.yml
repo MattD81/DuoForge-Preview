@@ -16,6 +16,7 @@ on:
       - 'tests/render-world-smoke.mjs'
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
+      - 'tests/research-3d.test.mjs'
       - 'tests/film-studio-smoke.mjs'
       - 'tests/film-path.test.mjs'
       - 'tests/cinema-production.test.mjs'
@@ -45,6 +46,10 @@ jobs:
       - name: JavaScript syntax check
         run: |
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/research-ui.mjs
+          node --check workshop/studio/research-performance.mjs
+          node --check workshop/studio/atmosphere-scattering.mjs
+          node --check tests/research-3d.test.mjs
           node --check workshop/studio/character-forge.mjs
           node --check workshop/studio/image-to-3d-client.mjs
           python3 -m py_compile services/image-to-3d/server.py
@@ -84,7 +89,7 @@ jobs:
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
-          node --test tests/ocean-spectrum.test.mjs
+          node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
         timeout-minutes: 3
