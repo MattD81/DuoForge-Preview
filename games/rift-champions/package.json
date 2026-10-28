@@ -1,0 +1,14 @@
+{
+  "name": "duoforge-rift-champions",
+  "private": true,
+  "version": "0.1.1",
+  "type": "module",
+  "description": "Original cinematic procedural 3D fighter for DuoForge",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  }
+}
