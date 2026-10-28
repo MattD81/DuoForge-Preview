@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import {clone as cloneSkeleton} from "three/addons/utils/SkeletonUtils.js";
 import {FrameZip,frameBatch} from "./cinema-production.mjs";
-import {denoisePixels} from "./cinema-denoise.mjs";
+import {atrousDenoisePixels} from "./cinema-wavelet-denoise.mjs";
 const PATH_MODULE="https://esm.sh/three-gpu-pathtracer@0.0.24?bundle&external=three";
 const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
 function copyHierarchy(from,to){
@@ -108,7 +108,7 @@ export function createPathFilm({getAnchor,getCamera,poseAt,onStatus,filename}){
      const ctx=clean.getContext("2d",{willReadFrequently:true});
      ctx.drawImage(canvas,0,0);
      const pixels=ctx.getImageData(0,0,width,height);
-     pixels.data.set(denoisePixels(pixels.data,width,height));
+     pixels.data.set(atrousDenoisePixels(pixels.data,width,height));
      ctx.putImageData(pixels,0,0);target=clean;
     }
     const blob=await new Promise(resolve=>target.toBlob(resolve,"image/png"));
