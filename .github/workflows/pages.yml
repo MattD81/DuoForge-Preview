@@ -97,7 +97,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/cache@v4
+        id: rift-ara-cache
+        with:
+          path: |
+            games/rift-champions/models/kael_ara.glb
+            games/rift-champions/models/vex_ara.glb
+          key: ara-premium-654a5d81-${{ hashFiles('games/rift-champions/character-forge/*.params.json') }}
       - name: Generate high-detail MakeHuman fighters (optional)
+        if: steps.rift-ara-cache.outputs.cache-hit != 'true'
         id: ara
         continue-on-error: true
         shell: bash
