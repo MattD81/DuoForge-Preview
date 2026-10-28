@@ -5,6 +5,7 @@ import * as THREE from "three";
 import {createShot,sampleCameraPath,createBrollSequence,sampleBrollSequence,normalizeFilmSettings,normalizeKeyframes} from "./film-path.mjs";
 import {createPathTraceStills} from "./path-trace-stills.mjs";
 import {createPathFilm} from "./cinema-path-film.mjs";
+import {createCinemaVideoAssembler} from "./cinema-video-assembly.mjs";
 import {normalizeCuts,movieDuration,locateCut,frameBatch,FrameZip} from "./cinema-production.mjs";
 
 const $=id=>document.getElementById(id);
@@ -38,6 +39,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    setWorldTime(t,0);
   },onStatus:message=>{status.textContent=message;},filename
  });
+ const assembler=createCinemaVideoAssembler({filename,getSoundURL:()=>soundURL});
  const fxSettings=()=>({
   dof:$("filmDof").checked,
   reflections:$("filmSSR").checked,
@@ -213,7 +215,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   playing=false;
   pathTrace.stop();
   setFilmPose(0,"still");
-  pathMovie.stop();
+  pathMovie.stop();assembler.stop();
   setCinematicEffects({dof:false,reflections:false});
   if(soundURL){URL.revokeObjectURL(soundURL);soundURL=null;}
   $("filmAudioPlayer").pause();
@@ -225,7 +227,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   opened=false;ui.hidden=true;document.body.classList.remove("film-studio-active");
  }
  function onPreviewExit(){
-  pathMovie.stop();
+  pathMovie.stop();assembler.stop();
   if(recording)finishRecorder({cancel:true});
   close();
  }
