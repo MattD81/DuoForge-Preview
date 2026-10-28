@@ -18,6 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build detailed GLB fighters and verify game logic (no external model API)
+        run: |
+          node --check games/rift-champions/build-models.mjs
+          node --check games/rift-champions/fighter-loader.mjs
+          node --check games/rift-champions/main.mjs
+          node games/rift-champions/build-models.mjs
+          node --test games/rift-champions/tests/*.test.mjs
+          test -s games/rift-champions/models/kael.glb
+          test -s games/rift-champions/models/vex.glb
       - uses: actions/configure-pages@v5
         with:
           enablement: true
