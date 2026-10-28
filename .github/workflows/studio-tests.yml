@@ -17,6 +17,8 @@ on:
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/research-3d.test.mjs'
+      - 'tests/sites-cinema-bridge.test.mjs'
+      - 'tests/sites-cinema-bridge-smoke.mjs'
       - 'tests/film-studio-smoke.mjs'
       - 'tests/film-path.test.mjs'
       - 'tests/cinema-production.test.mjs'
@@ -50,6 +52,8 @@ jobs:
           node --check workshop/studio/research-performance.mjs
           node --check workshop/studio/atmosphere-scattering.mjs
           node --check tests/research-3d.test.mjs
+          node --check workshop/studio/sites-cinema-bridge.mjs
+          node --check tests/sites-cinema-bridge-smoke.mjs
           node --check workshop/studio/character-forge.mjs
           node --check workshop/studio/image-to-3d-client.mjs
           python3 -m py_compile services/image-to-3d/server.py
@@ -89,6 +93,7 @@ jobs:
           node --check tests/studio-smoke.mjs
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
+          node --test tests/sites-cinema-bridge.test.mjs
           node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
@@ -101,6 +106,8 @@ jobs:
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
       - name: Test Film Studio cinematic video rendering, Full HD PNG and storyboard
         run: node tests/film-studio-smoke.mjs
+      - name: Verify cross-origin Sites↔Cinema integration with a real GLB
+        run: node tests/sites-cinema-bridge-smoke.mjs
       - name: Test Ocean Render World waves, storm, preview, desktop and mobile
         run: node tests/ocean-world-smoke.mjs
       - name: Test PBR Material Lab and real GLB embedded texture roundtrip

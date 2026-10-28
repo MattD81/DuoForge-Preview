@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import {atmosphereState} from "./atmosphere-scattering.mjs";
 import {createSurfaceLibrary} from "./procedural-materials.mjs";
-import {buildOceanScene} from "./ocean-scene.mjs?v=ocean-clean-v7";
-import {normalizeOceanSettings} from "./ocean-water.mjs?v=ocean-clean-v7";
+import {buildOceanScene} from "./ocean-scene.mjs?v=research-3d-v1";
+import {normalizeOceanSettings} from "./ocean-water.mjs?v=research-3d-v1";
 
 export function getOceanSun(weather="clear",sunElevation){
  const sky=atmosphereState(weather,sunElevation);

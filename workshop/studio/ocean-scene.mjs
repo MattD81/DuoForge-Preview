@@ -1,6 +1,6 @@
 // Render World Ocean environmental details. Temporary scene only, never GLB exported.
 import * as THREE from "three";
-import {createOceanSurface,normalizeOceanSettings} from "./ocean-water.mjs?v=ocean-clean-v7";
+import {createOceanSurface,normalizeOceanSettings} from "./ocean-water.mjs?v=research-3d-v1";
 const randSeed=(seed=91531)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
 export function buildOceanScene({quality="medium",settings={}}={}){
  const group=new THREE.Group();group.name="DuoForge Ocean — sea, rocks, dock and floating markers";

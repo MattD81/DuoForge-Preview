@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {newMatch,stepMatch,makeAI,getPosePhase} from './combat.mjs';
 import {createFighter,updateFighterPose} from './fighter.mjs';
+import {loadDetailedFighter} from './fighter-loader.mjs';
 import {createArena} from './arena.mjs';
 import {createEffects,makeAudio} from './fx.mjs';
 const $=id=>document.getElementById(id), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -10,6 +11,22 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFi
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,.1,120);
 const arena=createArena(scene),rigs=[createFighter({index:0}),createFighter({index:1})];rigs.forEach(r=>scene.add(r.root));
+// Progressive HD asset loading: preserve the existing animated fighters as a safe fallback.
+const detailedModelStatus=[{status:'loading'},{status:'loading'}];
+for(let i=0;i<2;i++){
+  const url='./models/'+(i===0?'kael':'vex')+'.glb';
+  loadDetailedFighter(url,i).then(detailed=>{
+    const previous=rigs[i];
+    if(!previous?.root || !detailed?.root)return;
+    // Both versions use the same pose API; existing combat, HUD, input and camera remain untouched.
+    scene.remove(previous.root);rigs[i]=detailed;scene.add(detailed.root);
+    detailedModelStatus[i]={status:'ready',...detailed.modelStats};
+  }).catch(error=>{
+    detailedModelStatus[i]={status:'fallback',reason:String(error?.message||error).slice(0,140)};
+    console.warn('HD fighter unavailable; using original procedural fighter:',error);
+  });
+}
+
 const fx=createEffects(scene),audio=makeAudio(),keys=new Set(),touched=new Set(),oneShot=new Set();
 let match=newMatch(),ai=makeAI('normal'),started=false,paused=false,pvp=false,soundOn=true,quality='high',composer=null,bloomPass=null;
 let eventTimer=0,comboTimer=0,lastTime=performance.now(),accumulator=0,shake=0,frame=0;
@@ -136,5 +153,5 @@ $('restart').addEventListener('click',startGame);
 $('quit').addEventListener('click',()=>{paused=false;started=false;match=newMatch();$('settingsDialog').classList.add('hidden');$('startScreen').classList.remove('hidden');});
 $('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;$('soundToggle').textContent='Ljud: '+(soundOn?'På':'Av');if(soundOn)audio.activate();else audio.mute();});
 window.addEventListener('error',e=>{console.error(e.message);});
-window.__duoforgeRift={getState:()=>({state:match.state,round:match.round,players:match.fighters.map(f=>({hp:f.hp,x:f.x,move:f.move,meter:f.meter})),rendered:renderer.info.render.calls,activeEffects:fx.active}),start:startGame,step:(p1={},p2={},n=1)=>{for(let i=0;i<n;i++)stepMatch(match,[p1,p2]);}};
+window.__duoforgeRift={getState:()=>({state:match.state,round:match.round,players:match.fighters.map(f=>({hp:f.hp,x:f.x,move:f.move,meter:f.meter})),rendered:renderer.info.render.calls,activeEffects:fx.active,models:detailedModelStatus}),start:startGame,step:(p1={},p2={},n=1)=>{for(let i=0;i<n;i++)stepMatch(match,[p1,p2]);}};
 requestAnimationFrame(renderLoop);
