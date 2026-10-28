@@ -25,7 +25,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
  let lastBlob=null,lastURL=null,downloadName="",keyframes=[];
  let format=normalizeFilmSettings(),movieShot="orbit",pendingCleanup=false;
  let cuts=[],cutPaths=[],activeCut=-1,frameExporting=false,frameAborted=false;
- let soundURL=null;
+ let soundURL=null,audioContext=null,audioSource=null,audioDestination=null;
  const ui=$("filmStudioOverlay"),status=$("filmStatus"),progress=$("filmProgress"),seek=$("filmSeek");
  const pathTrace=createPathTraceStills({
   getAnchor:getPreviewAnchor,getCamera:()=>camera,onStatus:message=>{status.textContent=message;},filename
@@ -179,6 +179,12 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   }
   displayState("Förhandsvisning klar. Ändra filmrörelsen eller exportera.");
  }
+ function detachRecordAudio(){
+  $("filmAudioPlayer").pause();
+  if(audioSource&&audioDestination){try{audioSource.disconnect(audioDestination);}catch{}}
+  audioDestination?.stream?.getTracks().forEach(t=>t.stop());
+  audioDestination=null;
+ }
  function finishRecorder({cancel=false}={}){
   if(!mediaRecorder)return;
   pendingCleanup=cancel;
@@ -187,7 +193,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   }
   recording=false;playing=false;
   if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
-  captureTrack=null;restoreOutputSize();
+  captureTrack=null;detachRecordAudio();restoreOutputSize();
   orbit.enabled=true;
   displayState(cancel?"Inspelningen avbröts.":"Sparar videofil lokalt …");
  }
@@ -200,6 +206,7 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
   setCinematicEffects({dof:false,reflections:false});
   if(soundURL){URL.revokeObjectURL(soundURL);soundURL=null;}
   $("filmAudioPlayer").pause();
+  if(audioContext){audioContext.close().catch(()=>{});audioContext=null;audioSource=null;}
   $("filmAudioPlayer").removeAttribute("src");
   $("filmAudioPlayer").hidden=true;
   restoreOutputSize();restoreCamera();
@@ -217,11 +224,14 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    displayState("Förhandsvisning pausad.");return;}
   beginPlayback();
  }
- function chooseMime(){
+ function chooseMime(hasAudio=false){
   if(typeof MediaRecorder==="undefined")return null;
-  return mimeChoices.find(type=>MediaRecorder.isTypeSupported(type))||"";
+  const choices=hasAudio?
+   ["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4","video/webm"]:
+   mimeChoices;
+  return choices.find(type=>MediaRecorder.isTypeSupported(type))||"";
  }
- function record(){
+ async function record(){
   if(frameExporting)return;
   if(recording){finishRecorder();return;}
   if(!opened&&!open())return;
@@ -235,10 +245,26 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    $("filmDownload").hidden=true;lastBlob=null;
    setOutputSize(output.width,output.height);
    renderFrame();
-   const mime=chooseMime();
    stream=canvas.captureStream(output.fps);
    captureTrack=stream.getVideoTracks()[0]||null;
    if(!captureTrack)throw Error("Ingen videoström från 3D-renderaren.");
+   const player=$("filmAudioPlayer");
+   const withSound=Boolean(soundURL&&player.src);
+   if(withSound){
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(!Audio)throw Error("Din webbläsare saknar stöd för ljudmixning.");
+    audioContext ||=new Audio();
+    audioSource ||=audioContext.createMediaElementSource(player);
+    await audioContext.resume();
+    audioDestination=audioContext.createMediaStreamDestination();
+    audioSource.connect(audioDestination);
+    audioSource.connect(audioContext.destination);
+    const tracks=audioDestination.stream.getAudioTracks();
+    if(!tracks.length)throw Error("Ingen ljudkanal skapades för filmen.");
+    stream=new MediaStream([...stream.getVideoTracks(),...tracks]);
+   }
+   const mime=chooseMime(withSound);
+   if(!mime)throw Error("Ingen kompatibel videokodare med "+(withSound?"ljud":"bild")+" finns.");
    const bitrate=output.quality==="1080"?11000000:6500000;
    const opts={videoBitsPerSecond:bitrate};
    if(mime)opts.mimeType=mime;
@@ -270,12 +296,17 @@ export function initFilmStudio({camera,orbit,canvas,renderer,scene,getAnchor,get
    };
    recorder.start(1000);
    recording=true;playing=true;orbit.enabled=false;
+   if(withSound){
+    player.pause();player.currentTime=0;
+    player.play().catch(err=>notify("Ljudspåret kunde inte startas: "+err.message,3500));
+   }
    displayState("Spelar in "+output.width+"×"+output.height+" · "+output.fps+" fps (mål) · "+
-    output.duration+" s. Bildhastighet beror på GPU:n.");
+    output.duration+" s · "+(withSound?"ljud inbäddat":"utan ljud")+". GPU:n bestämmer verklig hastighet.");
   }catch(e){
    console.error("Film Studio capture",e);
    if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
    mediaRecorder=null;recording=false;playing=false;
+   detachRecordAudio();
    restoreOutputSize();orbit.enabled=true;
    displayState("Kunde inte starta video: "+e.message);
    notify("Videoinspelning stöds inte fullt ut på din enhet – prova 720p eller PNG.",5500);
