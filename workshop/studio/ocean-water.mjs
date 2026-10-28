@@ -2,15 +2,18 @@
 // non-periodic breaking foam and camera-adaptive capillary normal detail.
 // Deterministic and local; not an FFT hydrodynamic simulation or full raytracing.
 import * as THREE from "three";
+import {sunElevationFor,normalizedSunElevation,atmosphereState} from "./atmosphere-scattering.mjs";
 import {spectralHeight,spectralSlope,spectralGLSL,slopeGLSL,isStorm} from "./ocean-spectrum.mjs";
-export const OCEAN_DEFAULTS=Object.freeze({height:.58,speed:1,weather:"clear",whitecaps:.12});
+export const OCEAN_DEFAULTS=Object.freeze({height:.58,speed:1,weather:"clear",whitecaps:.12,sunElevation:42});
 export const OCEAN_WEATHER=Object.freeze(["clear","sunset","storm","storm-sunset"]);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function normalizeOceanSettings(value={}){
+ const weather=OCEAN_WEATHER.includes(value.weather)?value.weather:"clear";
  return {height:clamp(Number.isFinite(Number(value.height))?Number(value.height):.58,.05,1.8),
  speed:clamp(Number.isFinite(Number(value.speed))?Number(value.speed):1,.15,3),
- weather:OCEAN_WEATHER.includes(value.weather)?value.weather:"clear",
- whitecaps:clamp(Number.isFinite(Number(value.whitecaps))?Number(value.whitecaps):.12,0,1)};
+ weather,
+ whitecaps:clamp(Number.isFinite(Number(value.whitecaps))?Number(value.whitecaps):.12,0,1),
+ sunElevation:normalizedSunElevation(value.sunElevation,sunElevationFor(weather))};
 }
 export function oceanHeight(x,z,time,settings=OCEAN_DEFAULTS){
  const s=normalizeOceanSettings(settings);
@@ -101,6 +104,7 @@ const fragment=[
 ].join("\n");
 export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}){
  const initial=normalizeOceanSettings(settings);
+ const initialSun=atmosphereState(initial.weather,initial.sunElevation);
  const divisions=quality==="low"?66:quality==="high"?190:118;
  const geometry=new THREE.PlaneGeometry(720,720,divisions,divisions);
  geometry.rotateX(-Math.PI/2);
@@ -111,7 +115,7 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
   uShallow:{value:new THREE.Color("#209aa6")},
   uSky:{value:new THREE.Color("#80bfd7")},
   uSun:{value:new THREE.Color("#ffe1a0")},
-  uSunDir:{value:new THREE.Vector3(-.56,.125,.82).normalize()},
+  uSunDir:{value:new THREE.Vector3(...initialSun.direction)},
   uRoughness:{value:.25},
   uWhitecaps:{value:initial.whitecaps},
   uDetail:{value:quality==="low"?.35:quality==="high"?1:.72},
@@ -133,6 +137,7 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
   uniforms.uHeight.value=current.height;uniforms.uSpeed.value=current.speed;
   uniforms.uStorm.value=isStorm(current.weather)?1.48:1;
   uniforms.uWhitecaps.value=current.whitecaps;
+  const air=atmosphereState(current.weather,current.sunElevation);
   if(current.weather==="storm-sunset"){
    uniforms.uDeep.value.set("#071a29");uniforms.uShallow.value.set("#1c485b");
    uniforms.uSky.value.set("#bd847e");uniforms.uSun.value.set("#ffd69f");
@@ -154,6 +159,9 @@ export function createOceanSurface({quality="medium",settings=OCEAN_DEFAULTS}={}
    uniforms.uSunDir.value.set(-.44,.73,.53).normalize();
    uniforms.uRoughness.value=.25;uniforms.uHaze.value=.0035;
   }
+  // Sky and water share the same solar vector and horizon scattering tint.
+  uniforms.uSunDir.value.fromArray(air.direction);
+  uniforms.uSky.value.set(air.waterSky);
   return current;
  }
  setSettings(initial);
