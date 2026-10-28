@@ -53,6 +53,7 @@ jobs:
           node --check workshop/studio/research-performance.mjs
           node --check workshop/studio/research-stack-core.mjs
           node --check workshop/studio/research-stack-ui.mjs
+          node --check workshop/studio/gaussian-preview.mjs
           node --check tests/research-stack.test.mjs
           node --check workshop/studio/atmosphere-scattering.mjs
           node --check tests/research-3d.test.mjs
