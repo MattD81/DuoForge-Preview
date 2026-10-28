@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#080f23">
+<meta name="description" content="AETHERFALL – 3D-actionäventyr med DuoForge Fusion Engine: SceneDNA, dynamisk detaljbudget, adaptiv WebGL och Auto Director.">
+<title>AETHERFALL — DuoForge Fusion Engine</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+</head><body>
+<main id="game" tabindex="-1" aria-label="Aetherfall 3D-actionspel">
+ <canvas id="stage" aria-label="Spelvärld i 3D: slåss mot väktare, samla tre energikärnor och gå genom portalen"></canvas>
+ <div id="vignette" aria-hidden="true"></div>
+ <div id="flash" aria-hidden="true"></div>
+ <div class="topbar">
+  <span class="brand"><b>◈</b> DUOFORGE <span>ORIGINALS</span></span>
+  <div class="research-badge"><span class="signal"></span> SCENEDNA <strong id="dna">–</strong> <span class="sep">•</span> <span id="fps">60 FPS TARGET</span></div>
+  <button id="pauseButton" type="button" title="Pausa spelet" aria-label="Pausa spelet">Ⅱ</button>
+ </div>
+ <div class="hud">
+  <div class="mission">
+   <span class="micro">AETHERFALL / <span id="chapter">01</span></span>
+   <strong id="place">SOLTEMPLET</strong>
+   <small id="objective">Samla energikärnorna</small>
+  </div>
+  <div class="stats">
+   <div class="stat"><span>LIV</span><div class="bar"><i id="health" class="health-fill"></i></div><b id="healthNumber">100</b></div>
+   <div class="stat"><span>ENERGI</span><div class="bar"><i id="energy" class="energy-fill"></i></div><b id="energyNumber">100</b></div>
+  </div>
+  <div class="counts"><div>✦ <strong id="cores">0 / 3</strong> <small>KÄRNOR</small></div><div>⚔ <strong id="kills">0 / 2</strong> <small>VÄKTARE</small></div></div>
+ </div>
+ <div id="crossObjective">HITTA DE 3 LJUSKÄRNORNA</div>
+ <div class="low-info"><span id="score">POÄNG 000000</span><span id="perf">FUSION ENGINE · WEBGL</span></div>
+ <div id="announcement" aria-live="polite"></div>
+ <div class="radar"><canvas id="minimap" width="150" height="150" aria-label="Minikarta: kärnor, väktare och portal"></canvas><span>⟡ SKY ARCHIPELAGO</span></div>
+ <div class="touch" id="touchControls" aria-label="Spelkontroller för mobil">
+  <div class="pad" aria-label="Förflyttning">
+   <button type="button" class="move up" data-move="up" aria-label="Framåt">▲</button>
+   <button type="button" class="move left" data-move="left" aria-label="Vänster">◀</button>
+   <button type="button" class="move down" data-move="down" aria-label="Bakåt">▼</button>
+   <button type="button" class="move right" data-move="right" aria-label="Höger">▶</button>
+  </div>
+  <div class="abilities">
+   <button type="button" data-action="jump" class="jump" aria-label="Hoppa">HOPP</button>
+   <button type="button" data-action="dash" class="dash" aria-label="Snabbförflyttning">DASH</button>
+   <button type="button" data-action="pulse" class="pulse" aria-label="Energichockvåg">PULS</button>
+   <button type="button" data-action="attack" class="attack" aria-label="Slå med svärd">HUGG</button>
+  </div>
+ </div>
+ <div id="startScreen" class="overlay">
+  <div class="panel">
+   <div class="eyebrow">DUOFORGE PRESENTS / FUSION EXPERIMENT 01</div>
+   <div class="sigil" aria-hidden="true">◈</div>
+   <h1>AETHER<span>FALL</span></h1>
+   <p class="subtitle">THE FRACTURED SKY</p>
+   <p>Tre svävande världar. Ett sönderfallande ljus. En sista väktare.<br>Samla tre energikärnor, besegra fienderna och öppna stjärnportalen.</p>
+   <div class="tag-row"><span>3D ACTION</span><span>SCENEDNA</span><span>ADAPTIV LOD</span><span>5 FILMVINKLAR</span></div>
+   <button id="start" type="button" class="primary">▶ STARTA ÄVENTYRET</button>
+   <div class="controls-help"><b>DATOR:</b> WASD / piltangenter – gå · J / mus – hugg · E – puls · Skift – dash · Mellanslag – hoppa<br>
+   <b>MOBIL:</b> vänster styrkors + högerknappar · <b>GAMEPAD:</b> vänsterspak + A / X / B / Y</div>
+  </div>
+ </div>
+ <div id="pauseScreen" class="overlay hidden">
+  <div class="panel compact"><div class="eyebrow">PAUS</div><h2>DEN BRUTNA HIMLEN VÄNTAR</h2>
+   <button id="resume" type="button" class="primary">▶ FORTSÄTT</button>
+   <button id="restart" type="button" class="secondary">↻ SPELA OM FRÅN BÖRJAN</button>
+   <button id="sound" type="button" class="secondary">♫ LJUD AV</button>
+  </div>
+ </div>
+ <div id="endScreen" class="overlay hidden">
+  <div class="panel compact"><div class="eyebrow" id="endEyebrow">UPPDRAG SLUTFÖRT</div>
+   <h2 id="endTitle">STJÄRNORNA ÄR DINA</h2><p id="endText"></p>
+   <button id="endNext" type="button" class="primary">NÄSTA VÄRLD ↗</button>
+   <button id="endRestart" type="button" class="secondary">↻ STARTA OM</button>
+  </div>
+ </div>
+ <div id="error" class="overlay hidden" role="alert"><div class="panel compact"><h2>3D-MOTORN KUNDE INTE STARTA</h2><p id="errorText"></p><button id="retry" class="primary" type="button">FÖRSÖK IGEN</button></div></div>
+</main><script type="module" src="./main.mjs"></script></body></html>
