@@ -95,6 +95,28 @@ export function createWorld({scene,quality="medium"}){
     gl_FragColor=vec4(max(col,vec3(0.)),1.);
    }`
  }));
+ if(quality==="low"){
+  // Affordable scattering/cloud approximation for mobile and software WebGL.
+  // Film mode retains the original multi-octave sky shader.
+  sky.material.fragmentShader=`
+   precision mediump float;
+   varying vec3 vRay;
+   uniform vec3 uSun,uTop,uHorizon;
+   uniform float uTime,uStorm;
+   void main(){
+    vec3 d=normalize(vRay),sun=normalize(uSun);
+    float level=smoothstep(-.03,.73,d.y);
+    vec3 color=mix(uHorizon,uTop,level);
+    float facing=max(dot(d,sun),0.);
+    float band=.5+.29*sin(d.x*14.+d.z*7.+uTime*.003)+.2*sin(d.z*24.-d.x*9.);
+    float cloud=smoothstep(.65,.83,band)*(.42+.4*uStorm);
+    color=mix(color,vec3(.13,.17,.23),cloud*(1.-level*.65));
+    color+=vec3(1.,.55,.25)*pow(facing,65.)*.16;
+    color+=vec3(1.,.77,.46)*pow(facing,750.)*.65;
+    gl_FragColor=vec4(color,1.);
+   }`;
+  sky.material.needsUpdate=true;
+ }
  sky.name="Atmospheric single-scattering and storm sky";
  sky.renderOrder=-100;world.add(sky);
  scene.fog=new THREE.FogExp2(atmosphere.fog,.0019);
