@@ -29,7 +29,10 @@ jobs:
           node --check games/last-light/ship.mjs
           node --check games/last-light/gameplay.mjs
           node --check games/last-light/game-smoke.mjs
-          node --test games/last-light/gameplay.test.mjs
+          node --check games/last-light/coastal-terrain.mjs
+          node --check games/last-light/coastal-world.mjs
+          node --check games/last-light/wake-trails.mjs
+          node --test games/last-light/gameplay.test.mjs games/last-light/coastal-terrain.test.mjs
       - name: Install Playwright (test only)
         timeout-minutes: 2
         run: npm install --no-save --no-package-lock playwright@1.56.1

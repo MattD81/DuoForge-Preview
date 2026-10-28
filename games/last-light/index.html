@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08131d"><meta name="description" content="LAST LIGHT – ett riktigt spelbart filmiskt 3D-räddningsuppdrag byggt med DuoForges havs-, atmosfärs-, PBR- och fysikmotorer.">
 <title>LAST LIGHT — DuoForge 3D Cinema Game</title>
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=2">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 </head><body>
 <div id="game">
@@ -27,6 +27,7 @@
  <nav id="options" aria-label="Kamera och simulering">
   <button type="button" id="view">◉ FÖLJKAMERA</button>
   <button type="button" id="weather">🌅 SOLNEDGÅNG</button>
+  <button type="button" id="quality" title="Byt mellan filmiska detaljer och mobilprestanda (spelet laddas om)">▤ GRAFIK: FILM</button>
   <button type="button" id="auto">✦ AUTOPILOT AV</button>
   <button type="button" id="sound">♫ LJUD AV</button>
   <button type="button" id="exportShip">⬇ HÄMTA FARTYG GLB</button>
@@ -48,8 +49,8 @@
   <span class="kicker">DUOFORGE ORIGINAL · CINEMATIC PLAYABLE EXPERIENCE</span>
   <h1>LAST <span>LIGHT</span></h1>
   <div class="tagline">THE STORM HAS A VOICE.</div>
-  <p>Fyra nödsignaler. Ett fartyg. En mörknande skärgård. Styr <strong>Aurora</strong> genom levande vågor och rädda besättningarna före stormens ankomst.</p>
-  <div class="feature-tags"><span>REAL-TIME 3D</span><span>PROCEDURAL OCEAN</span><span>PBR • ATMOSPHERE</span><span>GLB EXPORT</span></div>
+  <p>Fyra nödsignaler. Ett fartyg. En mörknande skärgård med verklig 3D-topografi, skogar, granitklippor, fiskeläge och fyrar. Styr <strong>Aurora</strong> genom levande vågor och rädda besättningarna före stormens ankomst.</p>
+  <div class="feature-tags"><span>REAL-TIME 3D</span><span>NATURAL COASTLINE</span><span>INSTANCED FORESTS</span><span>PROCEDURAL OCEAN</span><span>PBR • ATMOSPHERE</span><span>GLB EXPORT</span></div>
   <button id="start" type="button" class="launch">▶ GE DIG UT PÅ HAVET <span>→</span></button>
   <small>WASD eller piltangenter · touchkontroller på mobilen · P = autopilot · C = kamera</small>
  </div>
@@ -64,5 +65,5 @@
 </div>
 <div id="boot" class="loading" role="status"><div class="loader"></div><span id="bootMessage">Startar DuoForge Ocean & Cinema Engine …</span></div>
 </div>
-<script type="module" src="./main.mjs?v=1"></script>
+<script type="module" src="./main.mjs?v=2"></script>
 </body></html>

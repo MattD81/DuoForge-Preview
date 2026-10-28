@@ -2,6 +2,15 @@
 
 A playable, original storm rescue experience under `/games/last-light/` on **existing** DuoForge GitHub Pages. No new platform, server, model API, work credits or private content.
 
+## V2 – more detailed scenery, same original game
+
+- Eight genuinely **triangulated coastal heightfields** with stratified granite, wet shoreline and moss vertex colors, replacing the prior faceted sphere-shaped islands. Landscape is procedural with deterministic saved seeds, not satellite topography or photogrammetry.
+- **Instanced wind-shaped pine forests and rocks**, scalable mobile/film rendering budgets to preserve responsiveness. The fishing harbor now has actual wood piers, posts, lit four-sided houses and warm framed windows.
+- Stone lighthouses now follow terrain height and include doors, several sets of windows, balcony railing and synced rotating light beams.
+- Original 7-band spectral ocean is retained. A **subtle dynamic wake** now follows the Aurora stern without large random white foam specks. Low-power sky shader on mobile; detailed multi-octave cloud sky in film mode.
+- Use the in-game **GRAFIK: FILM / MOBIL** selector; it reloads the scene and starts a new mission. On software GPUs the engine can force the low-power renderer.
+- The renderer is still WebGL, not an actual WebGPU/path-traced photorealism solution. No external assets/APIs, no Work.
+
 ## What is real
 
 - Uses **the actual existing ocean-water.mjs shader**: seven-direction spectral waves, CPU matched height/slope, PBR water reflections, whitecap controls and weather.
@@ -19,7 +28,7 @@ Steer A/D or ◀/▶, throttle W or GAS, brake S or BROMS. P toggles autopilot; 
 ## Verification
 
 ```bash
-node --test games/last-light/gameplay.test.mjs
+node --test games/last-light/gameplay.test.mjs games/last-light/coastal-terrain.test.mjs
 node --check games/last-light/main.mjs
 # Independent GitHub Actions last-light-tests.yml runs Playwright desktop/iPhone smoke and real GLB export.
 ```
