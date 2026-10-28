@@ -23,10 +23,11 @@ try{
  await page.screenshot({path:"last-light-intro-desktop.png"});
  await page.locator("#start").click();
  assert.equal(await page.locator("#intro").isVisible(),false);
- await page.keyboard.down("w");await page.waitForTimeout(1300);await page.keyboard.up("w");
- await page.waitForTimeout(3000);
- console.log("FRAME STATE",await page.evaluate(()=>({speed:document.querySelector("#speed")?.textContent,fps:document.querySelector("#fps")?.textContent,boot:document.querySelector("#bootMessage")?.textContent})),errors.slice(0,10));
- await page.waitForFunction(()=>Number(document.querySelector("#speed")?.textContent)>0,{timeout:12000});
+ await page.keyboard.down("w");
+ // Observe speed while W is held: releasing before checking lets the ship coast to 0.
+ await page.waitForFunction(()=>Number(document.querySelector("#speed")?.textContent)>0,{timeout:20000});
+ console.log("FRAME STATE",await page.evaluate(()=>({speed:document.querySelector("#speed")?.textContent,fps:document.querySelector("#fps")?.textContent})),errors.slice(0,10));
+ await page.keyboard.up("w");
  await page.locator("#auto").click();
  assert.match(await page.locator("#auto").textContent(),/PÅ/);
  await page.locator("#weather").click();
