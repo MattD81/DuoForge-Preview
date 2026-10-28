@@ -10,6 +10,7 @@ import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
+import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -565,6 +566,34 @@ renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axe
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initLocalImageTo3D({loadGLB,notify});
+const sitesBridge=initSitesStudioBridge({
+ importGLB:async(file,name)=>{
+  if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
+  await loadGLB(file,name);
+ },
+ openCinema:()=>{
+  // Read from existing controls and preserve all project/editor logic.
+  if(!renderWorld.isActive())renderWorld.start();
+  const selectWorld=$("renderWorldSelect");
+  if(selectWorld&&selectWorld.value!=="ocean"){
+   selectWorld.value="ocean";
+   selectWorld.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  $("filmOpen").click();
+ },
+ setOcean:settings=>{
+  if(!renderWorld.isActive())renderWorld.start();
+  const control={height:"oceanHeightLive",speed:"oceanSpeedLive",
+   weather:"oceanWeatherLive",whitecaps:"oceanWhitecapsLive"};
+  for(const [key,value]of Object.entries(settings)){
+   const input=$(control[key]);
+   if(!input)throw Error("Ocean-kontroll saknas: "+key);
+   input.value=String(value);
+   input.dispatchEvent(new Event(key==="weather"?"change":"input",{bubbles:true}));
+  }
+ },
+ allowLocalhost:location.hostname==="127.0.0.1"||location.hostname==="localhost"
+});
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
