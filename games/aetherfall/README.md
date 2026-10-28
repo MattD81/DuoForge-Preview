@@ -12,7 +12,7 @@ A real **three-level 3D action game**, built for existing DuoForge GitHub Previe
 - Procedural PBR character, animated neon opponents, crystal pickups, 3D stone architecture, fragment-shader sky and animated ocean surface. All authored with Three.js and native browser APIs (Three MIT).
 
 ## Source / dependencies / limitations
-The game imports the **real existing Fusion Engine**. Its branch is currently PR #32, stacked atop PR #29. Do not merge this game alone before both dependencies exist on `main`. Use feature-branch review and tests first, then merge in dependency order.
+The game **bundles an exact copy of the existing Fusion Engine** as `./fusion-engine.mjs` to work in DuoForge's isolated game builder, where `../../workshop/studio/` is unavailable. The canonical engine lives in `workshop/studio/fusion-engine.mjs` on PR #32. CI checks byte-for-byte equivalence (`cmp`) to prevent engine drift. The game branch is stacked on #32/#29; merge in dependency order after CI.
 
 No downloaded GLBs, paid AI APIs, new servers or cloud GPUs. Uses three@0.180.0 (MIT). CSS has no remote imports. Browser preview uses version-pinned jsDelivr CDN for Three. In isolated DuoForge builds the `three` dependency is declared in package.json.
 
