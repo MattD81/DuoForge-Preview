@@ -51,5 +51,5 @@ test("knowledge source documents and existing Studio integration link are presen
  assert.ok(html.includes('src="./knowledge.mjs"'));
  assert.ok(app.includes('fetch("./knowledge.json"'));
  assert.ok(studio.includes("../../docs/3d-knowledge-base/"));
- assert.ok(readFileSync(base+"LEGAL_AND_SOURCES.md","utf8").includes("utesluter EU"));
+ assert.match(readFileSync(base+"LEGAL_AND_SOURCES.md","utf8"),/utesluter (EU|Europeiska unionen)/i);
 });
