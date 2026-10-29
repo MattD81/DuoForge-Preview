@@ -16,6 +16,7 @@ import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
 import {initGpuDeluxeV5Studio} from "./gpu-deluxe-v5-studio.mjs";
+import {initLookdevStudio} from "./lookdev-studio.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -53,7 +54,7 @@ transform.addEventListener("dragging-changed",e=>{orbit.enabled=!e.value});
 transform.addEventListener("mouseDown",()=>{pushHistory();});
 transform.addEventListener("mouseUp",()=>{updateInspector();refreshTree();dirty();});
 transform.addEventListener("objectChange",()=>{updateInspector();updateStats();});
-let livingRuntime=null,renderWorld=null,materialLab=null,gpuV2=null,gpuV5=null;
+let livingRuntime=null,renderWorld=null,materialLab=null,gpuV2=null,gpuV5=null,lookdev=null;
 const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
@@ -87,6 +88,7 @@ function animate(){
   boundsHelper.setFromObject(selected);
   boundsHelper.visible=!new THREE.Box3().setFromObject(selected).isEmpty();
  }else boundsHelper.visible=false;
+ lookdev?.update();
  const timer=gpuV2?.timer;
  timer?.poll();
  timer?.begin();
@@ -587,6 +589,8 @@ gpuV5=initGpuDeluxeV5Studio({renderer,canvas,scene,root,camera,
  isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),
  isPbrBusy:()=>Boolean(renderWorld?.isActive()),
  getGpuTime:()=>gpuV2?.timer.snapshot()??null,notify});
+lookdev=initLookdevStudio({renderer,scene,root,ground,grid,sun,skyLight,notify,
+ isBusy:()=>Boolean(renderWorld?.isActive()||gpuV5?.active)});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
