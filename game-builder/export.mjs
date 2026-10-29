@@ -62,6 +62,7 @@ export async function collectGameFiles(config,{fetcher=fetch,base=import.meta.ur
   ["games/game-builder/runtime.mjs","./runtime.mjs"],
   ["games/game-builder/planner.mjs","./planner.mjs"],
   ["workshop/studio/gpu-deluxe.mjs","../workshop/studio/gpu-deluxe.mjs"],
+  ["workshop/studio/gpu-deluxe-v2.mjs","../workshop/studio/gpu-deluxe-v2.mjs"],
   ["workshop/studio/ocean-water.mjs","../workshop/studio/ocean-water.mjs"],
   ["workshop/studio/ocean-spectrum.mjs","../workshop/studio/ocean-spectrum.mjs"],
   ["workshop/studio/atmosphere-scattering.mjs","../workshop/studio/atmosphere-scattering.mjs"]
