@@ -28,7 +28,7 @@ export function createState(){
  return {
   player:{x:80,y:431,vx:0,vy:0,width:23,height:46,facing:1,onGround:true,coyote:.1,jumpBuffer:0,pose:0},
   collected:RELICS.map(()=>false),count:0,won:false,dead:false,deaths:0,elapsed:0,checkpoint:{x:80,y:431},
-  cameraX:0,jumps:0,particles:[]
+  cameraX:0,jumps:0,jumpHeld:false,particles:[]
  };
 }
 export function stepPhysics(state,input={},dt=1/60){
@@ -40,8 +40,9 @@ export function stepPhysics(state,input={},dt=1/60){
  state.elapsed+=frame;
  p.vx+=(steer*245-p.vx)*Math.min(1,frame*(p.onGround?12:7.2));
  if(steer!==0)p.facing=steer;
- p.coyote=p.onGround?.105:Math.max(0,p.coyote-frame);
- p.jumpBuffer=jump?.13:Math.max(0,p.jumpBuffer-frame);
+ p.coyote=p.onGround ? .105 : Math.max(0,p.coyote-frame);
+ p.jumpBuffer=jump&&!state.jumpHeld ? .13 : Math.max(0,p.jumpBuffer-frame);
+ state.jumpHeld=jump;
  if(p.jumpBuffer>0&&p.coyote>0){
   p.vy=-505;p.onGround=false;p.coyote=0;p.jumpBuffer=0;state.jumps++;
  }
