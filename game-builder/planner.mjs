@@ -28,6 +28,11 @@ export function normalizeConfig(raw={}){
   revision:cap(Math.round(Number(x.revision)||1),1,9999)
  });
 }
+/** Zero-enemy games remain peaceful on every level, not only the first. */
+export function levelEnemyCount(config,stage){
+ const n=normalizeConfig(config).enemies;
+ return n===0?0:Math.min(12,n+Math.floor((Math.max(1,Math.floor(Number(stage)||1))-1)*.65));
+}
 function numberFor(t,words){
  const pattern=new RegExp("(\\d{1,3}|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|tio)\\s*(?:\\w+\\s*){0,2}(?:"+words+")\\b","iu");
  const m=t.match(pattern);if(!m)return null;
@@ -59,9 +64,17 @@ export function planGame(prompt,existing=null){
  if(matches(t,/(?:^|[^\p{L}])(fighting|fightingspel|duell|arena|slåss|stridsspel)(?=$|[^\p{L}])/u))patch.genre="arena";
  else if(matches(t,/(?:^|[^\p{L}])(äventyr|samla|utforska|actionäventyr)(?=$|[^\p{L}])/u))patch.genre="adventure";
  const lv=numberFor(t,"banor|nivåer|världar|levels?");if(lv!==null)patch.levels=cap(lv,1,10);
- const enemies=numberFor(t,"fiender|monster|motståndare|väktare");if(enemies!==null)patch.enemies=cap(enemies,0,12);
+ // A peaceful game is a real gameplay choice, not an unspecified default.
+ // Negations win over nearby numbers (e.g. "tre banor utan fiender").
+ const noEnemies=/(?:^|[^\\p{L}])(?:inga|ingen|utan|noll)\\s+(?:fiender|fiende|monster|motståndare|väktare)(?=$|[^\\p{L}])/u;
+ const noItems=/(?:^|[^\\p{L}])(?:inga|ingen|utan|noll)\\s+(?:kristaller|kristall|energikärnor|energikärna|föremål|skatter|skatt)(?=$|[^\\p{L}])/u;
+ const enemies=numberFor(t,"fiender|monster|motståndare|väktare");
+ if(matches(t,noEnemies))patch.enemies=0;
+ else if(enemies!==null)patch.enemies=cap(enemies,0,12);
  else if(existing&&matches(t,/fler (fiender|monster)/u))patch.enemies=cap(original.enemies+2,0,12);
- const items=numberFor(t,"kristaller|energikärnor|föremål|skatter");if(items!==null)patch.collectibles=cap(items,0,12);
+ const items=numberFor(t,"kristaller|energikärnor|föremål|skatter");
+ if(matches(t,noItems))patch.collectibles=0;
+ else if(items!==null)patch.collectibles=cap(items,0,12);
  if(matches(t,/(?:^|[^\p{L}])(prestanda|snabbare|fps|batteri|performance)(?=$|[^\p{L}])/u))patch.quality="performance";
  else if(matches(t,/(?:^|[^\p{L}])(högsta grafik|bättre grafik|ultra|kvalitetsläge|quality)(?=$|[^\p{L}])/u))patch.quality="quality";
  else if(matches(t,/(?:^|[^\p{L}])(adaptiv|auto grafik|automatisk grafik)(?=$|[^\p{L}])/u))patch.quality="auto";
