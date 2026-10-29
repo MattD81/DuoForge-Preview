@@ -11,6 +11,7 @@ import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initShapeDnaLab} from "./shape-dna-studio.mjs";
+import {initStudioMobileUX} from "./mobile-studio-ux.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -623,6 +624,7 @@ const sitesBridge=initSitesStudioBridge({
  allowLocalhost:location.hostname==="127.0.0.1"||location.hostname==="localhost"
 });
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
+initStudioMobileUX();
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
 
