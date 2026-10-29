@@ -1,0 +1,45 @@
+name: Shape DNA Lab — Geometry & Browser Verification
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/shape-dna-**'
+      - 'workshop/studio/studio.mjs'
+      - 'workshop/studio/studio.css'
+      - 'workshop/studio/index.html'
+      - 'tests/shape-dna-**'
+      - '.github/workflows/shape-dna.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and deterministic geometry rules
+        run: |
+          node --check workshop/studio/shape-dna-core.mjs
+          node --check workshop/studio/shape-dna-studio.mjs
+          node --check workshop/studio/studio.mjs
+          node --test tests/shape-dna-core.test.mjs
+      - name: Install Playwright browser test tools
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing DuoForge Studio
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-shape.log 2>&1 &
+      - name: Real browser, GLB export and mobile smoke
+        run: node tests/shape-dna-browser.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shape-dna-smoke
+          path: |
+            shape-dna-desktop.png
+            shape-dna-mobile.png
+          if-no-files-found: ignore

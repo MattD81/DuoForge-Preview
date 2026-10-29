@@ -3,12 +3,14 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
+import {clone as cloneSkeleton} from "three/addons/utils/SkeletonUtils.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=research-3d-v1";
 import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
+import {initShapeDnaLab} from "./shape-dna-studio.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -96,8 +98,13 @@ function animate(){
  gpuV2?.updateStatus();
  gpuV5?.updateStatus();
 }animate();
+// Preserve skinned mesh bind matrices and bones during undo/redo. Ordinary clone loses skin wiring.
+function cloneSceneTree(object){
+ let skin=false;object.traverse(o=>{if(o.isSkinnedMesh)skin=true;});
+ return skin?cloneSkeleton(object):object.clone(true);
+}
 function cloneState(){
- const copy=root.clone(true);
+ const copy=cloneSceneTree(root);
  copy.traverse(obj=>{if(obj.isMesh&&obj.material){
   obj.material=Array.isArray(obj.material)?obj.material.map(m=>m.clone()):obj.material.clone();
  }});
@@ -109,7 +116,7 @@ function pushHistory(){
 }
 function restore(state){
  select(null);root.clear();
- const clone=state.tree.clone(true);
+ const clone=cloneSceneTree(state.tree);
  for(const child of [...clone.children])root.add(child);
  $("projectName").value=state.name;
  refreshTree();updateStats();fitScene();dirty();updateUndoButtons();
@@ -577,6 +584,7 @@ initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,di
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
+initShapeDnaLab({root,getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateStats,updateInspector});
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});

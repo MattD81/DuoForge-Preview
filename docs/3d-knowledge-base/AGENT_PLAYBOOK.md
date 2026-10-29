@@ -39,3 +39,7 @@ ReferenceInput + License/Consent + TargetBudget
 ## Utvärdera visuell kvalitet
 
 Konsekvent referensfoto: fram, bak, sidor, 3/4, clay, neutral PBR, deformering. Även maskinella metrics (CLIP-sim, Chamfer, normal consistency) kan vilseleda och ska kompletteras med visuell granskning av baksida, anatomiska proportioner och mobilfidelitet.
+
+## Kunskapsbankens experimentella Shape DNA-steg
+
+Om användaren redan har en **riktig mesh** som behöver detaljrikare ytor och variation: jämför befintliga alternativ med `shape_dna` i `knowledge.json`, läs `SHAPE_DNA_EXPERIMENT.md`. Den aktiva koden finns i `workshop/studio/shape-dna-core.mjs` och `shape-dna-studio.mjs` när denna PR publiceras. Poängen är teknisk säkerhet; ingen AI-modelltränad kvalitetsbedömning. Rekonstruktion från **en bild** kräver fortfarande separat modell/pipeline, och 360°-kontroll i denna modul är XYZ-dimensioner, inte renderade 360-vyer.

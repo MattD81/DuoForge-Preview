@@ -330,3 +330,26 @@
 .character-forge-panel .subheading{font-size:12px;color:#e8d7ff}
 .character-forge-panel #forgeStatus{border:1px solid #455d83;border-radius:8px;padding:9px;margin-top:8px;background:#12223c}
 @media(max-width:580px){.character-forge-panel select,.character-forge-panel input[type=file]{font-size:16px}.character-forge-panel button{min-height:44px}}
+
+/* Shape DNA Lab: green experimental material-aware geometry controls. */
+.shape-dna-panel{background:linear-gradient(150deg,#0e352a,#122d36);border-top:1px solid #439b7b;border-bottom:1px solid #338b69}
+.shape-dna-panel h2{color:#c8ffe4}
+.shape-dna-panel .mini-pill{background:#16503a;color:#b2fcd3;border-color:#56bd86}
+.shape-dna-panel p,.shape-dna-panel .hint{color:#c0e4d4;font-size:11px;line-height:1.65}
+.shape-dna-panel select,.shape-dna-panel input[type=number]{width:100%;min-width:0;max-width:100%;
+ border:1px solid #5a9e83;border-radius:8px;background:#08251d;color:#f1fff6;
+ padding:9px 10px;font:inherit;font-size:12px;margin:5px 0 11px}
+.shape-dna-panel .range-line{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.shape-dna-panel .range-line input{flex:1;min-width:70px}
+.shape-dna-panel .range-line output{color:#8ef9be;min-width:42px;text-align:right}
+.shape-dna-panel .row button{white-space:normal;line-height:1.35;min-height:42px}
+.shape-dna-panel #dnaStatus{border:1px solid #39775e;padding:10px;border-radius:8px;background:#092b1e}
+.shape-dna-panel .dna-results{display:grid;gap:8px}
+.shape-dna-panel .dna-result{display:flex;flex-direction:column;gap:6px;padding:10px;
+ border:1px solid #439c70;border-radius:9px;background:#08281d}
+.shape-dna-panel .dna-result strong{color:#befcda}
+.shape-dna-panel .dna-result small{font-size:11px;color:#aacfc2;line-height:1.5}
+.shape-dna-panel .dna-pick{background:#21734b;color:#f5fff8;border:1px solid #5ad79a;
+ border-radius:9px;min-height:42px;font-weight:750;padding:9px}
+@media(max-width:580px){.shape-dna-panel select,.shape-dna-panel input[type=number]{font-size:16px}
+.shape-dna-panel button{min-height:44px}}
