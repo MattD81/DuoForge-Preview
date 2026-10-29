@@ -32,8 +32,8 @@ test("BVH encodes actual triangles, bounds, colors and material roughness",()=>{
  assert.ok(b.nodeData[3]>=0,"root is internal node");
  assert.equal(b.nodeData[4],13);
  const first=b.triData.slice(0,20);
- assert.equal(first[15],.35);
- assert.equal(first[16],.4);
+ assert.ok(Math.abs(first[15]-.35)<1e-6);
+ assert.ok(Math.abs(first[16]-.4)<1e-6);
  // Every vertex coordinate stays available for true ray–triangle GLSL.
  assert.equal(first[3],0);
  assert.equal(first[7],0);
