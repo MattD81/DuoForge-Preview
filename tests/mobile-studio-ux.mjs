@@ -56,7 +56,7 @@ try{
  const [dl]=await Promise.all([portrait.waitForEvent("download"),portrait.locator("#exportGLB").click()]);
  assert.ok((await dl.path())!==null);
  // One-tap tab changes reveal independent drawers without duplicating controls.
- for(const [tab,target,side] of [["scene","#hierarchy","left"],["material","#materialLabPanel","right"],["dna","#shapeDnaLab","left"],["adjust","#inspector","right"],["create","#characterForge","left"]]){
+ for(const [tab,target,side] of [["scene","#hierarchy","left"],["material","#materialLabPanel","right"],["dna","#shapeDnaLab","left"],["adjust",".right-panel .panel-section:first-child","right"],["create","#characterForge","left"]]){
   await portrait.locator('[data-mobile-tab="'+tab+'"]').click();
   assert.equal(await portrait.locator(target).isVisible(),true,"tab: "+tab);
   assert.equal(await portrait.locator("."+side+"-panel").getAttribute("data-mobile-active"),"true");
