@@ -83,8 +83,9 @@ test("simultaneous movement overlay modifies only target limb",()=>{
  const engine=new NeuromuscularEngine();
  engine.setMotion("walk");
  engine.setOverlay("wave",{weight:1,mask:["left.shoulder.abd","left.elbow.flex"]});
+ for(let i=0;i<60;i++)engine.step(1/120); // finish the initial crossfade
  const target=engine.targetPose();
- const walk=poseForAction("walk",0,1),wave=poseForAction("wave",0,1);
+ const walk=poseForAction("walk",engine.time,1),wave=poseForAction("wave",engine.time,1);
  assert.equal(target["left.shoulder.abd"],wave["left.shoulder.abd"]);
  assert.equal(target["right.hip.flex"],walk["right.hip.flex"]);
  engine.setOverlay(null);
