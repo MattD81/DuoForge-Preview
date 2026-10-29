@@ -66,6 +66,10 @@ try{
  await mobile.waitForFunction(()=>typeof window.__stormblade?.state==="function",{timeout:30000});
  await mobile.locator("#start").click();
  assert.equal(await mobile.locator('[data-action="attack"]').isVisible(),true);
+ const graphics=await mobile.evaluate(()=>window.__stormblade.state().graphics);
+ assert.equal(graphics.profile.mobile,true);
+ assert.equal(graphics.targetFps,30);
+ assert.ok(graphics.profile.width*graphics.profile.height*graphics.profile.baseDpr**2<=graphics.profile.maxPixels+1);
  assert.equal((await mobile.evaluate(()=>window.__stormblade.state())).ocean,"Ocean Cinema V5");
  assert.equal(await mobile.locator("#models").isVisible(),true);
  assert.equal(await mobile.locator("#cinema").isVisible(),true);
@@ -91,3 +95,4 @@ try{
  console.log("PASS: mobile 3D WebGL, touch movement/attack, responsive HUD");
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}
+

@@ -1,0 +1,43 @@
+import test from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {chromium} from "playwright";
+const browser=await chromium.launch({headless:true,args:["--no-sandbox","--use-gl=angle","--use-angle=swiftshader","--enable-webgl","--disable-gpu-sandbox"]});
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:840},acceptDownloads:true});
+ const errors=[];page.on("pageerror",err=>errors.push(err.message));
+ await page.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
+ test.equal(await page.locator("#fusionLab").count(),1,"Fusion Lab mounted in existing studio");
+ await page.locator("#fusionAnalyze").click();
+ await page.waitForFunction(()=>document.querySelector("#fusionResult")?.textContent.includes("SceneDNA"),{timeout:12000});
+ const report=await page.locator("#fusionResult").textContent();
+ test.match(report,/5 filmvinklar/);
+ const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#fusionExport").click()]);
+ const fusion=JSON.parse(readFileSync(await download.path(),"utf8"));
+ test.equal(fusion.cinema.shots.length,5);
+ test.equal(fusion.quality.mode,"analysis-only");
+ test.equal(fusion.dna.objects>0,true);
+ const [cinemaDownload]=await Promise.all([page.waitForEvent("download"),page.locator("#fusionCinemaJson").click()]);
+ test.equal(cinemaDownload.suggestedFilename(),"duoforge-five-camera-shots.json");
+ const cinema=JSON.parse(readFileSync(await cinemaDownload.path(),"utf8"));
+ test.equal(cinema.seconds,25);
+ await page.locator("#fusionCinema").click();
+ await page.waitForFunction(()=>document.querySelector("#fusionCinema")?.textContent.includes("Stoppa"),{timeout:5000});
+ await page.waitForTimeout(1100);
+ test.match(await page.locator("#fusionLive").textContent(),/Auto Director/);
+ await page.locator("#fusionCinema").click();
+ await page.waitForFunction(()=>document.querySelector("#fusionLive")?.textContent.includes("återställda"),{timeout:5000});
+ await page.locator("#fusionAdaptive").click();
+ await page.waitForFunction(()=>document.querySelector("#fusionAdaptive")?.textContent.includes("Stoppa"),{timeout:5000});
+ await page.locator("#fusionAdaptive").click();
+ await page.waitForFunction(()=>document.querySelector("#fusionLive")?.textContent.includes("återställda"),{timeout:5000});
+ test.deepEqual(errors,[],"No JS runtime errors");
+ console.log("PASS: Fusion Lab, SceneDNA planning, 5-shot export/playback, adaptive start/stop");
+ const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+ await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
+ await mobile.waitForSelector("#fusionLab",{timeout:30000});
+ await mobile.locator("#fusionAnalyze").click();
+ test.match(await mobile.locator("#fusionResult").textContent(),/SceneDNA/);
+ console.log("PASS: Fusion Lab mobile UI and analysis");
+}finally{await browser.close();}
+

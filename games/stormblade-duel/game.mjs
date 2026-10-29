@@ -19,6 +19,7 @@ const inputDown=name=>Boolean(held[name]||padState[name]);
 const player={hp:100,attack:null,cool:0,invuln:0,stun:0,dodge:0,combo:0,comboTime:0};
 const enemy={hp:100,attack:null,cool:1.3,invuln:0,stun:0,dodge:0};
 let perfState={frameMs:null,fps:null,p95Ms:null,pixelRatio:1};
+let postLoading=false;
 function initRenderer(){
  scene=new THREE.Scene();
  camera=new THREE.PerspectiveCamera(49,1,.1,1000);
@@ -45,9 +46,10 @@ function initRenderer(){
   fighter.root.traverse(obj=>{if(obj.isMesh)obj.castShadow=true});
  resize();addEventListener("resize",resize,{passive:true});
  document.addEventListener("visibilitychange",()=>{last=performance.now()*.001;});
- setupPost();
 }
 async function setupPost(){
+ if(composer||postLoading)return;
+ postLoading=true;
  try{
   const [{EffectComposer},{RenderPass},{ShaderPass},{OutputPass}]=await Promise.all([
    import("three/addons/postprocessing/EffectComposer.js"),
@@ -65,6 +67,7 @@ async function setupPost(){
   pass.setSize(host.clientWidth||1,host.clientHeight||1);
   composer=pass;
  }catch(err){console.warn("GPU Deluxe enhancement unavailable; using normal WebGL:",err);}
+ finally{postLoading=false;}
 }
 function resize(){
  if(!renderer)return;
@@ -339,6 +342,7 @@ $("quality").onclick=()=>{
  const modes=["auto","quality","performance","off"];
  mode=modes[(modes.indexOf(mode)+1)%modes.length];
  gpu.configure({mode,quality:"high"});
+ if(mode==="quality")setupPost();
  if(filmLook!=="off"){
   renderer.shadowMap.enabled=mode==="quality"||window.innerWidth>800;
   filmLights?.apply(filmLook,true);
@@ -353,7 +357,7 @@ try{
   start:startDemo,
   state:()=>({playerHp:player.hp,enemyHp:enemy.hp,running,finished,round,mode,
    playerX:world?.player.root.position.x,enemyX:world?.opponent.root.position.x,
-   backend:gpu?.info().capabilities.backend,
+   backend:gpu?.info().capabilities.backend,graphics:gpu?.info(),
    ocean:world?.oceanVersion,characterModel:fighterUpgrade?.status,
    filmLook,playDirector:playDirector?.info(),gamepad:padState.connected}),
   restart:resetState
@@ -365,3 +369,4 @@ try{
  $("modal").hidden=true;$("fatal").hidden=false;
  $("fatal").textContent="3D-motorn kunde inte starta: "+String(err.message||err).slice(0,250);
 }
+
