@@ -1,0 +1,48 @@
+name: Test DuoForge Intelligent Game Builder
+on:
+  pull_request:
+    paths:
+      - 'game-builder/**'
+      - 'tests/intelligent-builder*.mjs'
+      - '.github/workflows/intelligent-game-builder.yml'
+      - 'workshop/studio/gpu-deluxe.mjs'
+      - 'workshop/studio/ocean-water.mjs'
+      - 'workshop/studio/ocean-spectrum.mjs'
+      - 'workshop/studio/atmosphere-scattering.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  game-builder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate isolated-builder JavaScript and test prompt/ZIP planning
+        run: |
+          node --check game-builder/planner.mjs
+          node --check game-builder/runtime.mjs
+          node --check game-builder/export.mjs
+          node --check game-builder/builder.mjs
+          node --test tests/intelligent-builder.test.mjs
+      - name: Install Chromium to test actual WebGL
+        timeout-minutes: 4
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing GitHub Pages-compatible DuoForge Preview
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/builder-server.log 2>&1 &
+      - name: Create, update, undo, play on desktop and iPhone, export ZIP
+        run: node tests/intelligent-builder-smoke.mjs
+      - name: Visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: intelligent-game-builder-screenshots
+          path: |
+            game-builder-desktop.png
+            game-builder-mobile.png
+          if-no-files-found: ignore

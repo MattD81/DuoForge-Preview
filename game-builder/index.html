@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071421">
+<meta name="description" content="DuoForge Intelligent Game Builder – skapa och uppdatera riktiga 3D-spel med text, återanvänd Ocean Cinema och GPU Deluxe och exportera spelbar kod. Gratis lokal prototyp.">
+<title>Intelligent Game Builder – DuoForge</title>
+<link rel="stylesheet" href="./builder.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+</head><body>
+<header class="topbar"><a class="brand" href="../">◈ <b>DUOFORGE</b> <span>BUILDER</span></a><nav><a href="../workshop/studio/">3D Studio ↗</a><a href="../games/aetherfall/">Spela Aetherfall ↗</a></nav></header>
+<main class="layout">
+<section class="intro">
+ <div class="eyebrow"><span class="pulse"></span> INTELLIGENT GAME BUILDER <span class="badge">V1 · LOKAL DEMO</span></div>
+ <h1>Din idé.<br><em>Ett spelbart 3D-spel.</em></h1>
+ <p>Beskriv ett spel på svenska. DuoForge planerar en värld, bygger en <strong>spelbar prototyp</strong> och låter dig fortsätta ändra <strong>samma projekt</strong>. Inga Work-körningar eller betalda API:er.</p>
+ <div class="pipeline" aria-label="Skapandeflöde"><span><b>01</b> Beskriv</span><i>→</i><span><b>02</b> Bygg & spela</span><i>→</i><span><b>03</b> Förbättra</span><i>→</i><span><b>04</b> Exportera</span></div>
+</section>
+<div class="workspace">
+ <section class="editor card" aria-labelledby="promptTitle">
+  <div class="sectionhead"><div><div class="sectiontag">01 / GAME DIRECTOR</div><h2 id="promptTitle">Vad ska vi bygga?</h2></div><span class="local">◌ Ingen server-AI</span></div>
+  <label for="prompt">Beskriv spelvärlden eller en ändring</label>
+  <textarea id="prompt" spellcheck="true" rows="5" maxlength="1200" placeholder="Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.">Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.</textarea>
+  <div class="presets" aria-label="Exempel att välja"><button type="button" data-preset="Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.">🌊 Viking & storm</button><button type="button" data-preset="Skapa ett fighting-spel i en mörk stad med sex fiender och tre banor.">⚔ Strid i staden</button><button type="button" data-preset="Skapa ett äventyr i en skog vid solnedgången, fem banor och sex kristaller.">🌲 Skogsäventyr</button></div>
+  <div class="actionrow"><button type="button" id="build" class="primary">✦ Skapa / förbättra spelet</button><button type="button" id="undo" class="secondary" disabled>↶ Ångra</button><button type="button" id="newProject" class="secondary">＋ Nytt projekt</button></div>
+  <div id="feedback" class="feedback" aria-live="polite">Redo. Ange en idé och välj <b>Skapa / förbättra spelet</b>.</div>
+  <div class="summary"><div class="sectiontag">PLANERADE FÖRÄNDRINGAR</div><div id="changes" class="changes"><span class="dim">Ändringar visas här.</span></div></div>
+  <div class="enginebox">
+   <div class="sectiontag">ÅTERANVÄND BEFINTLIG TEKNIK</div>
+   <div id="engines" class="engines"><span>◈ GPU Deluxe</span><span>◇ Ocean Cinema vid hav</span><span>◎ Procedural 3D</span><span>⦿ Input</span></div>
+   <div id="warnings" role="status"></div>
+  </div>
+ </section>
+ <section class="stage card" aria-labelledby="previewTitle">
+  <div class="sectionhead"><div><div class="sectiontag">02 / LIVE PLAYTEST</div><h2 id="previewTitle">Spela direkt</h2></div><span class="status-pill" id="renderState">◌ Startar 3D</span></div>
+  <div class="game-toolbar"><div><strong id="gameTitle">Mitt DuoForge-spel</strong><small id="identity">Projektversion 1 · lokal preview</small></div><button type="button" id="restart">↻ Börja om</button></div>
+  <div class="world-shell"><div id="viewport" aria-label="Spelbar 3D-värld från din beskrivning"></div>
+   <div class="gamehud" aria-live="off"><span id="level">BANA 1/3</span><span id="health">♥ 100</span><span id="progress">✦ 0/3</span></div>
+   <div class="goal" id="goal">Samla kristaller, besegra fiender och gå genom portalen.</div>
+  </div>
+  <div id="controls" class="controls" aria-label="Mobilkontroller">
+   <div class="dpad"><button type="button" data-move="up" aria-label="Framåt">▲</button><button type="button" data-move="left" aria-label="Vänster">◀</button><button type="button" data-move="down" aria-label="Bakåt">▼</button><button type="button" data-move="right" aria-label="Höger">▶</button></div>
+   <div class="ability"><button type="button" data-action="jump">HOPP</button><button type="button" data-action="dash">DASH</button><button type="button" data-action="attack" class="accent">⚔ HUGG</button></div>
+  </div>
+  <p class="hint">WASD/piltangenter – gå · J – hugg · K – dash · Mellanslag – hopp · ansluten gamepad: vänsterspak + A/B/X.</p>
+  <div class="exportbar"><button type="button" id="export" class="primary">⬇ Exportera spelbar ZIP</button><div class="exportinfo">Innehåller riktig spelkod, <code>project.json</code> och delade grafikmoduler. Kör på webbserver eller importera via GitHub.</div></div>
+ </section>
+</div>
+<footer><strong>DUOFORGE INTELLIGENT GAME BUILDER V1</strong><span>Spelbar 3D-mall • Regelbaserad svensk prompttolkning • Sparas i din webbläsare, inte i Sites • Ingen generativ AI • Öppen preview på GitHub Pages</span></footer>
+</main>
+<script type="module" src="./builder.mjs"></script>
+</body></html>
