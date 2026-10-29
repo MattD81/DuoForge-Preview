@@ -8,7 +8,7 @@ const targets={
  scene:{title:"▤ Objekt & historik",side:"left",default:".left-panel > .panel-section",
   shortcuts:[["Objekt","#hierarchy"],["Ångra","#undo"],["Gör om","#redo"]]},
  material:{title:"◈ Material & texturer",side:"right",default:"#materialLabPanel",
-  shortcuts:[["PBR-material","#materialLabPanel"],["Färg","#surfaceTint"]]},
+  shortcuts:[["📚 360 material","#pbrVault"],["PBR-material","#materialLabPanel"],["Färg","#surfaceTint"]]},
  dna:{title:"🧬 Shape DNA",side:"left",default:"#shapeDnaLab",
   shortcuts:[["DNA-varianter","#shapeDnaLab"],["Karaktär","#characterForge"]]},
  adjust:{title:"⚙ Redigera & exportera",side:"right",default:".right-panel > .panel-section",
