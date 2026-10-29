@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'workshop/studio/gpu-deluxe-v5*.mjs'
+      - 'workshop/studio/lookdev-*.mjs'
+      - 'tests/lookdev-presets.test.mjs'
+      - 'workshop/studio/studio.css'
       - 'workshop/studio/studio.mjs'
       - 'tests/gpu-deluxe-v5*.mjs'
       - '.github/workflows/gpu-deluxe-v5.yml'
@@ -24,11 +27,14 @@ jobs:
       - name: Validate V5 JavaScript and run BVH/shader tests
         run: |
           node --check workshop/studio/gpu-deluxe-v5-core.mjs
+          node --check workshop/studio/lookdev-presets.mjs
+          node --check workshop/studio/lookdev-studio.mjs
           node --check workshop/studio/gpu-deluxe-v5-shaders.mjs
           node --check workshop/studio/gpu-deluxe-v5-studio.mjs
           node --check workshop/studio/studio.mjs
           node --check tests/gpu-deluxe-v5-smoke.mjs
           node --test tests/gpu-deluxe-v5.test.mjs
+          node --test tests/lookdev-presets.test.mjs
       - name: Prepare Chromium WebGL2
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
