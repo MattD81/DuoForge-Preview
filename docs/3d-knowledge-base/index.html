@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071d15">
+<meta name="description" content="DuoForge 3D Knowledge Engine – sökbar kunskapsbank för snygga spelklara GLB-modeller, AI, PBR och riggning.">
+<title>DuoForge · 3D Knowledge Engine</title>
+<link rel="stylesheet" href="./knowledge.css">
+</head>
+<body>
+<header class="bar">
+<a class="brand" href="../../"><span class="mark">◈</span> DuoForge <strong>3D Knowledge</strong></a>
+<nav><a href="../../workshop/studio/">← 3D-verkstaden</a><a href="./README.md">Teknisk dokumentation</a></nav>
+</header>
+<main class="layout">
+<section class="hero">
+<div class="eyebrow">DUOFORGE RESEARCH LAB · 2026-10-29</div>
+<h1>Bygg varelser som ser <em>riktiga</em> ut.</h1>
+<p>En källgranskad kunskapsbank för verklig 360°-geometri, skulptering, retopologi, texturer, PBR, skinnad animation och spelklar GLB. Sök tekniker och få en rekommenderad produktionskedja – utan påhittad AI-generering.</p>
+<div class="hero-meta"><span>28 tekniker</span><span>Öppet forskningsindex</span><span>Inga Work-krediter</span><span>EU-licenskontroll</span></div>
+</section>
+<section class="advisor shell" aria-labelledby="advisorTitle">
+<div class="section-head"><h2 id="advisorTitle">⚡ Teknikguiden</h2><span class="chip">lokal beslutslogik</span></div>
+<p>Beskriv till exempel <i>”mossig slottsgolem i GLB för mobil”</i> eller <i>”orm med skinning och animation”</i>. Detta ger ett förslag på arbetsflöde; det genererar inte själva modellen.</p>
+<div class="row"><input id="prompt" type="text" placeholder="Vad vill du skapa?" maxlength="400" aria-label="Beskriv 3D-modellen"><button id="advise" class="primary">Föreslå teknik</button></div>
+<div class="presets" aria-label="Exempel"><button data-example="slott golem mobil">🏰 Slottsgolem</button><button data-example="muskelmonster med animation och rigg">💪 Muskelmonster</button><button data-example="skogsväktare bark och texturer">🌳 Skogsmonster</button><button data-example="orm med skinning">🐍 Orm</button><button data-example="bild till 3d modell">📷 En bild</button><button data-example="fotogrammetri flera bilder">📸 Fotogrammetri</button></div>
+<div id="recommendation" class="recommendation" role="status" aria-live="polite">Välj en exempelmodell eller skriv en beskrivning.</div>
+</section>
+<section class="library shell">
+<div class="section-head"><h2>Utforska tekniker</h2><span id="count" class="chip">Läser…</span></div>
+<div class="filters"><input type="search" id="search" placeholder="Sök t.ex. normal bake, UV, TRELLIS…" aria-label="Sök tekniker"><select id="category" aria-label="Filtrera kategori"><option value="all">Alla kategorier</option></select><label class="toggle"><input type="checkbox" id="showBlocked"> Visa även juridiskt blockerade</label></div>
+<p class="notice"><strong>Licensvarning:</strong> Tencent Hunyuan3D 2.1:s publicerade communitylicens utesluter EU, inklusive Sverige. Den modellen är därför blockerad i standardrekommendationer. ”Publicerat på GitHub” betyder inte fri användning.</p>
+<div id="cards" class="cards" aria-live="polite"></div>
+</section>
+<section class="documents shell">
+<h2>Produktionsmanualer</h2>
+<div class="links">
+<a href="./PIPELINES.md"><strong>01 · Rätt pipeline</strong><span>Prompt, referensbild, scan, 3D-sculpt</span></a>
+<a href="./MESH_MATERIAL_RIG.md"><strong>02 · Bygg kvalitet</strong><span>Mesh, UV, PBR, baking, skinning</span></a>
+<a href="./AI_MODELS.md"><strong>03 · AI-tekniker</strong><span>Modeller, licenser, VRAM och begränsningar</span></a>
+<a href="./QUALITY_GATES.md"><strong>04 · GLB-test</strong><span>Validering, mobilprestanda och visuell kontroll</span></a>
+<a href="./LEGAL_AND_SOURCES.md"><strong>05 · Källor & juridik</strong><span>Primärkällor, licensspärrar, attribuering</span></a>
+<a href="./AGENT_PLAYBOOK.md"><strong>06 · Coding Engine</strong><span>Så ska framtida AI-agenten återanvända databasen</span></a>
+</div>
+</section>
+<p class="foot">DuoForge 3D Knowledge Engine v1 · Dokumenterad forskning, ingen självlärande modell eller installerad tung GPU. <a href="https://github.com/MattD81/DuoForge-Preview">GitHub</a></p>
+</main>
+<script type="module" src="./knowledge.mjs"></script>
+</body></html>

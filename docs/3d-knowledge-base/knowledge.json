@@ -1,0 +1,543 @@
+{
+  "schema": "duoforge.3d-knowledge@1",
+  "version": "1.0.0",
+  "reviewed": "2026-10-29",
+  "purpose": "Faktabank för att välja GLB-teknik, ingen modellträning eller AI-inferens",
+  "policy": {
+    "noWork": true,
+    "noPaidApi": true,
+    "noUnconsentedUpload": true,
+    "needsLicenseReview": true,
+    "blockedInEU": [
+      "hunyuan21"
+    ],
+    "notInstalled": [
+      "trellis2",
+      "sam3d",
+      "hunyuan21",
+      "colmap",
+      "meshroom"
+    ]
+  },
+  "recommendations": {
+    "brute": [
+      "sculpt",
+      "retopo",
+      "bake",
+      "pbr",
+      "skin",
+      "rigify",
+      "morph",
+      "retarget",
+      "gltf",
+      "validator"
+    ],
+    "forest": [
+      "sculpt",
+      "retopo",
+      "pbr",
+      "procedural",
+      "skin",
+      "gltf"
+    ],
+    "castle": [
+      "silhouette",
+      "procedural",
+      "rigid",
+      "pbr",
+      "gltf",
+      "validator"
+    ],
+    "serpent": [
+      "sculpt",
+      "retopo",
+      "serpent_rig",
+      "skin",
+      "pbr",
+      "gltf"
+    ],
+    "image": [
+      "tripo",
+      "trellis2",
+      "instantmesh",
+      "retopo",
+      "skin",
+      "gltf"
+    ],
+    "photo": [
+      "colmap",
+      "meshroom",
+      "open3d",
+      "gltf"
+    ],
+    "mobile": [
+      "retopo",
+      "pbr",
+      "transform",
+      "validator"
+    ]
+  },
+  "techniques": [
+    {
+      "id": "silhouette",
+      "title": "Siluett & blockout",
+      "area": "Geometri",
+      "inputs": [
+        "prompt",
+        "mall"
+      ],
+      "goal": "Stora, läsbara former från alla vinklar",
+      "limitation": "Siluett först, detaljer senare. Rundade primitiv ger inte automatiskt reklamkvalitet.",
+      "runtime": "browser",
+      "license": "Ingen extra licens",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/"
+      ]
+    },
+    {
+      "id": "sculpt",
+      "title": "Digital skulpt & multiresolution",
+      "area": "Geometri",
+      "inputs": [
+        "reference",
+        "mesh"
+      ],
+      "goal": "Organiska former, muskler, bark, sten",
+      "limitation": "Högpoly har mycket detalj men måste ofta retopologiseras för spel.",
+      "runtime": "authoring",
+      "license": "Blender är GPL som program",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/"
+      ]
+    },
+    {
+      "id": "retopo",
+      "title": "Retopologi & edge loops",
+      "area": "Geometri",
+      "inputs": [
+        "sculpt",
+        "scan",
+        "generated"
+      ],
+      "goal": "Ren deformationstopologi med quad-flow",
+      "limitation": "Auto-decimate är inte tillräckligt för armbågar, muskler, knän och rygg.",
+      "runtime": "authoring",
+      "license": "Blender är GPL som program",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/3.3/modeling/meshes/retopology.html"
+      ]
+    },
+    {
+      "id": "uv",
+      "title": "UV-unwrapping & texeldensitet",
+      "area": "Material",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Texturer sitter korrekt på hela ytan",
+      "limitation": "Undvik stretch, sömfel och synliga seams även på baksidan.",
+      "runtime": "authoring",
+      "license": "Blender är GPL som program",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/"
+      ]
+    },
+    {
+      "id": "bake",
+      "title": "High-poly → low-poly normal bake",
+      "area": "Material",
+      "inputs": [
+        "sculpt",
+        "retopo"
+      ],
+      "goal": "Skulpturdetaljer på spelmesh",
+      "limitation": "Normals bevarar ytdetalj men inte ändrad siluett.",
+      "runtime": "authoring",
+      "license": "Blender är GPL som program",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://www.khronos.org/gltf/pbr"
+      ]
+    },
+    {
+      "id": "pbr",
+      "title": "PBR metallic-roughness & IBL",
+      "area": "Material",
+      "inputs": [
+        "mesh",
+        "uv"
+      ],
+      "goal": "Realistiska material och belysning",
+      "limitation": "Roughness variation, korrekt sRGB/linjär och matchad normal-grön kanal.",
+      "runtime": "browser",
+      "license": "glTF 2.0 standard",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"
+      ]
+    },
+    {
+      "id": "procedural",
+      "title": "Procedurgenererade material & trim sheets",
+      "area": "Material",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Snabb bark, mossig sten, metall, läder",
+      "limitation": "Dessa är inte automatiskt full 4K fotorealistiska unika texturer.",
+      "runtime": "browser",
+      "license": "Egen DuoForge-teknik",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://gltf-transform.dev/"
+      ]
+    },
+    {
+      "id": "rigid",
+      "title": "Ledade delar & hårda pivotarmar",
+      "area": "Rigging",
+      "inputs": [
+        "hard_surface",
+        "mesh"
+      ],
+      "goal": "Robotar, stengolem, maskiner",
+      "limitation": "Parent-to-bone flyttar delen men deformerar inte ytan.",
+      "runtime": "browser",
+      "license": "glTF 2.0 standard",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/animation/armatures/skinning/introduction.html"
+      ]
+    },
+    {
+      "id": "skin",
+      "title": "Skinning & viktmålning",
+      "area": "Rigging",
+      "inputs": [
+        "mesh",
+        "retopo"
+      ],
+      "goal": "Ledstyrd mjuk geometri för varelser",
+      "limitation": "Automatiska vikter måste kontrolleras i animerad pose.",
+      "runtime": "browser",
+      "license": "glTF 2.0 standard",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/animation/armatures/skinning/introduction.html"
+      ]
+    },
+    {
+      "id": "rigify",
+      "title": "Rigify, adaptiva armature-mallar",
+      "area": "Rigging",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Snabb humanoidrigg med kontroller",
+      "limitation": "Blenders Rigify-rigg måste bakas/exporteras som korrekt GLB-skelett.",
+      "runtime": "authoring",
+      "license": "GPL för add-on; kontrollera integration",
+      "licenseStatus": "review",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/addons/rigify/index.html"
+      ]
+    },
+    {
+      "id": "serpent_rig",
+      "title": "Spline-/bendy-chain-rigg för orm",
+      "area": "Rigging",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Mjuk ringling och attack",
+      "limitation": "Kräver ringtopologi, många ben och deformationstest.",
+      "runtime": "browser",
+      "license": "Egen implementation möjlig med glTF",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"
+      ]
+    },
+    {
+      "id": "morph",
+      "title": "Morph targets, ansikte & blend shapes",
+      "area": "Rigging",
+      "inputs": [
+        "mesh",
+        "retopo"
+      ],
+      "goal": "Blinkning, läppar, ansikte, klädrörelser",
+      "limitation": "Game/Studio måste klara morph-animationer efter GLB reimport.",
+      "runtime": "browser",
+      "license": "glTF 2.0 standard",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"
+      ]
+    },
+    {
+      "id": "retarget",
+      "title": "IK/FK, motion retargeting & corrective poses",
+      "area": "Animation",
+      "inputs": [
+        "rigged_mesh"
+      ],
+      "goal": "Naturlig gång, attack och ansiktsuttryck",
+      "limitation": "glTF lagrar resultatets animationer, inte alla DCC-kontrollers.",
+      "runtime": "authoring",
+      "license": "Beroende av rigg/verktyg",
+      "licenseStatus": "review",
+      "sources": [
+        "https://docs.blender.org/manual/en/latest/animation/armatures/skinning/introduction.html"
+      ]
+    },
+    {
+      "id": "tripo",
+      "title": "TripoSR",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "Lättare bild→mesh-utkast, valfri lokal adapter finns",
+      "limitation": "Baksidan gissas. Textur, skinning och spelrigg kräver efterarbete.",
+      "runtime": "external_optional",
+      "license": "MIT i officiellt modellkort; kontrollera beroenden",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://huggingface.co/stabilityai/TripoSR"
+      ]
+    },
+    {
+      "id": "trellis2",
+      "title": "TRELLIS.2 (Microsoft)",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "Avancerad 3D-rekonstruktion med PBR-kvalitet",
+      "limitation": "Linux + NVIDIA min 24GB VRAM enligt repo. Tider på H100, inte mobil.",
+      "runtime": "external_optional",
+      "license": "MIT huvudmodell/kod; nvdiffrast & nvdiffrec separata",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/microsoft/TRELLIS.2"
+      ]
+    },
+    {
+      "id": "trellis1",
+      "title": "TRELLIS (Microsoft)",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "3D + alternativa representationsformer",
+      "limitation": "Tung runtime, särskilda moduler och exportsteg.",
+      "runtime": "external_optional",
+      "license": "MIT huvudrepo; kontrollera beroenden",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/microsoft/TRELLIS"
+      ]
+    },
+    {
+      "id": "instantmesh",
+      "title": "InstantMesh",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "Multi-view-prioriterad mesh från en bild",
+      "limitation": "Olika pipelines, GPU och efterarbete behövs.",
+      "runtime": "external_optional",
+      "license": "Hugging Face modellkort Apache-2.0; verifiera dependencies",
+      "licenseStatus": "review",
+      "sources": [
+        "https://huggingface.co/TencentARC/InstantMesh"
+      ]
+    },
+    {
+      "id": "sam3d",
+      "title": "SAM 3D Objects",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "Objekt med occlusions från enstaka bild",
+      "limitation": "Avancerad licens och eventuellt splatformat; inte auto-rigg.",
+      "runtime": "external_optional",
+      "license": "SAM License (inte MIT); juridisk granskning",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/facebookresearch/sam-3d-objects"
+      ]
+    },
+    {
+      "id": "hunyuan21",
+      "title": "Hunyuan3D 2.1 — ej tillåten i EU",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "single_image"
+      ],
+      "goal": "Forskningsreferens för PBR image-to-3D",
+      "limitation": "Licensen utesluter EU inkl Sverige! Får inte integreras under denna licens.",
+      "runtime": "external_optional",
+      "license": "TERRITORY EXCLUDES EU, UK, SOUTH KOREA",
+      "licenseStatus": "blocked_eu",
+      "sources": [
+        "https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1/blob/main/LICENSE"
+      ]
+    },
+    {
+      "id": "colmap",
+      "title": "COLMAP SfM & Multi-View Stereo",
+      "area": "Fotogrammetri",
+      "inputs": [
+        "photo_set",
+        "multiview"
+      ],
+      "goal": "Riktiga kameravinklar och geometri från många foton",
+      "limitation": "Behöver överlapp och varierade vinklar, riggar inte.",
+      "runtime": "external_optional",
+      "license": "BSD, beroenden separat",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://github.com/colmap/colmap"
+      ]
+    },
+    {
+      "id": "meshroom",
+      "title": "Meshroom / AliceVision",
+      "area": "Fotogrammetri",
+      "inputs": [
+        "photo_set",
+        "multiview"
+      ],
+      "goal": "Reproducerbara flerstegs fotogrammetrigrafer",
+      "limitation": "Kräver dator/ganska mycket beräkning. Skapar inte automatiskt spelrigg.",
+      "runtime": "external_optional",
+      "license": "MPL-2.0, beroenden separat",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/alicevision/Meshroom"
+      ]
+    },
+    {
+      "id": "open3d",
+      "title": "Open3D mesh/point-cloud cleanup",
+      "area": "Geometri",
+      "inputs": [
+        "mesh",
+        "scan"
+      ],
+      "goal": "Normals, downsample, rekonstruktion, kvalitetsstöd",
+      "limitation": "Ingen färdig en-bild→fotorealistik varelse-pipeline.",
+      "runtime": "external_optional",
+      "license": "MIT",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://github.com/isl-org/Open3D"
+      ]
+    },
+    {
+      "id": "pytorch3d",
+      "title": "PyTorch3D differentiable rendering",
+      "area": "AI / rekonstruktion",
+      "inputs": [
+        "mesh",
+        "reference"
+      ],
+      "goal": "Optimering och rendering från mesh/image",
+      "limitation": "Forskningsbibliotek, ingen färdig generator eller serverfri iPhone-AI.",
+      "runtime": "external_optional",
+      "license": "BSD",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://github.com/facebookresearch/pytorch3d"
+      ]
+    },
+    {
+      "id": "gltf",
+      "title": "glTF 2.0 / binär GLB",
+      "area": "Export & QA",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Portabel mesh, PBR, skins och animationer",
+      "limitation": "Filformat garanterar inte estetisk kvalitet eller att Blender constraints fungerar.",
+      "runtime": "browser",
+      "license": "Khronos royaltyfri standard",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://www.khronos.org/gltf/"
+      ]
+    },
+    {
+      "id": "validator",
+      "title": "Khronos glTF Validator",
+      "area": "Export & QA",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Kontrollerar GLB, referenser, accessors, animeringar och extension-stöd",
+      "limitation": "Bedömer inte konstnärlig kvalitet eller anatomiska fel.",
+      "runtime": "browser",
+      "license": "Kontrollera programvarans licens vid distribution",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/KhronosGroup/glTF-Validator"
+      ]
+    },
+    {
+      "id": "transform",
+      "title": "glTF Transform",
+      "area": "Export & QA",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Optimera, prune, quantize, KTX2/WebP/Meshopt",
+      "limitation": "Kompression kan kräva dekoders; kontrollera tangent-basis och precision.",
+      "runtime": "external_optional",
+      "license": "MIT huvudverktyg; codecs separat",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://gltf-transform.dev/"
+      ]
+    },
+    {
+      "id": "sample",
+      "title": "Khronos Sample Assets",
+      "area": "Export & QA",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Verifikation av importer/skins/material/animation",
+      "limitation": "Varje exempelmodell har egen licens, ibland CC-BY.",
+      "runtime": "browser",
+      "license": "Per-asset license/attribution",
+      "licenseStatus": "review",
+      "sources": [
+        "https://github.com/KhronosGroup/glTF-Sample-Assets"
+      ]
+    },
+    {
+      "id": "filament",
+      "title": "Filament PBR Materials Guide",
+      "area": "Material",
+      "inputs": [
+        "reference"
+      ],
+      "goal": "Teori bakom metaller, roughness, IBL och BRDF",
+      "limitation": "Teori är inte automatisk integration av Filament i Three.js.",
+      "runtime": "browser",
+      "license": "Documentation",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://github.com/google/filament/blob/main/docs/Materials.md.html"
+      ]
+    }
+  ]
+}
