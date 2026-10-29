@@ -95,7 +95,7 @@ export function createRenderer(target,{width=960,height=540,quality="high"}={}){
    textures.push(tex);
   }
   for(const name of ["uAlbedo","uNormal","uOccluder","uResolution","uCount","uLights","uColors","uTime","uDarkness","uShadows"])
-   uniform[name]=gl.getUniformLocation(program,name);
+   uniform[name]=gl.getUniformLocation(program,name==="uLights"||name==="uColors"?name+"[0]":name);
   gl.uniform1i(uniform.uAlbedo,0);gl.uniform1i(uniform.uNormal,1);gl.uniform1i(uniform.uOccluder,2);
   gl.uniform2f(uniform.uResolution,width,height);
   gl.disable(gl.BLEND);gl.disable(gl.DEPTH_TEST);
