@@ -3,7 +3,8 @@
  * Does not touch/serialize imported models or change other renderer pipelines.
  */
 import * as THREE from "three";
-import {buildTriangleBVH,v5QualityProfile,v5CameraSignature} from "./gpu-deluxe-v5-core.mjs";
+import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
+import {buildTriangleBVH,v5QualityProfile,v5CameraSignature,v5DetailPbrProfile} from "./gpu-deluxe-v5-core.mjs";
 import {V5_RAYTRACE_SHADER,V5_ACCUMULATE_SHADER,V5_PRESENT_SHADER} from "./gpu-deluxe-v5-shaders.mjs";
 
 function sceneSignature(root){
@@ -59,16 +60,16 @@ function makeDataTexture(data,width){
  tex.generateMipmaps=false;tex.flipY=false;tex.needsUpdate=true;
  return tex;
 }
-export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>false,
+export function initGpuDeluxeV5Studio({renderer,canvas,scene,root,camera,isBusy=()=>false,
  getGpuTime=()=>null,notify=()=>{}}={}){
- if(!renderer||!canvas||!root||!camera)throw Error("GPU Deluxe V5 requires existing Studio");
+ if(!renderer||!canvas||!scene||!root||!camera)throw Error("GPU Deluxe V5 requires existing Studio scene");
  const parent=document.querySelector(".sidebar.right-panel")||document.querySelector(".sidebar");
  if(!parent)return null;
  const panel=document.createElement("section");
  panel.id="gpuDeluxeV5";panel.className="panel-section";
  panel.innerHTML=[
   '<div class="section-heading"><h2>⚡ GPU Deluxe V5</h2><span class="mini-pill">CINEMA V5</span></div>',
-  '<p class="hint">Ray tracing genom verkliga trianglar (BVH), skuggor, reflektioner, ambient occlusion, progressiv antialiasing, brusreducering och adaptiv pixelbudget. Allt kör lokalt.</p>',
+  '<p class="hint">V5 Detail PBR bevarar alla modelltrianglar, GLB-texturer och animationer i originalrenderern. Ray Cinema är ett separat experimentellt BVH-läge. Båda kör lokalt.</p>',
   '<label class="field-label" for="gpuV5Preset">Grafikprofil</label>',
   '<select id="gpuV5Preset" aria-label="GPU Deluxe V5 kvalitet">',
   '<option value="balanced">Balanced · snabbare</option>',
@@ -76,13 +77,14 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
   '<option value="extreme">Extreme · maximal förhandsvisning</option>',
   '</select>',
   '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">',
+  '<button id="gpuV5Detail" type="button" aria-pressed="false">✦ V5 Detail PBR</button>',
   '<button id="gpuV5Enable" type="button" aria-pressed="false">✦ V5 Ray Cinema</button>',
   '<button id="gpuV5Reset" type="button">↻ Nytt bildprov</button>',
   '<button id="gpuV5Capture" type="button">PNG</button>',
   '<button id="gpuV5Off" type="button">Normal vy</button>',
   '</div>',
   '<p id="gpuV5Status" class="hint" role="status" aria-live="polite">V5 redo. V2 och vanlig 3D-vy finns kvar.</p>',
-  '<p class="hint">V5 raytracar ett begränsat urval verkliga trianglar (max 768). Materialfärger används; texturer, exakta animationer och AI-uppskalning ingår inte. Cinematic/Extreme belastar datorns GPU.</p>'
+  '<p class="hint">Detail PBR återanvänder hela Studio-scenen med miljöreflektioner och adaptiv skärmupplösning. Ray Cinema använder max 768 utvalda trianglar och saknar texturer/skinning. Ingen neural DLSS eller hårdvaru-RTX.</p>'
  ].join("");
  parent.append(panel);
  const $=id=>panel.querySelector("#"+id);
@@ -92,10 +94,11 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
   $("gpuV5Enable").disabled=true;
   $("gpuV5Status").textContent="V5 kräver WebGL2. Normal 3D och GPU Deluxe V2 fungerar fortfarande.";
  }
- let active=false,disposed=false,preset="balanced",profile=null,signature=null,geometry=null,
+ let active=false,disposed=false,mode="ray",preset="balanced",profile=null,signature=null,geometry=null,
   triTexture=null,nodeTexture=null,rayTarget=null,accum=[],sampleCount=0,frame=0,dim=[0,0],
   lastCamera=null,rayMaterial=null,accumMaterial=null,presentMaterial=null,historyIdx=0,
-  rendererIssue="",gpuSlowFrames=0,adaptiveScale=1,refreshCounter=0;
+  rendererIssue="",gpuSlowFrames=0,adaptiveScale=1,refreshCounter=0,
+  detailScale=1,detailSlowFrames=0,detailFastFrames=0,pbrState=null,pbrTarget=null;
  const quadGeo=new THREE.PlaneGeometry(2,2),quadCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
  const quad=new THREE.Mesh(quadGeo,new THREE.MeshBasicMaterial());
  quad.frustumCulled=false;const fsScene=new THREE.Scene();fsScene.add(quad);
@@ -103,6 +106,41 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
  const makeMaterial=shader=>new THREE.ShaderMaterial({glslVersion:THREE.GLSL3,
   vertexShader:shader.vertexShader,fragmentShader:shader.fragmentShader,
   uniforms:{},depthTest:false,depthWrite:false,toneMapped:false});
+ // Full-fidelity path: no geometry sampling, texture stripping or scene serialization.
+ // The environment and renderer changes are ephemeral and restored on exit.
+ function stopPbr(){
+  if(!pbrState)return;
+  scene.environment=pbrState.environment;
+  scene.environmentIntensity=pbrState.environmentIntensity;
+  renderer.toneMappingExposure=pbrState.exposure;
+  renderer.setPixelRatio(pbrState.pixelRatio);
+  pbrState=null;
+ }
+ function startPbr(){
+  if(pbrState)return;
+  pbrState={environment:scene.environment,
+   environmentIntensity:scene.environmentIntensity,
+   exposure:renderer.toneMappingExposure,pixelRatio:renderer.getPixelRatio()};
+  if(!pbrTarget){
+   const generator=new THREE.PMREMGenerator(renderer);
+   const room=new RoomEnvironment();
+   try{pbrTarget=generator.fromScene(room)}
+   catch(error){
+    console.warn("GPU V5 procedural environment unavailable",error);
+    notify("V5 PBR fortsätter med befintlig belysning.");
+   }finally{room.dispose();generator.dispose()}
+  }
+  if(pbrTarget)scene.environment=pbrTarget.texture;
+ }
+ function updateDetailQuality(){
+  const quality=v5DetailPbrProfile({preset,mobile:mobile(),
+   devicePixelRatio:window.devicePixelRatio||1,adaptiveScale:detailScale});
+  if(Math.abs(renderer.getPixelRatio()-quality.pixelRatio)>.02)
+   renderer.setPixelRatio(quality.pixelRatio);
+  scene.environmentIntensity=preset==="extreme"?.9:preset==="cinematic"?.7:.5;
+  renderer.toneMappingExposure=preset==="extreme"?1.15:1.08;
+  return quality;
+ }
  function disposeBuffers(){
   rayTarget?.dispose();rayTarget=null;
   for(const t of accum)t.dispose();accum=[];
@@ -163,24 +201,34 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
   });
  }
  function reset(){sampleCount=0;historyIdx=0;lastCamera=null;}
- function setActive(value){
-  if(disposed||value&&!supported)return;
-  if(active===value)return;
-  active=value;reset();adaptiveScale=1;gpuSlowFrames=0;
-  $("gpuV5Enable").setAttribute("aria-pressed",String(active));
+ function setActive(value,nextMode=mode){
+  if(disposed||value&&nextMode==="ray"&&!supported)return;
+  if(active===value&&(!value||mode===nextMode))return;
+  if(mode==="detail")stopPbr();
+  active=value;mode=value?nextMode:"ray";reset();
+  adaptiveScale=1;gpuSlowFrames=0;detailScale=1;
+  detailSlowFrames=0;detailFastFrames=0;
+  $("gpuV5Enable").setAttribute("aria-pressed",String(active&&mode==="ray"));
+  $("gpuV5Detail").setAttribute("aria-pressed",String(active&&mode==="detail"));
   if(active){
    document.querySelector("#gpuV2Off")?.click();
-   $("gpuV5Status").textContent="V5 startar triangelbaserad ray tracing…";
-   notify("GPU Deluxe V5: BVH-ray tracing aktiverad.");
+   if(mode==="detail"){
+    $("gpuV5Status").textContent="V5 Detail PBR startar i full geometriupplösning…";
+    notify("GPU Deluxe V5: detaljerad PBR med originalgeometri aktiverad.");
+   }else{
+    $("gpuV5Status").textContent="V5 startar triangelbaserad ray tracing…";
+    notify("GPU Deluxe V5: BVH-ray tracing aktiverad.");
+   }
   }else{
    disposeBuffers();$("gpuV5Status").textContent="V5 pausad. Normal WebGL/V2-visning återställd.";
   }
  }
- $("gpuV5Enable").onclick=()=>setActive(!active);
+ $("gpuV5Enable").onclick=()=>setActive(!(active&&mode==="ray"),"ray");
+ $("gpuV5Detail").onclick=()=>setActive(!(active&&mode==="detail"),"detail");
  $("gpuV5Off").onclick=()=>setActive(false);
  $("gpuV5Reset").onclick=()=>{reset();if(active)refreshGeometry();};
  $("gpuV5Preset").onchange=e=>{preset=e.target.value;
-  adaptiveScale=1;profile=null;disposeGeometry();
+  adaptiveScale=1;detailScale=1;profile=null;disposeGeometry();
   if(active)$("gpuV5Status").textContent="Ny V5-profil: "+preset;
  };
  $("gpuV5Capture").onclick=()=>{
@@ -199,8 +247,14 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
  }
  oldPanel?.addEventListener("click",onV2Click);
  function render(){
-  if(!active||disposed||isBusy())return false;
+  if(!active||disposed)return false;
+  if(isBusy()){if(mode==="detail")stopPbr();return false;}
   try{
+   if(mode==="detail"){
+    startPbr();updateDetailQuality();
+    renderer.setRenderTarget(null);renderer.render(scene,camera);
+    return true;
+   }
    ensureProfile();
    if(!signature||++refreshCounter%25===0){
     const changed=sceneSignature(root);
@@ -256,6 +310,26 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
   if(disposed||!active||++frame%30)return;
   const q=getGpuTime();
   const gpuMs=q?.supported&&q.gpuMs!==null?q.gpuMs:null;
+  if(mode==="detail"){
+   if(gpuMs!==null){
+    detailSlowFrames=gpuMs>40?detailSlowFrames+1:0;
+    detailFastFrames=gpuMs<16?detailFastFrames+1:0;
+    if(detailSlowFrames>=3){
+     detailScale=Math.max(.6,detailScale*.85);
+     detailSlowFrames=0;detailFastFrames=0;
+    }else if(detailFastFrames>=8){
+     detailScale=Math.min(1,detailScale*1.06);
+     detailFastFrames=0;
+    }
+   }
+   const quality=v5DetailPbrProfile({preset,mobile:mobile(),
+    devicePixelRatio:window.devicePixelRatio||1,adaptiveScale:detailScale});
+   $("gpuV5Status").textContent="V5 Detail PBR · hela scenens trianglar, texturer och animationer"+
+    " · DPR "+quality.pixelRatio+" · "+preset+
+    (gpuMs===null?" · GPU-tid ej tillgänglig":" · "+gpuMs+" ms GPU")+
+    (detailScale<.99?" · adaptiv upplösning":"");
+   return;
+  }
   if(gpuMs!==null&&sampleCount>1){
    gpuSlowFrames=gpuMs>45?gpuSlowFrames+1:0;
    if(gpuSlowFrames>=4&&adaptiveScale>.55){
@@ -270,7 +344,8 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
    (total>sampled?" · begränsat geometriprov":"");
  }
  function dispose(){
-  if(disposed)return;disposed=true;setActive(false);
+  if(disposed)return;setActive(false);disposed=true;
+  stopPbr();pbrTarget?.dispose();pbrTarget=null;
   disposeGeometry();rayMaterial?.dispose();accumMaterial?.dispose();presentMaterial?.dispose();
   quad.material.dispose();quadGeo.dispose();oldPanel?.removeEventListener("click",onV2Click);
   panel.remove();
