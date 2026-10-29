@@ -11,6 +11,8 @@ try{
   page.on("console",m=>{if(m.type()==="error")errors.push("console: "+m.text())});
   await page.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
   await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
+  // On phones advanced GPU settings live inside the Justera drawer.
+  if(size.width<=720)await page.locator('[data-mobile-tab="adjust"]').click();
   assert.ok(await page.locator("#gpuDeluxeV5").isVisible());
   assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"false");
   await page.locator("#gpuV5Preset").selectOption("balanced");
