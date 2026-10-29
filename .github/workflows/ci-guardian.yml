@@ -1,0 +1,51 @@
+name: DuoForge CI Guardian
+on:
+  pull_request:
+    paths:
+      - 'scripts/ci-guardian*.mjs'
+      - 'tests/ci-guardian.test.mjs'
+      - '.github/workflows/ci-guardian.yml'
+  workflow_run:
+    workflows:
+      - 'Test GPU Deluxe V5'
+      - 'Test GPU Deluxe V2'
+      - 'Test DuoForge 3D Studio'
+    types: [completed]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  unit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/ci-guardian.test.mjs
+  diagnose:
+    # workflow_run executes from default branch. Never execute code from trigger PR.
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Diagnose only the latest failing branch head
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DUOFORGE_FAILED_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: node scripts/ci-guardian.mjs
+      - name: Attach compact diagnostics, never raw job logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-guardian-${{ github.event.workflow_run.id }}
+          path: ci-guardian-report.json
+          retention-days: 7
+          if-no-files-found: warn
