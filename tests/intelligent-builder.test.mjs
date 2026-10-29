@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {planGame,normalizeConfig,BUILDER_VERSION} from "../game-builder/planner.mjs";
+import {planGame,normalizeConfig,levelEnemyCount,BUILDER_VERSION} from "../game-builder/planner.mjs";
 import {crc32,zipStore,collectGameFiles,STANDALONE_HTML} from "../game-builder/export.mjs";
 
 test("Swedish prompt creates an actual config with storm ocean and stages",()=>{
@@ -40,6 +40,26 @@ test("Unimplemented instructions are clearly reported, not claimed",()=>{
  assert.ok(r.warnings.some(x=>x.includes("Racing")));
  assert.ok(r.warnings.some(x=>x.includes("MP4")));
  assert.equal(r.config.genre,"adventure");
+});
+test("Peaceful prompts remove enemies and collectibles without resetting the existing game",()=>{
+ const original=normalizeConfig({id:"existing-adventure",enemies:5,collectibles:4,levels:6,revision:7});
+ const updated=planGame("Gör tre banor utan fiender och inga kristaller",original);
+ assert.equal(updated.config.id,"existing-adventure");
+ assert.equal(updated.config.revision,8);
+ assert.equal(updated.config.levels,3);
+ assert.equal(updated.config.enemies,0);
+ assert.equal(updated.config.collectibles,0);
+ assert.equal(levelEnemyCount(updated.config,1),0);
+ assert.equal(levelEnemyCount(updated.config,3),0);
+ assert.equal(levelEnemyCount(updated.config,10),0);
+ const repeat=planGame("Utan fiender och inga kristaller",updated.config);
+ assert.equal(repeat.applied,0);
+ assert.equal(repeat.config.revision,8);
+ const newGame=planGame("Skapa ett äventyr med ingen fiende och noll skatter");
+ assert.equal(newGame.config.enemies,0);
+ assert.equal(newGame.config.collectibles,0);
+ assert.equal(levelEnemyCount({enemies:3},2),3);
+ assert.equal(levelEnemyCount({enemies:3},4),4);
 });
 test("Invalid numbers and titles never exceed safe export/play bounds",()=>{
  const r=planGame("Jag vill ha 999 banor, 999 monster och 999 kristaller. Döp spelet till \"A <b>cool</b> game\"");
