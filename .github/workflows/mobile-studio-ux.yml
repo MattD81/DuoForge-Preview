@@ -1,0 +1,43 @@
+name: Verify Mobile Studio UX
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/mobile-studio-**'
+      - 'workshop/studio/studio.mjs'
+      - 'workshop/studio/index.html'
+      - 'tests/mobile-studio-ux.mjs'
+      - '.github/workflows/mobile-studio-ux.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax
+        run: |
+          node --check workshop/studio/mobile-studio-ux.mjs
+          node --check workshop/studio/studio.mjs
+          node --check tests/mobile-studio-ux.mjs
+      - name: Browser dependency (CI only)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing Studio
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-mobile.log 2>&1 &
+      - name: Test portrait + landscape and desktop regression
+        run: node tests/mobile-studio-ux.mjs
+      - name: Screenshots for UX review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-studio-ux-screenshots
+          path: |
+            mobile-studio-portrait.png
+            mobile-studio-landscape.png
+          if-no-files-found: ignore
