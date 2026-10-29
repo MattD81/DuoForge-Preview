@@ -121,8 +121,6 @@ function tick(now){
  if(isMobile&&renderTicks++%2!==0)return; // 30 FPS mobile, 60 FPS desktop
  try{
   // Avoid accumulated world-camera drift on narrow portrait viewports.
-  const target=clamp(game.player.x-VIEW.width*.43,0,VIEW.worldWidth-VIEW.width);
-  game.cameraX+=(target-game.cameraX)*Math.min(1,dt*7);
   const lights=createLights(game,now*.001);
   renderer.paint(pass=>paintLandscape(pass,game),now*.001,lights);
   if(++frameCount%20===0)updateHud();
