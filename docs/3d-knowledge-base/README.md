@@ -38,3 +38,7 @@ Utgångsflöde: **referenser → blockout/rekonstruktion → skulptera → retop
 6. Behåll extern modellkörning frivillig; den här katalogen skickar ingen bild någonstans.
 
 Referenser och exakta länkar finns i [LEGAL_AND_SOURCES.md](LEGAL_AND_SOURCES.md).
+
+## Sökbar webbvy
+
+Efter merge och GitHub Pages-distribution: `https://mattd81.github.io/DuoForge-Preview/docs/3d-knowledge-base/`. Visar och filtrerar `knowledge.json`, och ger **lokala regelbaserade rekommendationer**. Ingen modellinferens sker och inga referensbilder skickas. Licensblockerade modeller är dolda som standard. En länk finns även i befintliga 3D Studio.

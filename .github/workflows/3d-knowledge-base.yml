@@ -1,0 +1,27 @@
+name: Verify 3D Knowledge Engine
+on:
+  pull_request:
+    paths:
+      - 'docs/3d-knowledge-base/**'
+      - 'workshop/studio/index.html'
+      - 'tests/3d-knowledge-base.test.mjs'
+      - '.github/workflows/3d-knowledge-base.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: |
+          node --check docs/3d-knowledge-base/advisor.mjs
+          node --check docs/3d-knowledge-base/knowledge.mjs
+          node --check tests/3d-knowledge-base.test.mjs
+      - name: Validate catalog, EU-licensing and technique routing
+        run: node --test tests/3d-knowledge-base.test.mjs
