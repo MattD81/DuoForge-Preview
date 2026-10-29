@@ -172,6 +172,7 @@ function shrine(c,t,normal){
 export function paintLandscape({ctx,normal,occlusion,time},state){
  const cam=state.cameraX;
  sky(ctx,time);mountains(ctx,cam);forest(ctx,cam);ruinsLayer(ctx,cam,time);
+ foliage(ctx,cam,time);
  ctx.save();ctx.translate(-cam,0);normal.save();normal.translate(-cam,0);occlusion.save();occlusion.translate(-cam,0);
  for(const solid of SOLIDS){
   const b=solid;if(b.x+b.w<cam-80||b.x>cam+VIEW.width+80)continue;
@@ -193,7 +194,6 @@ export function paintLandscape({ctx,normal,occlusion,time},state){
  hangingBridge(ctx,528,433,91,time);
  hangingBridge(ctx,1140,433,83,time);
  hangingBridge(ctx,1660,433,84,time);
- foliage(ctx,cam,time);
  shrine(ctx,time,false);shrine(normal,time,true);
  for(let i=0;i<RELICS.length;i++){
   const r=RELICS[i];relic(ctx,r.x,r.y,time,state.collected[i]);
