@@ -45,7 +45,13 @@ try {
  const count=Number(await page.locator("#objectCount").innerText());
  await page.locator("#undo").click();
  await page.waitForFunction(expected=>Number(document.querySelector("#objectCount")?.textContent)===expected,count-1);
- console.log("PASS: animated GLB, animation player, undo");
+ await page.locator("#redo").click();
+ await page.waitForFunction(expected=>Number(document.querySelector("#objectCount")?.textContent)===expected,count);
+ const [redoDL]=await Promise.all([page.waitForEvent("download"),page.locator("#exportGLB").click()]);
+ const redoGLB=jsonOfGLB(readFileSync(await redoDL.path()));
+ assert.ok(redoGLB.skins?.length>=13,"undo/redo must keep skinned bind targets");
+ assert.ok(redoGLB.animations?.length>=11,"undo/redo must keep animation tracks");
+ console.log("PASS: animated GLB, player, undo/redo rig preservation");
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
  mobile.on("pageerror",e=>errors.push(e.message));
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
