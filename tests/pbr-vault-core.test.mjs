@@ -48,7 +48,7 @@ test("physically plausible metalness and material-specific microstructure",()=>{
  const g=[],s=[];for(let i=0;i<gold.orm.length;i+=4){g.push(gold.orm[i+2]);s.push(sand.orm[i+2])}
  assert.ok(g.every(x=>x>=253),"Gold should be a metal");
  assert.ok(s.every(x=>x===0),"Sand should be a dielectric");
- const presets=["brick","wood","bark","asphalt","marble","steel","grass","cobblestone"];
+ const presets=["brick","oak","bark","asphalt","marble","steel","grass","cobblestone"];
  const fingerprints=presets.map(id=>{
   const p=generateVaultPixels(id+"-original",64);let h=0;
   for(let i=0;i<p.normal.length;i+=19)h=(Math.imul(h,16777619)^p.normal[i])>>>0;
