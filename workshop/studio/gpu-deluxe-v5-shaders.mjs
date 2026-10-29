@@ -73,7 +73,7 @@ export const V5_RAYTRACE_SHADER={
   float hitId=-2.;
   vec3 invDir=invSafe(rd);
   int stack[24];int top=0;stack[0]=0;
-  for(int visit=0;visit<256;visit++){
+  for(int visit=0;visit<512;visit++){
    if(top<0||uNodeCount<=0)break;
    int index=stack[top];top--;
    if(index<0||index>=uNodeCount)continue;
