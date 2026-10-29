@@ -1,0 +1,39 @@
+name: Test GPU Deluxe V5
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/gpu-deluxe-v5*.mjs'
+      - 'workshop/studio/studio.mjs'
+      - 'tests/gpu-deluxe-v5*.mjs'
+      - '.github/workflows/gpu-deluxe-v5.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gpu-deluxe-v5-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  gpu-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate V5 JavaScript and run BVH/shader tests
+        run: |
+          node --check workshop/studio/gpu-deluxe-v5-core.mjs
+          node --check workshop/studio/gpu-deluxe-v5-shaders.mjs
+          node --check workshop/studio/gpu-deluxe-v5-studio.mjs
+          node --check workshop/studio/studio.mjs
+          node --check tests/gpu-deluxe-v5-smoke.mjs
+          node --test tests/gpu-deluxe-v5.test.mjs
+      - name: Prepare Chromium WebGL2
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Start existing Studio locally
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . > /tmp/duoforge-gpu-v5.log 2>&1 &
+      - name: Validate actual V5 shader render and fallback in desktop/mobile
+        run: node tests/gpu-deluxe-v5-smoke.mjs

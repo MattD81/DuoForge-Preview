@@ -15,6 +15,7 @@ import {initFusionLab} from "./fusion-lab.mjs";
 import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
+import {initGpuDeluxeV5Studio} from "./gpu-deluxe-v5-studio.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -52,7 +53,7 @@ transform.addEventListener("dragging-changed",e=>{orbit.enabled=!e.value});
 transform.addEventListener("mouseDown",()=>{pushHistory();});
 transform.addEventListener("mouseUp",()=>{updateInspector();refreshTree();dirty();});
 transform.addEventListener("objectChange",()=>{updateInspector();updateStats();});
-let livingRuntime=null,renderWorld=null,materialLab=null,gpuV2=null;
+let livingRuntime=null,renderWorld=null,materialLab=null,gpuV2=null,gpuV5=null;
 const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
@@ -90,9 +91,10 @@ function animate(){
  timer?.poll();
  timer?.begin();
  try{
-  if(!gpuV2?.render()&&!renderWorld?.render())renderer.render(scene,camera);
+  if(!gpuV5?.render()&&!gpuV2?.render()&&!renderWorld?.render())renderer.render(scene,camera);
  }finally{timer?.end()}
  gpuV2?.updateStatus();
+ gpuV5?.updateStatus();
 }animate();
 function cloneState(){
  const copy=root.clone(true);
@@ -581,6 +583,9 @@ initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName"
 initFusionLab({root,renderer,canvas,camera,orbit,renderWorld,livingRuntime,getProjectName:()=>$("projectName").value,notify});
 gpuV2=initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,
  isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),notify});
+gpuV5=initGpuDeluxeV5Studio({renderer,canvas,root,camera,
+ isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),
+ getGpuTime:()=>gpuV2?.timer.snapshot()??null,notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
