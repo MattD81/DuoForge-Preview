@@ -5,8 +5,7 @@
  */
 export const V5_RAYTRACE_SHADER={
  vertexShader:String.raw`
- in vec3 position;
- in vec2 uv;
+ // Three.js ShaderMaterial already declares position and uv.
  out vec2 vUv;
  void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}
 `,
