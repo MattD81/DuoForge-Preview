@@ -11,6 +11,7 @@ import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
+import {initFusionLab} from "./fusion-lab.mjs";
 import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 
@@ -570,6 +571,7 @@ initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dir
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
+initFusionLab({root,renderer,canvas,camera,orbit,renderWorld,livingRuntime,getProjectName:()=>$("projectName").value,notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");
@@ -601,3 +603,4 @@ const sitesBridge=initSitesStudioBridge({
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
+

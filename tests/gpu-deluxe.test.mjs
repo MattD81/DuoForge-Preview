@@ -91,3 +91,41 @@ test("GPU Deluxe is wired to the original playable Stormblade game",()=>{
  assert.match(ocean,/spectralGLSL/);
  assert.match(world,/makeWarrior/);
 });
+
+
+test("viewport budget remains bounded on portrait, landscape and 4K TV",async()=>{
+ const {graphicsProfile}=await import('../workshop/studio/gpu-deluxe.mjs');
+ for(const [width,height,mobile] of [[390,844,true],[844,390,true],[3840,2160,false]]){
+  const p=graphicsProfile({clientWidth:width,clientHeight:height},{devicePixelRatio:3},'high');
+  assert.equal(p.mobile,mobile);
+  assert.ok(width*height*p.baseDpr**2<=p.maxPixels+1);
+  assert.equal(p.targetFps,mobile?30:60);
+ }
+});
+test("repeated configuration preserves learned budget and resize respects recording",()=>{
+ const canvas={clientWidth:1280,clientHeight:800};
+ let ratio=1.5,changes=0;
+ const renderer={getContext:()=>null,getPixelRatio:()=>ratio,setPixelRatio:v=>{ratio=v;changes++}};
+ const d=createGPUDeluxe({renderer,canvas,env:{devicePixelRatio:2}});
+ d.configure({mode:'auto',quality:'high'});
+ for(let i=0;i<192;i++)d.tick(.045);
+ const learned=d.info();
+ d.configure({mode:'auto',quality:'high'});
+ assert.equal(d.info().pixelRatio,learned.pixelRatio);
+ assert.equal(d.info().samples,learned.samples);
+ canvas.clientWidth=3840;canvas.clientHeight=2160;
+ const count=changes;
+ for(let i=0;i<96;i++)d.tick(.04,{recording:true});
+ assert.equal(changes,count);
+ for(let i=0;i<48;i++)d.tick(.04);
+ const p=d.info().profile;
+ assert.equal(p.width,3840);
+ assert.ok(ratio**2*p.width*p.height<=p.maxPixels+10000);
+ assert.ok(d.info().pixelRatio<=learned.pixelRatio);
+});
+test("background pauses cannot allocate a new drawing buffer",()=>{
+ let changes=0;
+ const d=createGPUDeluxe({renderer:{getContext:()=>null,setPixelRatio:()=>changes++},canvas:{}});
+ for(let i=0;i<96;i++)d.tick(2);
+ assert.equal(changes,0);assert.equal(d.info().samples,0);
+});

@@ -17,6 +17,9 @@ on:
       - 'tests/ocean-world-smoke.mjs'
       - 'tests/ocean-spectrum.test.mjs'
       - 'tests/research-3d.test.mjs'
+      - 'tests/fusion-engine.test.mjs'
+      - 'tests/fusion-lab-smoke.mjs'
+      - 'tests/gpu-deluxe.test.mjs'
       - 'tests/research-stack.test.mjs'
       - 'tests/research-stack-smoke.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
@@ -49,6 +52,8 @@ jobs:
           node-version: 22
       - name: JavaScript syntax check
         run: |
+          node --check workshop/studio/fusion-engine.mjs
+          node --check workshop/studio/fusion-lab.mjs
           node --check workshop/studio/studio.mjs
           node --check workshop/studio/research-ui.mjs
           node --check workshop/studio/research-performance.mjs
@@ -101,6 +106,7 @@ jobs:
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
           node --test tests/sites-cinema-bridge.test.mjs
+          node --test tests/fusion-engine.test.mjs tests/gpu-deluxe.test.mjs
           node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs tests/research-stack.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
@@ -127,6 +133,8 @@ jobs:
         run: node tests/studio-smoke.mjs
       - name: Test free research stack in browser and mobile
         run: node tests/research-stack-smoke.mjs
+      - name: Test Fusion Lab
+        run: node tests/fusion-lab-smoke.mjs
       - name: Test Character Forge volumetric GLB and image silhouettes
         run: node tests/character-forge-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
@@ -158,3 +166,4 @@ jobs:
             material-world-desktop.png
             material-lab-mobile.png
           if-no-files-found: ignore
+

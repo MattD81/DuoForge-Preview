@@ -7,6 +7,17 @@ export const GPU_DELUXE_VERSION="duoforge-gpu-deluxe@1";
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const MODES=new Set(["off","auto","quality","performance"]);
+/** Bound drawing-buffer cost by actual viewport area, including landscape/TV. */
+export function graphicsProfile(canvas,env=globalThis,quality="medium"){
+ const width=Math.max(1,finite(canvas?.clientWidth,finite(env.innerWidth,1280)));
+ const height=Math.max(1,finite(canvas?.clientHeight,finite(env.innerHeight,720)));
+ const mobile=!!env.matchMedia?.("(pointer:coarse)")?.matches||Math.min(width,height)<700;
+ const maxPixels=mobile?2_000_000:4_000_000;
+ const qualityCap=quality==="high"?2:quality==="medium"?1.5:1;
+ const baseDpr=Math.max(.25,Math.min(finite(env.devicePixelRatio,1)||1,qualityCap,
+  Math.sqrt(maxPixels/(width*height))));
+ return Object.freeze({width,height,mobile,maxPixels,baseDpr,targetFps:mobile?30:60});
+}
 export function detectGraphicsCapabilities(renderer,env=globalThis){
  const gl=renderer?.getContext?.();
  const safe=(name,fallback=0)=>{try{return gl?.getParameter?.(name)??fallback}catch{return fallback}};
@@ -22,8 +33,8 @@ export function detectGraphicsCapabilities(renderer,env=globalThis){
 export function createGPUDeluxeGovernor(options={}){
  const mode=MODES.has(options.mode)?options.mode:"off";
  const targetFps=clamp(finite(options.targetFps,60),24,120);
- const baseDpr=clamp(finite(options.baseDpr,1),.5,3);
- const minDpr=clamp(finite(options.minDpr,.7),.5,baseDpr);
+ const baseDpr=clamp(finite(options.baseDpr,1),.25,3);
+ const minDpr=clamp(finite(options.minDpr,.7),.25,baseDpr);
  let scale=clamp(finite(options.initialScale,mode==="performance"?.85:1),minDpr/baseDpr,1);
  let ema=null,frames=0,bucket=[];
  function snapshot(){
@@ -82,29 +93,36 @@ export function createGPUDeluxe({renderer,canvas,env=globalThis}={}){
  if(!renderer||!canvas)throw Error("GPU Deluxe behöver 3D-renderaren och canvas.");
  const capabilities=detectGraphicsCapabilities(renderer,env);
  let settings={mode:"auto",quality:"medium"};
- let governor=null,actualRatio=null,elapsed=0,sharpen=false;
- const isMobile=()=>!!env.matchMedia?.("(max-width:700px)")?.matches;
+ let governor=null,profile=null,actualRatio=null,elapsed=0,sharpen=false;
+ function refreshProfile(preserve=true){
+  const next=graphicsProfile(canvas,env,settings.quality);
+  if(preserve&&profile&&next.baseDpr===profile.baseDpr&&next.targetFps===profile.targetFps){profile=next;return;}
+  const previous=preserve?governor?.snapshot().pixelRatio:null;
+  profile=next;
+  governor=createGPUDeluxeGovernor({mode:settings.mode,baseDpr:profile.baseDpr,
+   minDpr:profile.baseDpr*(profile.mobile?.6:.65),targetFps:profile.targetFps,
+   initialScale:previous===null?undefined:
+    (settings.mode==="auto"||settings.mode==="performance"?previous/profile.baseDpr:1)});
+ }
  function configure({mode=settings.mode,quality=settings.quality}={}){
-  settings={mode:MODES.has(mode)?mode:"off",
+  const next={mode:MODES.has(mode)?mode:"off",
    quality:["low","medium","high"].includes(quality)?quality:"medium"};
-  const baseDpr=Math.min(env.devicePixelRatio||1,
-   settings.quality==="high"?2:settings.quality==="medium"?1.5:1);
-  governor=createGPUDeluxeGovernor({
-   mode:settings.mode,baseDpr,
-   minDpr:Math.max(.6,baseDpr*(isMobile()?.6:.65)),
-   targetFps:isMobile()?30:60
-  });
-  elapsed=0;actualRatio=null;
+  if(governor&&next.mode===settings.mode&&next.quality===settings.quality){refreshProfile();return info();}
+  settings=next;
+  refreshProfile(false);
+  elapsed=0;actualRatio=renderer.getPixelRatio?.()??null;
   return info();
  }
  function info(){return Object.freeze({
-  ...governor.snapshot(),capabilities,
+  ...governor.snapshot(),capabilities,profile,
   enhancement:sharpen?"spatial-edge-aware":"none"
  });}
  function tick(dt,{recording=false,onResize}={}){
   if(recording||settings.mode==="off")return info();
-  const state=governor.sample(dt);
+  if(!Number.isFinite(dt)||dt<=0||dt>.25)return info();
   elapsed++;
+  if(elapsed%48===0)refreshProfile();
+  const state=governor.sample(dt);
   if(elapsed%48===0&&(actualRatio===null||Math.abs(state.pixelRatio-actualRatio)>.02)){
    renderer.setPixelRatio(state.pixelRatio);
    actualRatio=state.pixelRatio;
@@ -118,3 +136,4 @@ export function createGPUDeluxe({renderer,canvas,env=globalThis}={}){
   get mode(){return settings.mode}
  });
 }
+
