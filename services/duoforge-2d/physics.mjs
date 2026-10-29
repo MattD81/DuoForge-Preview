@@ -81,7 +81,7 @@ export function stepPhysics(state,input={},dt=1/60){
   state.deaths++;state.dead=true;p.x=state.checkpoint.x;p.y=state.checkpoint.y;p.vx=0;p.vy=0;p.onGround=false;
  }else state.dead=false;
  if(p.x>=2250&&state.count===RELICS.length){state.won=true;p.vx=0;p.vy=0;}
- state.cameraX=clamp(state.cameraX+(clamp(p.x-340,0,VIEW.worldWidth-VIEW.width)-state.cameraX)*Math.min(1,frame*6),0,VIEW.worldWidth-VIEW.width);
+ state.cameraX=clamp(state.cameraX+(clamp(p.x-VIEW.width*.43,0,VIEW.worldWidth-VIEW.width)-state.cameraX)*Math.min(1,frame*6),0,VIEW.worldWidth-VIEW.width);
  return state;
 }
 export function simulate(inputs=[],state=createState()){
