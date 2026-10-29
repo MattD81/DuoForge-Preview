@@ -1,0 +1,52 @@
+/* DuoForge PBR Material Vault: 360 procedural recipes, true CPU PBR map previews.
+   Compact responsive gallery within original Material Lab / mobile drawer. */
+.pbr-vault{margin:15px 0 4px;background:linear-gradient(155deg,#0a3127,#0b2736);border:1px solid #37866d;border-radius:11px;padding:10px}
+.pbr-vault .section-heading{gap:6px;align-items:flex-start;margin-bottom:8px}
+.pbr-vault .section-heading h2{font-size:15px;color:#c8ffe8}
+.pbr-vault .mini-pill{color:#a3ffbe;background:#15533b;border:1px solid #4a9975;font-size:10px}
+.pbr-vault .hint{font-size:11px;line-height:1.6;color:#b3d8c9}
+.pbr-vault hr{border:0;border-top:1px solid #386d59;margin:8px 0 14px}
+.vault-search{display:grid;grid-template-columns:1fr;gap:8px}
+.pbr-vault input[type=search],.pbr-vault select{width:100%;min-width:0;padding:10px;border-radius:8px;
+ border:1px solid #5b9079;background:#092820;color:#f2fff6;font:inherit;font-size:12px}
+.pbr-vault .vault-check{display:flex;align-items:center;gap:7px;margin:10px 0;color:#c9f6df;font-size:12px}
+.vault-check input{accent-color:#3fd494}
+.vault-toolbar{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:12px 0}
+.vault-toolbar label{display:block;font-size:11px;color:#b9ecd1;min-width:0;flex:1}
+.vault-toolbar select{margin-top:4px}
+#vaultCount{white-space:nowrap;font-size:10px;color:#b0ffda;font-variant-numeric:tabular-nums}
+.vault-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:365px;overflow-y:auto;
+ overscroll-behavior:contain;padding-right:2px}
+.vault-card{position:relative;min-width:0}
+.vault-pick{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;height:100%;min-height:102px;
+ padding:5px 5px 7px;background:#08251c;border:1px solid #426a53;border-radius:8px;overflow:hidden;
+ color:#ddffea;line-height:1.3;text-align:center}
+.vault-pick canvas{width:100%;max-width:100%;height:58px;border-radius:5px;object-fit:cover;image-rendering:auto}
+.vault-pick span{font-size:10px;min-height:27px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.vault-pick[aria-pressed=true]{border:2px solid #4be59e;background:#18583e;box-shadow:0 0 0 1px #20a86b}
+.vault-favorite{position:absolute;right:3px;top:3px;min-height:32px;min-width:32px;padding:3px;background:#101f1cef;
+ color:#ffdd7c;border:1px solid #678d6d;border-radius:9px;font-size:20px;line-height:1}
+.vault-favorite[aria-pressed=true]{background:#775d25}
+.pbr-vault #vaultMore{width:100%;padding:9px;margin:8px 0 12px;border:1px solid #59ac7d;color:#e5ffe9;background:#1b5339;min-height:40px}
+.vault-selected{border:1px solid #417f61;border-radius:10px;background:#092117;padding:10px}
+.vault-selected strong{display:block;font-size:13px;color:#d2ffdf}
+.vault-selected>span{display:block;font-size:11px;line-height:1.5;color:#b2d9c4;margin:5px 0}
+.vault-preview{display:flex;align-items:center;gap:10px;margin:10px 0}
+#vaultPreview{width:80px;height:80px;border:1px solid #5b9876;border-radius:9px;object-fit:cover}
+.vault-sample{display:flex;flex-direction:column;gap:6px;color:#aaffce;font-size:12px}
+.vault-sample small{font-size:10px;color:#bbdfcb}
+.vault-actions{display:grid;gap:7px}
+.vault-actions button{white-space:normal;min-height:43px;padding:10px 6px;font-size:12px}
+.pbr-vault #vaultStatus{border-top:1px solid #2e6045;margin:11px 0 0;padding-top:8px;min-height:30px}
+@media(min-width:1150px){.vault-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){
+ .pbr-vault{margin:8px 0;padding:9px;border-radius:10px}
+ .pbr-vault input[type=search],.pbr-vault select{font-size:16px;min-height:44px}
+ .vault-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-height:none}
+ .vault-pick{min-height:100px}
+ .vault-pick canvas{height:62px}
+ .vault-pick span{font-size:10px}
+ .vault-toolbar select{width:100%}
+ .vault-actions button{min-height:44px}
+}
+@media(max-width:350px){.vault-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

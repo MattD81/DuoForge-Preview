@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {SURFACE_PRESETS,createSurfaceLibrary,surfacePreset,hasSurfaceTexture} from "./procedural-materials.mjs";
 import {classifySurfaceName} from "./surface-classifier.mjs";
+import {initPbrVault} from "./pbr-vault-ui.mjs";
 
 const $=id=>document.getElementById(id);
 function isTextured(mesh){
@@ -30,7 +31,7 @@ function safeUV(mesh){
 }
 export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector}){
  const surfaceLibrary=createSurfaceLibrary("medium");
- let preset="paint",tintEdited=false;
+ let preset="paint",tintEdited=false,vault=null;
  const container=$("materialSwatches");
  function chosen(){
   let item=getSelected();
@@ -66,6 +67,7 @@ export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTre
   const count=obj?Array.from((function*(){let meshes=[];obj.traverse(o=>{if(o.isMesh)meshes.push(o)});yield*meshes})()).length:0;
   $("surfaceTarget").textContent=obj?obj.name+" • "+count+" mesh"+(count===1?"":"ar"):"Markera ett objekt i scenen";
   $("applySurface").disabled=!count;$("autoSurface").disabled=!count;
+  vault?.selectionChanged();
   return count;
  }
  function assign(mesh,type,tint,repeat){
@@ -127,6 +129,8 @@ export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTre
  $("surfaceTile").oninput=()=>{$("surfaceTileOut").textContent=Number($("surfaceTile").value).toFixed(1)+"×"};
  $("applySurface").onclick=applyChosen;
  $("autoSurface").onclick=autoFinish;
- updateSwatches();selectionChanged();
+ updateSwatches();
+ vault=initPbrVault({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector,safeUV,selectionChanged});
+ selectionChanged();
  return {selectionChanged};
 }
