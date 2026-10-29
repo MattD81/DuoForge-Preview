@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {GPU_DELUXE_V5_VERSION,V5_MAX_TRIANGLES,buildTriangleBVH,v5QualityProfile,v5CameraSignature}
+import {GPU_DELUXE_V5_VERSION,V5_MAX_TRIANGLES,buildTriangleBVH,v5QualityProfile,v5CameraSignature,v5DetailPbrProfile}
  from "../workshop/studio/gpu-deluxe-v5-core.mjs";
 import {V5_RAYTRACE_SHADER,V5_ACCUMULATE_SHADER,V5_PRESENT_SHADER}
  from "../workshop/studio/gpu-deluxe-v5-shaders.mjs";
@@ -18,6 +18,19 @@ test("V5 is a new version, preserving V2 fallback and bounding resources",()=>{
  const m=v5QualityProfile({width:390,height:844,mobile:true,preset:"extreme"});
  assert.ok(m.maxPixels<=22000);
  assert.ok(m.maxTriangles<=192);
+});
+test("V5 full-detail PBR retains geometry, textures and animation with bounded DPR",()=>{
+ const high=v5DetailPbrProfile({preset:"extreme",devicePixelRatio:3});
+ assert.equal(high.mode,"full-detail-pbr");
+ assert.equal(high.pixelRatio,2);
+ assert.equal(high.preservesGeometry,true);
+ assert.equal(high.preservesTextures,true);
+ assert.equal(high.preservesSkinning,true);
+ assert.equal(high.usesNeuralModel,false);
+ const mobile=v5DetailPbrProfile({preset:"extreme",mobile:true,devicePixelRatio:3,adaptiveScale:.6});
+ assert.equal(mobile.pixelRatio,.9);
+ assert.equal(v5DetailPbrProfile({preset:"unrecognized",devicePixelRatio:2}).pixelRatio,1);
+ assert.equal(v5DetailPbrProfile({devicePixelRatio:Infinity}).pixelRatio,1);
 });
 test("BVH encodes actual triangles, bounds, colors and material roughness",()=>{
  const b=buildTriangleBVH([tri(0),tri(3),tri(6),tri(9),tri(12)],{leafSize:2});
@@ -93,5 +106,9 @@ test("V5 panel is added into existing 3D Studio and retains V2",()=>{
  assert.match(adapter,/buildTriangleBVH\(src\.triangles/);
  assert.match(adapter,/renderer\.setRenderTarget\(rayTarget\)/);
  assert.match(adapter,/gpuV5Capture/);
+ assert.match(adapter,/gpuV5Detail/);
+ assert.match(adapter,/renderer\.render\(scene,camera\)/);
+ assert.match(adapter,/stopPbr\(\)/);
+ assert.match(studio,/canvas,scene,root,camera/);
  assert.match(adapter,/getGpuTime=\(\)=>null/);
 });

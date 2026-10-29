@@ -13,7 +13,27 @@ try{
   await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
   assert.ok(await page.locator("#gpuDeluxeV5").isVisible());
   assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"false");
+  // LookDev is non-destructive, including for the small-screen layout.
+  assert.ok(await page.locator("#lookdevStudio").isVisible());
+  await page.locator("#lookdevPreset").selectOption("golden");
+  await page.locator("#lookdevEnable").click();
+  await page.waitForFunction(()=>document.querySelector("#lookdevStatus")?.textContent.includes("Golden Hour"),{timeout:45000});
+  assert.equal(await page.locator("#lookdevEnable").getAttribute("aria-pressed"),"true");
+  await page.locator("#lookdevPreset").selectOption("neon");
+  await page.waitForFunction(()=>document.querySelector("#lookdevStatus")?.textContent.includes("Neon Noir"),{timeout:20000});
+  await page.locator("#lookdevExposure").evaluate(el=>{el.value="120";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.locator("#lookdevFit").click();
+  assert.match(await page.locator("#lookdevStatus").textContent(),/Skuggor anpassade/);
+  await page.locator("#lookdevOff").click();
+  assert.equal(await page.locator("#lookdevEnable").getAttribute("aria-pressed"),"false");
+  assert.equal(await page.locator("#objectCount").textContent(),"1");
+  console.log("PASS: reversible LookDev lighting and PBR environment",size.width+"x"+size.height);
   await page.locator("#gpuV5Preset").selectOption("balanced");
+  await page.locator("#gpuV5Detail").click();
+  await page.waitForFunction(()=>document.querySelector("#gpuV5Status")?.textContent.includes("hela scenens trianglar"),{timeout:45000});
+  assert.equal(await page.locator("#gpuV5Detail").getAttribute("aria-pressed"),"true");
+  assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"false");
+  console.log("PASS: V5 full-detail PBR",size.width+"x"+size.height);
   await page.locator("#gpuV5Enable").click();
   await page.waitForFunction(()=>document.querySelector("#gpuV5Status")?.textContent.includes("trianglar"),{timeout:45000});
   assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"true",
