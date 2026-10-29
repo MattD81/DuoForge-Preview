@@ -1,6 +1,6 @@
 {
   "schema": "duoforge.3d-knowledge@1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "reviewed": "2026-10-29",
   "purpose": "Faktabank för att välja GLB-teknik, ingen modellträning eller AI-inferens",
   "policy": {
@@ -30,7 +30,8 @@
       "morph",
       "retarget",
       "gltf",
-      "validator"
+      "validator",
+      "shape_dna"
     ],
     "forest": [
       "sculpt",
@@ -38,7 +39,8 @@
       "pbr",
       "procedural",
       "skin",
-      "gltf"
+      "gltf",
+      "shape_dna"
     ],
     "castle": [
       "silhouette",
@@ -46,7 +48,8 @@
       "rigid",
       "pbr",
       "gltf",
-      "validator"
+      "validator",
+      "shape_dna"
     ],
     "serpent": [
       "sculpt",
@@ -54,7 +57,8 @@
       "serpent_rig",
       "skin",
       "pbr",
-      "gltf"
+      "gltf",
+      "shape_dna"
     ],
     "image": [
       "tripo",
@@ -74,7 +78,8 @@
       "retopo",
       "pbr",
       "transform",
-      "validator"
+      "validator",
+      "shape_dna"
     ]
   },
   "techniques": [
@@ -537,6 +542,22 @@
       "licenseStatus": "allow",
       "sources": [
         "https://github.com/google/filament/blob/main/docs/Materials.md.html"
+      ]
+    },
+    {
+      "id": "shape_dna",
+      "title": "DuoForge Shape DNA · experimentell geometriförädling",
+      "area": "Geometri",
+      "inputs": [
+        "mesh"
+      ],
+      "goal": "Tre deterministiska materialbaserade reliefvarianter med teknisk säkerhetskontroll och bibehållen UV/skin-weighting.",
+      "limitation": "Bearbetar existerande mesh; rekonstruerar inte en referensbild, skapar inte ny karaktärsanatomi eller fotorealistisk PBR från en bild.",
+      "runtime": "browser",
+      "license": "Egen DuoForge-kod i befintligt repository",
+      "licenseStatus": "allow",
+      "sources": [
+        "https://github.com/MattD81/DuoForge-Preview/blob/main/docs/3d-knowledge-base/SHAPE_DNA_EXPERIMENT.md"
       ]
     }
   ]

@@ -40,3 +40,11 @@ Licensen säger ordagrant att dess territorium utesluter Europeiska unionen, Sto
 ## Källhygien
 
 Vid större uppgradering: granska primärkällornas README/LICENSE på nytt, dokumentera datum och modellrevision, byt inte bas på tredjepartsbloggar. Registrera nya poster i `knowledge.json` med status/krav/begränsning; gamla råd är inte automatiskt korrekta.
+
+## Ny forskningsinspiration för Shape DNA-labbet
+
+- https://openaccess.thecvf.com/content/CVPR2025/html/Yu_Fancy123_One_Image_to_High-Quality_3D_Mesh_Generation_via_Plug-and-Play_CVPR_2025_paper.html — Fancy123: korrigering av multiview och geometrifidelitet (CVPR 2025). Kod/vikter har **inte** importerats.
+- https://openaccess.thecvf.com/content/CVPR2025/html/Dinh_Geometry_in_Style_3D_Stylization_via_Surface_Normal_Deformation_CVPR_2025_paper.html — Geometry in Style: normalkontrollerad formändring (CVPR 2025). Metoden återimplementeras **inte** av vårt enkla procedurbrus.
+- https://openaccess.thecvf.com/content/CVPR2026/html/Held_MeshSplatting_Differentiable_Rendering_with_Opaque_Meshes_CVPR_2026_paper.html — MeshSplatting: meshinriktad rekonstruktion (CVPR 2026). Inspiration, inte installerad motor.
+
+Dessa källor visar att formtrogen detalj och kontroll mellan vyer är aktiva forskningsfrågor. Shape DNA är ett **lokalt tekniskt experiment**, inte dokumenterat unikt i världen.
