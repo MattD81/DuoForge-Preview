@@ -7,7 +7,7 @@
 import * as THREE from "three";
 import {createOceanSurface} from "../workshop/studio/ocean-water.mjs";
 import {createGPUDeluxe} from "../workshop/studio/gpu-deluxe.mjs";
-import {normalizeConfig} from "./planner.mjs";
+import {normalizeConfig,levelEnemyCount} from "./planner.mjs";
 
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const EPS=.00001;
@@ -106,7 +106,7 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   if(water){scene.remove(water.mesh);water.dispose();water=null;}
   worldRoot=new THREE.Group();scene.add(worldRoot);
   foes=[];relics=[];decor=[];portal=null;seen=0;
-  levelEnemies=Math.min(12,project.enemies+Math.floor((stage-1)*.65));
+  levelEnemies=levelEnemyCount(project,stage);
   levelItems=project.genre==="arena"?0:project.collectibles;
   stageNotice="Bana "+stage+" / "+project.levels+" • samla kristaller och besegra fiender";
   const ground=basic(project.world==="ocean"?0x64462f:project.world==="city"?0x344353:

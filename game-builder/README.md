@@ -5,7 +5,7 @@
 ## Vad som faktiskt fungerar
 
 1. Ange en svensk spelidé eller förbättring i textfältet.
-2. Regelbaserad promptplanner (`planner.mjs`) tolkar igenkännbara önskemål om **3D-action/arena**, hav/skog/stad/ruiner, väder, antal banor/fiender/kristaller, grafikläge, karaktärstyp och spelnamn.
+2. Regelbaserad promptplanner (`planner.mjs`) tolkar igenkännbara önskemål om **3D-action/arena**, hav/skog/stad/ruiner, väder, antal banor/fiender/kristaller (även "utan fiender" och "inga kristaller"), grafikläge, karaktärstyp och spelnamn.
 3. En **riktig spelbar WebGL 3D-motor** (`runtime.mjs`) skapar en procedurvärld, fiende-AI, kamp, HP, samlarobjekt och portal som leder vidare till nästa bana. Spela med WASD/piltangenter, J/K/Space, mobilknappar eller en redan ansluten Bluetooth/USB-gamepad.
 4. Samma projekt behåller **ID och övriga konfigurationer**, uppdateras inkrementellt, får historik och ångra. Projektet sparas i webbläsarens lokala lagring. Det är ingen server-synk.
 5. Återanvänder **befintliga Ocean Cinema V5** (7-band WebGL) och **GPU Deluxe** för adaptiv upplösning från `workshop/studio/`.
