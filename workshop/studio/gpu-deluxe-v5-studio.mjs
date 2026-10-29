@@ -61,7 +61,7 @@ function makeDataTexture(data,width){
  return tex;
 }
 export function initGpuDeluxeV5Studio({renderer,canvas,scene,root,camera,isBusy=()=>false,
- getGpuTime=()=>null,notify=()=>{}}={}){
+ isPbrBusy=isBusy,getGpuTime=()=>null,notify=()=>{}}={}){
  if(!renderer||!canvas||!scene||!root||!camera)throw Error("GPU Deluxe V5 requires existing Studio scene");
  const parent=document.querySelector(".sidebar.right-panel")||document.querySelector(".sidebar");
  if(!parent)return null;
@@ -248,7 +248,10 @@ export function initGpuDeluxeV5Studio({renderer,canvas,scene,root,camera,isBusy=
  oldPanel?.addEventListener("click",onV2Click);
  function render(){
   if(!active||disposed)return false;
-  if(isBusy()){if(mode==="detail")stopPbr();return false;}
+  if(mode==="detail"?isPbrBusy():isBusy()){
+   if(mode==="detail")stopPbr();
+   return false;
+  }
   try{
    if(mode==="detail"){
     startPbr();updateDetailQuality();
