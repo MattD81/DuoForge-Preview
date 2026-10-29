@@ -30,7 +30,7 @@ const alias={
   toe:["toe_right","righttoebase","righttoe"]
  }
 };
-function findTarget(index,side,part){
+function findTarget(index,side,part,dof){
  const pref=side?alias[side][part]:alias[part];
  if(pref){for(const n of pref){const item=index.get(normalize(n));if(item)return item;}}
  if(!side){return null;}
@@ -39,9 +39,15 @@ function findTarget(index,side,part){
   ring:["ring","finger3"],little:["little","pinky","finger4"]}[part];
  if(!tails)return null;
  const candidates=[...index.values()];
+ const digit={base:"1",middle:"2",tip:"3"}[dof];
+ const suffix={base:["proximal","metacarpal"],middle:["intermediate","middle"],tip:["distal","tip"]}[dof]||[];
  return candidates.find(b=>{
-  const n=normalize(b.name);return tails.some(t=>n.includes(t))&&
-  (n.includes(sideWord)||n.endsWith(which));
+  if(!b.isBone)return false;
+  const n=normalize(b.name);
+  const fingerMatch=tails.some(t=>n.includes(t));
+  const sideMatch=n.includes(sideWord)||n.startsWith(which)||n.endsWith(which);
+  const segmentMatch=n.endsWith(digit)||suffix.some(s=>n.endsWith(s));
+  return fingerMatch&&sideMatch&&segmentMatch;
  })||null;
 }
 const orientation={
@@ -65,6 +71,51 @@ const faceKeys={
  snarl:["snarl","noseSneerLeft","noseSneerRight"],
  surprise:["surprise","eyeWideLeft","eyeWideRight"]
 };
+/** Inspect actual GLB skin vertex weights, without pretending to create missing anatomy.
+ * Sampled vertex-weight sum is a diagnostics proxy, not a complete mesh validator.
+ */
+export function auditGLBAnatomy(root,{maxVertexSamples=2200}={}){
+ if(!root?.traverse)throw Error("Använd en riktig importerad 3D-scen.");
+ const info={skinnedMeshes:0,bones:0,skinnedVertices:0,
+  morphTargets:0,sampledVertices:0,weightIssues:0,
+  missingSkinWeights:0,nonNormalizedSamples:0,zeroWeightSamples:0,
+  faceMorphNames:[],warnings:[]};
+ const names=new Set(),bones=new Set();
+ root.traverse(node=>{
+  if(node.isBone)bones.add(node);
+  if(!node.isSkinnedMesh)return;
+  info.skinnedMeshes++;
+  const geometry=node.geometry,vertices=geometry?.getAttribute?.("position")?.count||0;
+  info.skinnedVertices+=vertices;
+  const morphs=node.morphTargetDictionary||{};
+  info.morphTargets=Math.max(info.morphTargets,Object.keys(morphs).length);
+  for(const n of Object.keys(morphs))names.add(n);
+  for(const b of node.skeleton?.bones||[])bones.add(b);
+  const index=geometry?.getAttribute?.("skinIndex"),weight=geometry?.getAttribute?.("skinWeight");
+  if(!index||!weight||weight.count!==vertices){info.missingSkinWeights++;continue;}
+  const total=Math.min(Math.floor(maxVertexSamples),vertices),stride=Math.max(1,Math.floor(vertices/Math.max(total,1)));
+  const channels=Math.min(weight.itemSize||0,4);
+  for(let i=0,seen=0;i<vertices&&seen<total;i+=stride,seen++){
+   let sum=0;
+   for(let j=0;j<channels;j++){
+    const value=weight.array[i*weight.itemSize+j];
+    if(!Number.isFinite(value)||value<0)info.weightIssues++;
+    else sum+=value;
+   }
+   info.sampledVertices++;
+   if(sum<.001)info.zeroWeightSamples++;
+   else if(Math.abs(sum-1)>.075)info.nonNormalizedSamples++;
+  }
+ });
+ info.bones=bones.size;info.faceMorphNames=[...names].slice(0,80);
+ if(info.missingSkinWeights)info.warnings.push("En eller flera SkinnedMesh saknar skinWeight/skinIndex.");
+ if(info.zeroWeightSamples)info.warnings.push("Flera vertex-samples har inga aktiva skinnvikter.");
+ if(info.nonNormalizedSamples)info.warnings.push("Skinnvikter behöver normaliseras.");
+ if(info.bones<60)info.warnings.push("Färre än 60 ben: fingrar, tår och fina ansiktsleder är sannolikt ofullständiga.");
+ if(!info.morphTargets)info.warnings.push("Inga ansikts- eller muskelmorphs kunde påvisas.");
+ return info;
+}
+
 export function createBiomechanicsAdapter(root,{massKg=75,intensity=1}={}){
  if(!root?.traverse)throw Error("Importera en GLB med skelett först.");
  const index=new Map(),skinned=[],morphs=[];
@@ -78,7 +129,7 @@ export function createBiomechanicsAdapter(root,{massKg=75,intensity=1}={}){
  const bones=new Map();
  for(const d of HUMAN_DOF){
   if(d.part==="jaw")continue;
-  const bone=findTarget(index,d.side,d.part);
+  const bone=findTarget(index,d.side,d.part,d.dof);
   if(!bone){missed.push(d.id);continue;}
   const setting=orientation[d.part]?.[d.dof]||(
    ["thumb","index","middle","ring","little"].includes(d.part)?{base:["z",1],middle:["z",1],tip:["z",1]}[d.dof]:null);
@@ -89,6 +140,7 @@ export function createBiomechanicsAdapter(root,{massKg=75,intensity=1}={}){
   if(!bones.has(bone))bones.set(bone,{rotation:bone.quaternion.clone(),scale:bone.scale.clone()});
  }
  if(mapped.size<10)throw Error("För få ledmatchningar i GLB. Krav: minst tio stödda ledkanaler.");
+ const audit=auditGLBAnatomy(root);
  const muscle=new NeuromuscularEngine({massKg,intensity});
  const q=new THREE.Quaternion(),euler=new THREE.Euler(0,0,0,"XYZ");
  let running=true;
@@ -139,7 +191,7 @@ export function createBiomechanicsAdapter(root,{massKg=75,intensity=1}={}){
  return {
   engine:muscle,update:animFrame,stop,setMotion:(name,params)=>muscle.setMotion(name,params),
   diagnostics:()=>({
-   engine:ENGINE_VERSION,skinnedMeshes:skinned.length,
+   engine:ENGINE_VERSION,skinnedMeshes:skinned.length,anatomy:audit,
    mappedChannels:mapped.size,totalChannels:HUMAN_DOF.length,
    unmapped:missed,matched:activeNames,
    facialTargets:[...new Set(morphs.flatMap(m=>Object.keys(m.morphTargetDictionary||{})))],
