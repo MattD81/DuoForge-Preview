@@ -1,6 +1,25 @@
 # DuoForge GPU Deluxe V5 – CINEMA V5
 
-**Status:** experimentellt opt-in-läge i befintliga GitHub Preview 3D Studio. **Ingen ändring i ChatGPT Sites-produktionen**, ingen Work, inga API-nycklar, ingen betald GPU. Behåller GPU Deluxe V2 och ordinarie redigering.
+**Status:** två opt-in-lägen (full detalj PBR och experimentell ray tracing) i befintliga GitHub Preview 3D Studio. **Ingen ändring i ChatGPT Sites-produktionen**, ingen Work, inga API-nycklar, ingen betald GPU. Behåller GPU Deluxe V2 och ordinarie redigering.
+
+## V5 Detail PBR (nytt i hybriduppdateringen)
+
+Välj **V5 Detail PBR** i samma Studio-panel. Detta är ett **full-geometriskt rasterläge**
+som använder Three.js befintliga WebGL-renderer, den riktiga scenens alla trianglar,
+GLB-texturer och skelettanimationer. En procedurgenererad RoomEnvironment-miljö
+ger PBR-metaller och roughness-material lokala reflexioner via PMREM där det stöds.
+Inga modellfiler eller scener ändras eller laddas upp.
+
+Balanced, Cinematic och Extreme styr **device pixel ratio** (max 1, 1,5, 2 för
+dator; max 1, 1,25, 1,5 för mobil). Vid faktisk GPU-tid över 40 ms över flera
+mätningar sänks DPR adaptivt (som lägst 60 % av profilens DPR) utan att ta bort
+någon geometri. Vid stabil GPU-tid under 16 ms kan DPR återhämta sig.
+Om GPU-tid inte går att mäta används profilens fastställda pixelgränser.
+Originalmiljö och renderingsexponering återställs när V5 stängs av.
+
+**Detail PBR är inte ray tracing eller neural AI-uppskalning.** Det är högfidelitets-
+rendering av hela scenen. **V5 Ray Cinema** är kvar som separat experimentell
+raytracing, med tidigare dokumenterade BVH/triangel- och texturbegränsningar.
 
 ## Vad som faktiskt är nytt
 
