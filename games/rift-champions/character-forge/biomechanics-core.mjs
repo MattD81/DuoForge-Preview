@@ -286,7 +286,7 @@ export class NeuromuscularEngine{
   this.face.browAngry=eased(this.face.browAngry,eyebrow,.13);
   this.face.blinkLeft=eased(this.face.blinkLeft,blink,.28);
   this.face.blinkRight=eased(this.face.blinkRight,blink,.28);
-  this.face.jawOpen=eased(this.face.jawOpen,this.motion==="breathe"?.09:0,.12);
+  this.face.jawOpen=eased(this.face.jawOpen,Math.max(this.joints["jaw.open"].angle/(32*RAD),this.motion==="breathe"?.09:0),.12);
   this.face.smile=eased(this.face.smile,this.motion==="dance"?.35:0,.09);
  }
  snapshot(){
