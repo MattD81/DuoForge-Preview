@@ -37,6 +37,6 @@ test("LookDev is integrated into Studio but cannot mutate exported objects",()=>
  assert.match(adapter,/new THREE\.PMREMGenerator\(renderer\)/);
  assert.match(adapter,/new RoomEnvironment\(\)/);
  assert.match(adapter,/function restore\(\)/);
- assert.match(adapter,/isBusy:\/\/|if\(isBusy\(\)\)/);
+ assert.match(adapter,/if\(isBusy\(\)\)/);
  assert.doesNotMatch(adapter,/root\.add\(|GLTFExporter|\.toJSON\(|\.material\.map=/);
 });
