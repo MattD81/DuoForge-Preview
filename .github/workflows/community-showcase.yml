@@ -1,0 +1,24 @@
+name: Validate DuoForge community showcase
+on:
+  pull_request:
+    paths:
+      - README.md
+      - 'showcase/**'
+      - 'docs/COMMUNITY_VISION.md'
+      - 'docs/PUBLIC_BOUNDARY.md'
+      - 'tests/community-showcase.test.mjs'
+      - '.github/workflows/community-showcase.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  community-showcase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public showcase content and source boundaries
+        run: node --test tests/community-showcase.test.mjs
