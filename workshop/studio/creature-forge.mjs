@@ -274,6 +274,23 @@ export function createCreature({type="castle",detail=2,size=1}={}){
  root.scale.setScalar(scale);
  return root;
 }
+// Reject an apparently successful GLB download when skinning, animations or textures were dropped.
+export function validateCreatureGLB(binary){
+ if(!(binary instanceof ArrayBuffer)||binary.byteLength<24)throw Error("GLB saknas eller är för liten");
+ const view=new DataView(binary);
+ if(view.getUint32(0,true)!==0x46546C67||view.getUint32(4,true)!==2||
+    view.getUint32(8,true)!==binary.byteLength)throw Error("Ogiltigt GLB-huvud");
+ const n=view.getUint32(12,true);
+ if(view.getUint32(16,true)!==0x4E4F534A||n+20>binary.byteLength)throw Error("GLB saknar JSON-del");
+ const text=new TextDecoder().decode(new Uint8Array(binary,20,n)).trim();
+ const json=JSON.parse(text);
+ if(!json.meshes?.length||!json.skins?.length||!json.animations?.length||
+    !json.materials?.length||!json.textures?.length){
+  throw Error("GLB saknar geometri, skinnad rigg, animering eller PBR-textur");
+ }
+ return {meshes:json.meshes.length,skins:json.skins.length,
+   animations:json.animations.length,textures:json.textures.length};
+}
 export function initCreatureForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify}){
  const parent=document.getElementById("characterForge");
  if(!parent||document.getElementById("creatureForge"))return;
