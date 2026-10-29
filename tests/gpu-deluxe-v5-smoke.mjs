@@ -14,6 +14,11 @@ try{
   assert.ok(await page.locator("#gpuDeluxeV5").isVisible());
   assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"false");
   await page.locator("#gpuV5Preset").selectOption("balanced");
+  await page.locator("#gpuV5Detail").click();
+  await page.waitForFunction(()=>document.querySelector("#gpuV5Status")?.textContent.includes("hela scenens trianglar"),{timeout:45000});
+  assert.equal(await page.locator("#gpuV5Detail").getAttribute("aria-pressed"),"true");
+  assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"false");
+  console.log("PASS: V5 full-detail PBR",size.width+"x"+size.height);
   await page.locator("#gpuV5Enable").click();
   await page.waitForFunction(()=>document.querySelector("#gpuV5Status")?.textContent.includes("trianglar"),{timeout:45000});
   assert.equal(await page.locator("#gpuV5Enable").getAttribute("aria-pressed"),"true",
