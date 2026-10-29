@@ -1,0 +1,34 @@
+name: Test DuoForge Human Motion Engine
+on:
+  pull_request:
+    paths:
+      - 'games/rift-champions/character-forge/biomechanics-*.mjs'
+      - 'games/rift-champions/character-forge/index.html'
+      - 'tests/biomechanics-*.test.mjs'
+      - '.github/workflows/biomechanics-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: neuromuscular-tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  neuromuscular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check all engine modules
+        run: |
+          node --check games/rift-champions/character-forge/biomechanics-core.mjs
+          node --check games/rift-champions/character-forge/biomechanics-three.mjs
+          node --check tests/biomechanics-core.test.mjs
+          node --check tests/biomechanics-adapter.test.mjs
+          node --test tests/biomechanics-core.test.mjs
+      - name: Install existing game's MIT Three.js version
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0
+      - name: Test real Three.js bone and skinned mesh adapter
+        run: node --test tests/biomechanics-adapter.test.mjs

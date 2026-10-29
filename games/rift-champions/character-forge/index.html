@@ -33,12 +33,53 @@ small{font-size:11px;color:#9cbdc9}button:focus-visible,select:focus-visible{out
 <button id="cmu" type="button">Prova CMU:s slagsekvens (02_05)</button>
 <div id="status" role="status" aria-live="polite">Laddar GLB-modellen…</div>
 <small>Mocap-data: <a href="https://mocap.cs.cmu.edu/">CMU Motion Capture Database</a>. Kreditering: Data obtained from mocap.cs.cmu.edu, funded by NSF EIA-0196217. Ingen betald generering.</small>
+<section id="bioLab" aria-label="DuoForge neuromuskulär motorik" style="border-top:1px solid #4e7182;padding-top:14px;display:flex;flex-direction:column;gap:9px">
+<h1>🧠 DuoForge Human Motion Engine V1</h1>
+<p>72 ledkanaler, 144 förenklade antagonistiska muskelaktuatorer och 27 rörelsemönster. Prova dynamisk gång, hopp, slag, balans och grepp direkt på GLB-skelettet. Muskelkrafter är simuleringar, inte uppmätt mänsklig anatomi.</p>
+<label for="bioMotion">Motoriskt beteende<select id="bioMotion">
+<option value="idle">Vila / andning</option>
+<option value="walk">Gå</option>
+<option value="run">Springa</option>
+<option value="sprint">Sprint</option>
+<option value="squat">Knäböj</option>
+<option value="sit">Sitta</option>
+<option value="stand">Stå upp</option>
+<option value="jump">Hoppa</option>
+<option value="land">Landa</option>
+<option value="reach">Sträcka sig</option>
+<option value="lift">Lyfta</option>
+<option value="push">Skjuta / trycka</option>
+<option value="pull">Dra</option>
+<option value="punch">Slå</option>
+<option value="kick">Sparka</option>
+<option value="block">Blockera</option>
+<option value="wave">Vinka</option>
+<option value="climb">Klättra</option>
+<option value="crawl">Krypa</option>
+<option value="turn">Vända / vrida</option>
+<option value="dance">Dansa</option>
+<option value="bow">Buga</option>
+<option value="stretch">Sträcka ut</option>
+<option value="balance">Balansera</option>
+<option value="grab">Gripa</option>
+<option value="point">Peka</option>
+<option value="breathe">Djupandning</option>
+</select></label>
+<label for="bioIntensity">Muskelarbete / rörelseintensitet <span id="bioPct">85%</span><input id="bioIntensity" type="range" min="10" max="100" value="85"></label>
+<label for="bioOverlay">Samtidig överkroppsrörelse<select id="bioOverlay"><option value="none">Ingen</option><option value="wave">Vinka samtidigt</option><option value="point">Peka samtidigt</option></select></label>
+<div class="row"><button id="bioStart" type="button">▶ Aktivera muskelsystem</button><button id="bioStop" type="button" disabled>■ Stoppa</button></div>
+<div id="bioStatus" role="status" aria-live="polite" style="font-size:12px;white-space:pre-wrap;background:#0c2636;border:1px solid #37627b;border-radius:8px;padding:9px;line-height:1.5">Starta för att kalibrera mot den aktuella GLB-modellens skelett.</div>
+<div id="bioMuscles" aria-label="Muskelgrupper med störst aktivitet" style="font-size:11px;line-height:1.6;color:#b5e6de"></div>
+<small><strong>Begränsning:</strong> V3 har inte alla hand- och fingerleder eller individuella muskelvolymer. De kan bara animeras när GLB-filen faktiskt innehåller motsvarande ben och blend shapes. Motorn är en forskningsinspirerad spelmodell, inte en komplett medicinsk människosimulator.</small>
+</section>
 </aside></main>
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createBVHRetargeter} from './mocap-retarget.mjs';
+import {createBiomechanicsAdapter} from './biomechanics-three.mjs';
+import {HUMAN_DOF} from './biomechanics-core.mjs';
 const $=id=>document.getElementById(id),panel=$('scene'),status=$('status');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x0c1828);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
@@ -51,11 +92,13 @@ for(const [hex,pos,power] of [[0xffffff,[3,6,6],3.3],[0x46e6cc,[-4,4,0],2.5],[0x
 const floor=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.83,.15,60),new THREE.MeshStandardMaterial({color:0x244154,metalness:.40,roughness:.44}));
 floor.position.y=-.15;floor.receiveShadow=true;scene.add(floor);
 let root=null,mixer=null,clips={},morph=null,mocap=null,bvhText='',paused=false,last=performance.now(),loadSeq=0;
+let biomechanics=null,bioHudLast=0;
 function say(message){status.textContent=message;}
 function size(){let w=panel.clientWidth,h=panel.clientHeight;if(!w||!h)return;renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(panel);else addEventListener('resize',size);size();
 async function load(){
   const seq=++loadSeq,who=$('fighter').value;
+  stopBio();
   if(mocap){mocap.stop();mocap=null;}mixer?.stopAllAction();if(root)scene.remove(root);
   root=null;mixer=null;morph=null;$('download').href='../models/'+who+'_skinned_v3.glb';
   say('Laddar '+who.toUpperCase()+' – skinnad V3 GLB…');
@@ -69,9 +112,9 @@ async function load(){
     say(who.toUpperCase()+' klar: '+gltf.animations.length+' animationer, '+Object.keys(morph.morphTargetDictionary).length+' ansiktsuttryck. Välj animation eller BVH.');
   }catch(err){say('Kunde inte ladda V3: '+err.message);console.error(err);}
 }
-function play(name){if(!mixer||!clips[name])return;if(mocap){mocap.stop();mocap=null;}mixer.stopAllAction();mixer.clipAction(clips[name]).reset().play();paused=false;}
+function play(name){if(!mixer||!clips[name])return;stopBio();if(mocap){mocap.stop();mocap=null;}mixer.stopAllAction();mixer.clipAction(clips[name]).reset().play();paused=false;}
 function expression(){
-  if(!morph)return;
+  if(!morph||biomechanics)return;
   const name=$('face').value;
   if(name==='neutral')return;
   const index=morph.morphTargetDictionary[name];
@@ -100,12 +143,68 @@ $('cmu').addEventListener('click',async()=>{
 });
 $('import').addEventListener('click',()=>{
  if(!root||!bvhText)return;
- try{mixer?.stopAllAction();mocap?.stop();mocap=createBVHRetargeter(bvhText,{root});paused=false;say('BVH spelar: '+mocap.matched.length+' leder, '+mocap.duration.toFixed(1)+' sek.');}
+ try{stopBio();mixer?.stopAllAction();mocap?.stop();mocap=createBVHRetargeter(bvhText,{root});paused=false;say('BVH spelar: '+mocap.matched.length+' leder, '+mocap.duration.toFixed(1)+' sek.');}
  catch(e){say('BVH-problem: '+e.message);}
 });
 function tick(now){requestAnimationFrame(tick);const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;
- if(!paused){if(mocap)mocap.update(dt);else mixer?.update(dt);}
+ if(!paused){
+  if(biomechanics){
+   const result=biomechanics.update(dt);
+   if(result&&now-bioHudLast>310){
+    bioHudLast=now;
+    $('bioMuscles').textContent=result.strongest.slice(0,6).map(m=>
+     m.name.replace(/-/g,' ')+' · '+Math.round(m.activation*100)+'% · '+m.forceN+' N*').join('\n');
+   }
+  }else if(mocap)mocap.update(dt);
+  else mixer?.update(dt);
+ }
  expression();controls.update();renderer.render(scene,camera);
 }
+function stopBio(){
+ if(!biomechanics)return;
+ biomechanics.stop();biomechanics=null;
+ $('bioStop').disabled=true;$('bioStart').disabled=false;
+ $('bioStatus').textContent='Muskelsystemet avstängt. Inbyggda GLB-animationer kan spelas igen.';
+ $('bioMuscles').textContent='';
+}
+function setBioOverlay(){
+ if(!biomechanics)return;
+ const which=$('bioOverlay').value;
+ if(which==='none'){biomechanics.engine.setOverlay(null);return;}
+ const side=which==='wave'?'left':'right';
+ const mask=HUMAN_DOF.filter(d=>d.side===side&&['clavicle','shoulder','elbow','forearm','wrist'].includes(d.part))
+ .map(d=>d.id);
+ biomechanics.engine.setOverlay(which,{weight:.78,mask});
+}
+$('bioStart').addEventListener('click',()=>{
+ if(!root)return $('bioStatus').textContent='Vänta tills en skinnad GLB-karaktär har laddats.';
+ try{
+  stopBio();mocap?.stop();mocap=null;mixer?.stopAllAction();
+  biomechanics=createBiomechanicsAdapter(root,{intensity:Number($('bioIntensity').value)/100});
+  biomechanics.setMotion($('bioMotion').value,{crossfade:.33});
+  setBioOverlay();paused=false;
+  const r=biomechanics.diagnostics();
+  $('bioStart').disabled=true;$('bioStop').disabled=false;
+  $('bioStatus').textContent='AKTIV · '+r.mappedChannels+'/'+r.totalChannels+
+   ' ledkanaler matchade i GLB · '+r.muscleGroups+' schematiska aktuatorer.\n'+
+   'Riktig GLB: '+r.anatomy.bones+' ben, '+r.anatomy.skinnedVertices+
+   ' skinnade vertex, '+r.anatomy.morphTargets+' morphtargets. '+
+   'Skinnvikter kontrollerade på '+r.anatomy.sampledVertices+
+   ' vertex-samples ('+r.anatomy.zeroWeightSamples+' nollvikter, '+
+   r.anatomy.nonNormalizedSamples+' onormaliserade).\n'+
+   (r.unmapped.length?'Saknade ledkanaler: '+r.unmapped.length+
+    ' (framför allt fingrar och handleder; kräver fler ben i modellen).':'Alla ledkanaler hittades.')+
+   (r.anatomy.warnings.length?'\nBegränsningar: '+r.anatomy.warnings.join(' '):'');
+  bioHudLast=0;
+ }catch(e){stopBio();$('bioStatus').textContent='Kan inte starta motorik: '+e.message;}
+});
+$('bioStop').addEventListener('click',()=>{stopBio();if(mixer)play('idle');});
+$('bioMotion').addEventListener('change',()=>biomechanics?.setMotion($('bioMotion').value,{crossfade:.35}));
+$('bioIntensity').addEventListener('input',()=>{
+ $('bioPct').textContent=$('bioIntensity').value+'%';
+ biomechanics?.engine.setIntensity(Number($('bioIntensity').value)/100);
+});
+$('bioOverlay').addEventListener('change',setBioOverlay);
+
 load();requestAnimationFrame(tick);
 </script></body></html>
