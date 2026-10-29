@@ -1,0 +1,43 @@
+name: Test GPU Deluxe V2
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/gpu-deluxe-v2*.mjs'
+      - 'workshop/studio/studio.mjs'
+      - 'games/stormblade-duel/game.mjs'
+      - 'game-builder/runtime.mjs'
+      - 'game-builder/export.mjs'
+      - 'tests/gpu-deluxe-v2*.mjs'
+      - '.github/workflows/gpu-deluxe-v2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gpu-deluxe-v2-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  gpu-deluxe-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax and GPU timer tests
+        run: |
+          node --check workshop/studio/gpu-deluxe-v2.mjs
+          node --check workshop/studio/gpu-deluxe-v2-effects.mjs
+          node --check workshop/studio/gpu-deluxe-v2-studio.mjs
+          node --check workshop/studio/studio.mjs
+          node --check games/stormblade-duel/game.mjs
+          node --check game-builder/runtime.mjs
+          node --test tests/gpu-deluxe-v2.test.mjs
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Start static preview server
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . > /tmp/duoforge-gpu-v2.log 2>&1 &
+      - name: Test temporal reconstruction, ray trace mode and restore on mobile and desktop
+        run: node tests/gpu-deluxe-v2-smoke.mjs
