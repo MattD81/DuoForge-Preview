@@ -93,5 +93,5 @@ test("V5 panel is added into existing 3D Studio and retains V2",()=>{
  assert.match(adapter,/buildTriangleBVH\(src\.triangles/);
  assert.match(adapter,/renderer\.setRenderTarget\(rayTarget\)/);
  assert.match(adapter,/gpuV5Capture/);
- assert.match(adapter,/getGpuTime:/)===false;
+ assert.match(adapter,/getGpuTime=\(\)=>null/);
 });
