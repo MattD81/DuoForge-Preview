@@ -1,0 +1,29 @@
+name: DuoForge Neural SR checks
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/neural-*.mjs'
+      - 'workshop/studio/gpu-deluxe-v2-studio.mjs'
+      - 'services/neural-sr/**'
+      - 'tests/neural-sr.test.mjs'
+      - '.github/workflows/neural-sr-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tiny-neural-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and neural regression
+        run: |
+          node --check workshop/studio/neural-sr.mjs
+          node --check workshop/studio/neural-sr-weights.mjs
+          node --check workshop/studio/neural-training-capture.mjs
+          node --check workshop/studio/gpu-deluxe-v2-studio.mjs
+          node --test tests/neural-sr.test.mjs
+          python3 -m py_compile services/neural-sr/train.py
