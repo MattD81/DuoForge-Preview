@@ -75,7 +75,7 @@ export const MUSCLE_GROUPS=Object.freeze(degrees.flatMap(x=>x.muscles.map((name,
 export const ACTIONS=Object.freeze([
  "idle","walk","run","sprint","squat","sit","stand","jump","land","reach",
  "lift","push","pull","punch","kick","block","wave","climb","crawl",
- "turn","dance","bow","stretch","balance","grab","point","breathe"
+ "turn","dance","bow","stretch","balance","grab","point","breathe","custom"
 ]);
 const anatomy=new Map(HUMAN_DOF.map(x=>[x.id,x]));
 const zero=()=>Object.fromEntries(HUMAN_DOF.map(x=>[x.id,0]));
@@ -112,6 +112,7 @@ export function poseForAction(action,t=0,intensity=1){
  };
  const arms=(l,r)=>{left("shoulder.flex",l);right("shoulder.flex",r);};
  switch(action){
+ case "custom":break;
  case "idle":case "breathe":
   s("chest.flex",-1.5+1.5*wave(t*.22));s("spine.flex",1.2*wave(t*.22+.15));
   s("neck.yaw",3*wave(t*.09));arms(2,-2);break;
@@ -191,6 +192,7 @@ export class NeuromuscularEngine{
   this.massKg=clamp(massKg,20,250);this.intensity=clamp(intensity,0,1);
   this.stiffness=clamp(stiffness,5,65);this.damping=clamp(damping,1,25);
   this.motion="idle";this.time=0;this.transition=1;this.fromPose=zero();
+  this.customPose=zero();this.overlay=null;
   this.joints=Object.fromEntries(HUMAN_DOF.map(d=>[d.id,{angle:0,velocity:0,target:0}]));
   this.muscles=Object.fromEntries(MUSCLE_GROUPS.map(m=>[m.id,{activation:0,excitation:0,
    length:1,velocity:0,forceN:0,tendonForceN:0}]));
@@ -205,9 +207,29 @@ export class NeuromuscularEngine{
   this.fadeDuration=clamp(crossfade,.05,2);this.transition=0;
  }
  setIntensity(value){this.intensity=clamp(value,0,1);}
+ setCustomPose(input,{crossfade=.3}={}){
+  if(!input||typeof input!=="object"||Array.isArray(input))throw Error("Ange målposition per ledkanal.");
+  const pose=zero();
+  for(const [id,value] of Object.entries(input)){
+   if(!Number.isFinite(value))throw Error("Ogiltig ledvinkel: "+id);
+   setTarget(pose,id,value);
+  }
+  this.customPose=pose;
+  if(this.motion==="custom"){
+   this.fromPose=this.currentPose();this.transition=0;this.fadeDuration=clamp(crossfade,.05,2);
+  }else this.setMotion("custom",{crossfade});
+ }
+ setOverlay(action,{weight=.5,mask=null}={}){
+  if(action===null){this.overlay=null;return;}
+  if(!ACTIONS.includes(action)||action==="custom")throw Error("Ogiltig överlagring.");
+  if(mask!==null&&(!Array.isArray(mask)||mask.some(x=>!anatomy.has(x))))throw Error("Ogiltig ledmask.");
+  this.overlay={action,weight:clamp(weight,0,1),mask};
+ }
  currentPose(){return Object.fromEntries(Object.entries(this.joints).map(([k,v])=>[k,v.angle]));}
  targetPose(){
-  const to=poseForAction(this.motion,this.time,this.intensity);
+  let to=this.motion==="custom"?this.customPose:poseForAction(this.motion,this.time,this.intensity);
+  if(this.overlay)to=blendPoses(to,poseForAction(this.overlay.action,this.time,this.intensity),
+   this.overlay.weight,this.overlay.mask);
   return this.transition<1?blendPoses(this.fromPose,to,this.transition):to;
  }
  step(dt){
