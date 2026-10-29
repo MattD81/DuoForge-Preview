@@ -109,17 +109,17 @@ function limb(root,prefix,mat,at,length,radius,detail){
  ball(lower,prefix+" · led",mat,[0,0,0],[radius*.83,radius*.83,radius*.83],detail);
  return {upper,lower,mesh:sk,endBone:lower,tipY:-length*.38};
 }
-function bindHumanoid(root,kind,detail,m){
+function bindHumanoid(root,kind,detail,m,instanceId){
  const legs=[],arms=[],rand=RNG(324);
  const bodyMat=kind==="castle"?m.stone:kind==="forest"?m.bark:m.skin;
  const headY=kind==="castle"?3.12:3.18;
  ball(root,"Bål · 360° volym",bodyMat,[0,2.13,0],[.73,.89,.53],detail);
  ball(root,"Höft",bodyMat,[0,1.45,0],[.63,.4,.43],detail);
  for(const sign of [-1,1]){
-  const label=sign<0?"Left":"Right",arm=limb(root,"DF_"+kind+"_Arm_"+label,bodyMat,[sign*.82,2.64,.02],1.37,.27,detail);
+  const label=sign<0?"Left":"Right",arm=limb(root,"DF_"+kind+"_"+instanceId+"_Arm_"+label,bodyMat,[sign*.82,2.64,.02],1.37,.27,detail);
   arms.push({bone:arm.upper,lower:arm.lower,sign});
   ball(arm.endBone,"Hand "+label,bodyMat,[0,arm.tipY,0],[.28,.26,.24],detail);
-  const leg=limb(root,"DF_"+kind+"_Leg_"+label,bodyMat,[sign*.39,1.36,0],1.19,.30,detail);
+  const leg=limb(root,"DF_"+kind+"_"+instanceId+"_Leg_"+label,bodyMat,[sign*.39,1.36,0],1.19,.30,detail);
   legs.push({bone:leg.upper,lower:leg.lower,sign});
   ball(leg.endBone,"Fot "+label,bodyMat,[0,leg.tipY,-.14],[.32,.19,.43],detail);
  }
@@ -187,7 +187,7 @@ function humanoidClips(rig){
  }
  return clips;
 }
-function makeSnake(root,detail,m){
+function makeSnake(root,detail,m,instanceId){
  const length=detail===3?104:detail===2?72:40,radial=detail===3?18:12;
  const points=[];
  // Coiled tail on the ground and an upright, curved neck with a defined face.
@@ -204,7 +204,7 @@ function makeSnake(root,detail,m){
  const verts=[],uv=[],ids=[],idx=[],weights=[];
  const bones=[],boneCount=detail===3?19:detail===2?15:11;
  for(let j=0;j<boneCount;j++){
-  const b=new THREE.Bone();b.name="DF_serpent_Bone_"+j;
+  const b=new THREE.Bone();b.name="DF_serpent_"+instanceId+"_Bone_"+j;
   const p=curve.getPointAt(j/(boneCount-1));
   if(j===0)b.position.copy(p);else b.position.copy(p.sub(curve.getPointAt((j-1)/(boneCount-1))));
   if(j>0)bones[j-1].add(b);bones.push(b);
@@ -267,7 +267,9 @@ export function createCreature({type="castle",detail=2,size=1}={}){
  root.userData={duoforgeGenerator:"creature-forge@2",kind,detail:density,
   note:"Original procedural 360 degree topology; not a photorealistic AI reconstruction"};
  const m=surfaces(density);
- const clips=kind==="serpent"?makeSnake(root,density,m):humanoidClips(bindHumanoid(root,kind,density,m));
+ // Persistent unique bone names keep animation targets stable across undo, scene saves and multi-creature export.
+ const instanceId=(globalThis.crypto?.randomUUID?.()||String(Date.now())+"_"+Math.random()).replace(/[^a-zA-Z0-9]/g,"").slice(0,16);
+ const clips=kind==="serpent"?makeSnake(root,density,m,instanceId):humanoidClips(bindHumanoid(root,kind,density,m,instanceId));
  root.animations=clips;registerRigClips(root,clips);
  root.scale.setScalar(scale);
  return root;
