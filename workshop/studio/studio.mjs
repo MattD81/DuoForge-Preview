@@ -3,12 +3,14 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {TransformControls} from "three/addons/controls/TransformControls.js";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
+import {clone as cloneSkeleton} from "three/addons/utils/SkeletonUtils.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=research-3d-v1";
-import {registerRigClips} from "./cinema-rig.mjs";
+import {registerRigClips,getRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
+import {initCreatureForge,validateCreatureGLB} from "./creature-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -96,8 +98,12 @@ function animate(){
  gpuV2?.updateStatus();
  gpuV5?.updateStatus();
 }animate();
+function cloneSceneTree(tree){
+ let skinned=false;tree.traverse(obj=>{if(obj.isSkinnedMesh)skinned=true});
+ return skinned?cloneSkeleton(tree):tree.clone(true);
+}
 function cloneState(){
- const copy=root.clone(true);
+ const copy=cloneSceneTree(root);
  copy.traverse(obj=>{if(obj.isMesh&&obj.material){
   obj.material=Array.isArray(obj.material)?obj.material.map(m=>m.clone()):obj.material.clone();
  }});
@@ -109,7 +115,7 @@ function pushHistory(){
 }
 function restore(state){
  select(null);root.clear();
- const clone=state.tree.clone(true);
+ const clone=cloneSceneTree(state.tree);
  for(const child of [...clone.children])root.add(child);
  $("projectName").value=state.name;
  refreshTree();updateStats();fitScene();dirty();updateUndoButtons();
@@ -386,7 +392,8 @@ async function loadGLB(blob,name){
  try{
   const gltf=await loader.loadAsync(url);
   const object=gltf.scene;object.name=name||"Importerad GLB";
-  registerRigClips(object,gltf.animations||[]);
+  object.animations=gltf.animations||[];
+  registerRigClips(object,object.animations);
   if(new THREE.Box3().setFromObject(object).isEmpty())throw Error("Filen innehåller ingen synlig geometri.");
   pushHistory();root.add(object);
   object.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
@@ -458,7 +465,19 @@ function download(filename,blob){
 }
 async function toGLB(maxTextureSize=2048){
  if(!root.children.length)throw Error("Scenen är tom.");
- return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,maxTextureSize:maxTextureSize===1024?1024:2048})],{type:"model/gltf-binary"});
+ // Export each imported or generated rig animation once, including skinned creatures.
+ const clips=[];
+ root.traverse(obj=>{
+  for(const clip of (obj.animations?.length?obj.animations:getRigClips(obj))){
+   if(!clips.includes(clip))clips.push(clip);
+  }
+ });
+ const binary=await exporter.parseAsync(root,{binary:true,onlyVisible:true,
+  maxTextureSize:maxTextureSize===1024?1024:2048,animations:clips});
+ if(root.children.some(obj=>obj.userData?.duoforgeGenerator==="creature-forge@2")){
+  validateCreatureGLB(binary);
+ }
+ return new Blob([binary],{type:"model/gltf-binary"});
 }
 $("exportGLB").onclick=async()=>{
  try{notify("Skapar GLB …",7000);const blob=await toGLB();download(safeFilename()+".glb",blob);notify("GLB nedladdad ("+(blob.size/1024).toFixed(0)+" kB)");}
@@ -577,6 +596,7 @@ initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,di
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
+initCreatureForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});

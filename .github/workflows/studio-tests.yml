@@ -7,6 +7,7 @@ on:
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
       - 'tests/character-forge-smoke.mjs'
+      - 'tests/creature-forge-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
       - 'tests/living-physics.test.mjs'
       - 'tests/world-builder-smoke.mjs'
@@ -69,6 +70,8 @@ jobs:
           node --check workshop/studio/sites-cinema-bridge.mjs
           node --check tests/sites-cinema-bridge-smoke.mjs
           node --check workshop/studio/character-forge.mjs
+          node --check workshop/studio/creature-forge.mjs
+          node --check tests/creature-forge-smoke.mjs
           node --check workshop/studio/image-to-3d-client.mjs
           python3 -m py_compile services/image-to-3d/server.py
           node --check tests/character-forge-smoke.mjs
@@ -145,6 +148,8 @@ jobs:
         run: node tests/fusion-lab-smoke.mjs
       - name: Test Character Forge volumetric GLB and image silhouettes
         run: node tests/character-forge-smoke.mjs
+      - name: Test Creature Forge PBR, real skin weights and GLB animations
+        run: node tests/creature-forge-smoke.mjs
       - name: Test Living Objects and Play & Build in Chromium
         run: node tests/living-objects-smoke.mjs
       - name: Test free Swedish text-to-world generation in Chromium

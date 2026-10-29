@@ -52,3 +52,33 @@ Known limitations: Full generative 3D from arbitrary images (including hidden su
 tests/character-forge-smoke.mjs covers generating a volumetric character, editing it, exporting GLB, silhouette import and a mobile smoke check.
 
 Optional TripoSR implementation and instructions: services/image-to-3d/README.md. The AI generation button checks for an authorized service on your own computer; it never claims AI is available when the model/server is missing.
+
+## Creature Forge V2 — 4 one-click rigged presets (2026-10-29)
+
+This additive module uses the **existing** Character Forge, Studio scene tree, Material Lab's free
+procedural PBR surfaces, local WebGL rendering, rig bridge and regular GLB exporter. It does not
+modify or claim deployment into the separate live Sites project.
+
+**Studio workflow:** open `/workshop/studio/`, go to Character Forge → Creature Forge V2, choose
+Castle Golem / Mountain Brute / Forest Guardian / Serpent (or type a matching Swedish description),
+choose Mobile/Balanced/High, then press **Bygg, rigga och texturera**. Preview available animation
+clips; export the finished scene with **Exportera GLB** (or Mobile GLB). No Work, paid API or external
+GPU is required for these procedural creatures.
+
+**Actual implementation:** mesh-based geometry on front, sides and back; textures (stone, bark,
+leather, grass, tile-like scales) using procedural local CanvasTexture/PBR; distinct deformable
+`THREE.SkinnedMesh` limbs on humanoids and a curved, bone-chain, skinned serpent body;
+2+ embedded bone animations per preset. Bone names are unique across instances and all clips
+are forwarded to `GLTFExporter`, instead of being silently discarded. The output remains editable.
+
+**Honest limitations:** presets are stylized/procedural, not Meshy-like photogrammetric quality;
+typing new adjectives does **not** synthesize a new sculpt or estimate hidden geometry. The
+existing optional image→3D TripoSR adapter remains separate and requires a self-hosted model;
+it does not automatically rig the resulting model. Animation rigging covers generated presets,
+not arbitrary uploaded GLBs. These presets are not fully anatomical muscle simulation.
+Export is scene-wide, including other objects already present. New design, retopology, 4K
+textures and high-fidelity single-photo 3D are separate engineering tasks.
+
+**Automated checks:** `node tests/creature-forge-smoke.mjs` in `studio-tests.yml` tests each
+preset in Chromium, GLB mesh/skins/animations/PBR/texture chunks, animation playback, undo,
+and mobile prompt routing. Never treat documentation or a PR as proof of passing CI.
