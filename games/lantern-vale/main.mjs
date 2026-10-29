@@ -131,6 +131,13 @@ function tick(now){
   stopped=true;
  }
 }
+// Read-only diagnostic snapshot: gameplay cannot be altered by the test harness.
+window.duoforge2dDiagnostics=()=>({
+ backend:renderer?.backend||"none",viewport:VIEW.width,
+ x:game.player.x,y:game.player.y,vx:game.player.vx,vy:game.player.vy,
+ onGround:game.player.onGround,fragments:game.count,deaths:game.deaths,
+ gameStarted:started,jumps:game.jumps,win:game.won
+});
 try{
  prepareRenderer();bindControls();updateHud();
  $("boot").hidden=true;
