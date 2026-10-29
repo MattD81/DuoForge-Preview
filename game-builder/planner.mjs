@@ -66,8 +66,8 @@ export function planGame(prompt,existing=null){
  const lv=numberFor(t,"banor|nivåer|världar|levels?");if(lv!==null)patch.levels=cap(lv,1,10);
  // A peaceful game is a real gameplay choice, not an unspecified default.
  // Negations win over nearby numbers (e.g. "tre banor utan fiender").
- const noEnemies=/(?:^|[^\\p{L}])(?:inga|ingen|utan|noll)\\s+(?:fiender|fiende|monster|motståndare|väktare)(?=$|[^\\p{L}])/u;
- const noItems=/(?:^|[^\\p{L}])(?:inga|ingen|utan|noll)\\s+(?:kristaller|kristall|energikärnor|energikärna|föremål|skatter|skatt)(?=$|[^\\p{L}])/u;
+ const noEnemies=/(?:^|[^\p{L}])(?:inga|ingen|utan|noll)\s+(?:fiender|fiende|monster|motståndare|väktare)(?=$|[^\p{L}])/u;
+ const noItems=/(?:^|[^\p{L}])(?:inga|ingen|utan|noll)\s+(?:kristaller|kristall|energikärnor|energikärna|föremål|skatter|skatt)(?=$|[^\p{L}])/u;
  const enemies=numberFor(t,"fiender|monster|motståndare|väktare");
  if(matches(t,noEnemies))patch.enemies=0;
  else if(enemies!==null)patch.enemies=cap(enemies,0,12);
