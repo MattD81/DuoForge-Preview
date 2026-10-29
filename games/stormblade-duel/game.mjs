@@ -5,11 +5,12 @@ import {createDuoForgePlayDirector} from "./play-director.mjs";
 import {createGamepadBridge} from "./duopad-input.mjs";
 import {createCinematicLighting} from "../../workshop/studio/cinematic-lighting.mjs";
 import {createGPUDeluxe,DELUXE_SHARPEN_SHADER} from "../../workshop/studio/gpu-deluxe.mjs";
+import {createGpuTimer} from "../../workshop/studio/gpu-deluxe-v2.mjs";
 
 const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const host=$("sceneHost");
-let renderer,scene,camera,world,gpu,composer=null,sharp=null,fighterUpgrade=null,playDirector=null,filmLights=null;
+let renderer,scene,camera,world,gpu,gpuTimer=null,composer=null,sharp=null,fighterUpgrade=null,playDirector=null,filmLights=null;
 let running=false,finished=false,round=90,last=0,now=0,screenFlash=0,frame=0,noticeTime=0;
 let mode="auto",filmLook="off",soundEnabled=false,audio=null;
 const held={up:false,down:false,left:false,right:false,block:false};
@@ -33,6 +34,7 @@ function initRenderer(){
  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  host.appendChild(renderer.domElement);
  gpu=createGPUDeluxe({renderer,canvas:renderer.domElement});
+ gpuTimer=createGpuTimer(renderer);
  gpu.configure({mode,quality:"high"});
  world=createWorld(scene,camera,renderer);
  fighterUpgrade=createFighterUpgrade(world,{onStatus:message=>setNotice(message,3.5)});
@@ -278,16 +280,23 @@ function renderFrame(timeMs){
  }
  if(frame++%30===0){
   const state=gpu.info();
-  $("perf").textContent="◈ "+mode.toUpperCase()+" / "+(state.fps??"…")+" FPS / "+state.capabilities.backend;
+  const measurement=gpuTimer?.snapshot();
+  const gpuLabel=measurement?.supported?(measurement.gpuMs===null?"GPU: mäter…":"GPU: "+measurement.gpuMs+" ms"):"GPU: ej stödd";
+  $("perf").textContent="◈ "+mode.toUpperCase()+" / "+(state.fps??"…")+" FPS / "+state.capabilities.backend+" / "+gpuLabel;
  }
- if(composer&&mode==="quality"){
-  if(sharp){
-   sharp.uniforms.uStrength.value=mode==="quality"?.20:.12;
-   sharp.uniforms.uTexel.value.x=1/Math.max(renderer.domElement.width,1);
-   sharp.uniforms.uTexel.value.y=1/Math.max(renderer.domElement.height,1);
-  }
-  composer.render();
- }else renderer.render(scene,camera);
+ gpuTimer?.poll();
+ // Sample one of every four frames to avoid excessive GPU query overhead.
+ if(frame%4===0)gpuTimer?.begin();
+ try{
+  if(composer&&mode==="quality"){
+   if(sharp){
+    sharp.uniforms.uStrength.value=mode==="quality"?.20:.12;
+    sharp.uniforms.uTexel.value.x=1/Math.max(renderer.domElement.width,1);
+    sharp.uniforms.uTexel.value.y=1/Math.max(renderer.domElement.height,1);
+   }
+   composer.render();
+  }else renderer.render(scene,camera);
+ }finally{gpuTimer?.end()}
 }
 const codeMap={KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",Space:"block"};
 addEventListener("keydown",e=>{
