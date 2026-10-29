@@ -6,9 +6,10 @@ import {GLTFExporter} from "three/addons/exporters/GLTFExporter.js";
 import {initLivingObjects} from "./living-objects.mjs?v=steering-fix-2";
 import {initWorldBuilder} from "./world-builder.mjs?v=surfaces-v1";
 import {initRenderWorld} from "./render-world.mjs?v=research-3d-v1";
-import {registerRigClips} from "./cinema-rig.mjs";
+import {registerRigClips,getRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
+import {initCreatureForge} from "./creature-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -386,7 +387,8 @@ async function loadGLB(blob,name){
  try{
   const gltf=await loader.loadAsync(url);
   const object=gltf.scene;object.name=name||"Importerad GLB";
-  registerRigClips(object,gltf.animations||[]);
+  object.animations=gltf.animations||[];
+  registerRigClips(object,object.animations);
   if(new THREE.Box3().setFromObject(object).isEmpty())throw Error("Filen innehåller ingen synlig geometri.");
   pushHistory();root.add(object);
   object.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
@@ -458,7 +460,15 @@ function download(filename,blob){
 }
 async function toGLB(maxTextureSize=2048){
  if(!root.children.length)throw Error("Scenen är tom.");
- return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,maxTextureSize:maxTextureSize===1024?1024:2048})],{type:"model/gltf-binary"});
+ // Export each imported or generated rig animation once, including skinned creatures.
+ const clips=[];
+ root.traverse(obj=>{
+  for(const clip of (obj.animations?.length?obj.animations:getRigClips(obj))){
+   if(!clips.includes(clip))clips.push(clip);
+  }
+ });
+ return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,
+  maxTextureSize:maxTextureSize===1024?1024:2048,animations:clips})],{type:"model/gltf-binary"});
 }
 $("exportGLB").onclick=async()=>{
  try{notify("Skapar GLB …",7000);const blob=await toGLB();download(safeFilename()+".glb",blob);notify("GLB nedladdad ("+(blob.size/1024).toFixed(0)+" kB)");}
@@ -577,6 +587,7 @@ initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,di
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
 materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateInspector});
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
+initCreatureForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
