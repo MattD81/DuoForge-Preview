@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="sv"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1628">
+<meta name="description" content="DuoForge 2D Deluxe — spelbar original 2D-motor med WebGL2, normalkartor, dynamiska skuggor, parallax, egna skelettanimationer och fysik.">
+<title>LANTERN VALE — DuoForge 2D Deluxe V1</title>
+<link rel="stylesheet" href="./style.css?v=1">
+</head><body>
+<div id="app">
+<canvas id="stage" aria-label="LANTERN VALE – spelbart 2D-plattformsäventyr"></canvas>
+<div id="filmGrain" aria-hidden="true"></div>
+<header class="topbar">
+ <a href="../../" class="logo">◈ DUOFORGE <em>2D DELUXE</em></a>
+ <div class="engine-pill" id="engine">STARTAR MOTOR…</div>
+ <button type="button" class="quiet" id="sound" aria-label="Slå på eller av ljud">♫ LJUD AV</button>
+</header>
+<div id="score" aria-live="polite">
+ <div class="score-cell"><small>LJUSFRAGMENT</small><strong><span id="collected">0</span> <i>/ 5</i></strong></div>
+ <div class="score-cell"><small>TID I SKOGEN</small><strong id="time">00:00</strong></div>
+ <div class="score-cell"><small>ÅTERUPPSTÅNDNA</small><strong id="deaths">0</strong></div>
+</div>
+<div id="mission" aria-live="polite"><div class="eyebrow">DAGBOK / UPPDRAG 01</div>
+ <h2 id="objective">SAMLA DE FEM LJUSEN</h2>
+ <p>Ta dig genom den glömda dalen och tänd fyren bortom skogen.</p>
+ <div class="progress"><div id="progress"></div></div>
+</div>
+<div id="badgeRow"><span class="badge">✦ GPU NORMAL MAPS</span><span class="badge">◉ DYNAMISKT LJUS</span><span class="badge">⚯ EGEN FYSIK & IK</span></div>
+<div id="touch" aria-label="Pekskärmskontroller">
+ <div class="dpad"><button class="pad" id="left" aria-label="Gå vänster">◀</button><button class="pad" id="right" aria-label="Gå höger">▶</button></div>
+ <button id="jump" class="jump" aria-label="Hoppa">↑ HOPPA</button>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="intro" class="modal">
+ <div class="modal-content">
+  <span class="kicker">DUOFORGE ORIGINAL · A NEW ERA OF 2D</span>
+  <div class="ornament">✦</div>
+  <h1>LANTERN<br><span>VALE</span></h1>
+  <p>Världen har slocknat. En ensam väktare bär det sista levande ljuset. Samla fem ljusfragment, korsa dalens djupa klyftor och väck den gamla helgedomen.</p>
+  <div class="tech">EGNA SHADERS &nbsp;·&nbsp; 2D-SKELETT &nbsp;·&nbsp; REALTIDSLJUS</div>
+  <button class="start" id="start" type="button">▶ BÖRJA ÄVENTYRET <span>→</span></button>
+  <small>← → eller A/D för att springa · mellanslag/W för att hoppa · stöd för gamepad och touch</small>
+ </div>
+</div>
+<div id="finish" class="modal" hidden>
+ <div class="modal-content">
+  <span class="kicker">DUOFORGE 2D DELUXE · KAMPANJ SLUTFÖRD</span><div class="ornament">✧</div>
+  <h1>LJUSET<br><span>ÅTERVÄNDER</span></h1>
+  <p>Du hittade alla fem fragment och återuppväckte dalens uråldriga fyr.</p>
+  <div id="finalStats" class="tech"></div>
+  <button class="start" id="restart" type="button">↻ SPELA IGEN <span>→</span></button>
+ </div>
+</div>
+<div id="boot" class="boot">Bygger DuoForge 2D Deluxe – GPU-ljus, fysik och värld…</div>
+</div>
+<script type="module" src="./main.mjs?v=1"></script>
+</body></html>
