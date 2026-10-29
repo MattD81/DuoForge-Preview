@@ -95,6 +95,24 @@ export function v5QualityProfile({width=1280,height=720,mobile=false,preset="bal
   resolutionScale:scale,usesNeuralModel:false,
   renderMode:"WebGL2-bvh-triangle-raytrace"});
 }
+/**
+ * Full-detail raster path for assets too rich for the small BVH preview.
+ * PBR uses the original scene graph, GLB textures, skinning and all triangles.
+ * The renderer may lower its device pixel ratio to preserve frame time; it
+ * never discards mesh geometry. No DLSS, model weights or network calls.
+ */
+export function v5DetailPbrProfile({preset="balanced",mobile=false,
+ devicePixelRatio=1,adaptiveScale=1}={}){
+ const ceiling={balanced:1,cinematic:mobile?1.25:1.5,extreme:mobile?1.5:2};
+ const selected=Object.hasOwn(ceiling,preset)?preset:"balanced";
+ const native=Number.isFinite(devicePixelRatio)?bound(devicePixelRatio,.5,4):1;
+ const adaptive=Number.isFinite(adaptiveScale)?bound(adaptiveScale,.6,1):1;
+ return Object.freeze({preset:selected,mode:"full-detail-pbr",
+  pixelRatio:Number(Math.max(.5,Math.min(native,ceiling[selected])*adaptive).toFixed(3)),
+  maxPixelRatio:Math.min(native,ceiling[selected]),preservesGeometry:true,
+  preservesTextures:true,preservesSkinning:true,usesNeuralModel:false});
+}
+
 export function v5CameraSignature(camera){
  if(!camera?.matrixWorld?.elements||!camera?.projectionMatrix?.elements)return null;
  return [...camera.matrixWorld.elements,...camera.projectionMatrix.elements].map(v=>Math.round(v*100000)/100000).join(",");
