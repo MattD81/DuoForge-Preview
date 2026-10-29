@@ -139,6 +139,8 @@ jobs:
         run: node tests/studio-smoke.mjs
       - name: Test GPU Deluxe V2 effects on desktop and mobile
         run: node tests/gpu-deluxe-v2-smoke.mjs
+      - name: Test real trained neural SR shader in Chromium
+        run: node tests/neural-sr-smoke.mjs
       - name: Test free research stack in browser and mobile
         run: node tests/research-stack-smoke.mjs
       - name: Test Fusion Lab
