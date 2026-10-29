@@ -72,7 +72,7 @@ export function initStudioMobileUX(){
   const box=sidebar.getBoundingClientRect(),target=item.getBoundingClientRect();
   const head=sidebar.querySelector(".mobile-sheet-head");
   const next=Math.max(0,sidebar.scrollTop+target.top-box.top-(head?.offsetHeight||0)-10);
-  sidebar.scrollTo({top:next,behavior:"instant"});
+  sidebar.scrollTo({top:next,behavior:"auto"});
  }
  function activate(key,reveal=false,selector=null){
   if(!targets[key])return;
@@ -122,7 +122,7 @@ export function initStudioMobileUX(){
  function updateUndo(){
   const buttons={undo:$("undo"),redo:$("redo")};
   for(const [id,original] of Object.entries(buttons))
-   for(const forwarded of [...dock.querySelectorAll(".mobile-sheet-"+id),...quick.querySelectorAll('[data-forward="'+id+'"]')])
+   for(const forwarded of [...document.querySelectorAll(".mobile-sheet-"+id),...quick.querySelectorAll('[data-forward="'+id+'"]')])
     forwarded.disabled=Boolean(original?.disabled);
  }
  const undo=$("undo"),redo=$("redo");
