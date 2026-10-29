@@ -5,14 +5,14 @@ const mobileQuery=window.matchMedia("(max-width: 720px), (max-height: 500px) and
 const targets={
  create:{title:"✦ Skapa 3D",side:"left",default:"#characterForge",
   shortcuts:[["Karaktär","#characterForge"],["Värld","#worldBuilderPanel"],["Former",".primitive-grid"],["Bibliotek","#library"]]},
- scene:{title:"▤ Objekt & historik",side:"left",default:".left-panel .panel-section:first-child",
+ scene:{title:"▤ Objekt & historik",side:"left",default:".left-panel > .panel-section",
   shortcuts:[["Objekt","#hierarchy"],["Ångra","#undo"],["Gör om","#redo"]]},
  material:{title:"◈ Material & texturer",side:"right",default:"#materialLabPanel",
   shortcuts:[["PBR-material","#materialLabPanel"],["Färg","#surfaceTint"]]},
  dna:{title:"🧬 Shape DNA",side:"left",default:"#shapeDnaLab",
   shortcuts:[["DNA-varianter","#shapeDnaLab"],["Karaktär","#characterForge"]]},
- adjust:{title:"⚙ Redigera & exportera",side:"right",default:".right-panel .panel-section:first-child",
-  shortcuts:[["Justera","#inspector"],["Skulptera","#sculptPanel"],["Testa","#renderWorldControls"],["Export",".right-panel .panel-section:last-child"]]}
+ adjust:{title:"⚙ Redigera & exportera",side:"right",default:".right-panel > .panel-section",
+  shortcuts:[["Justera",".right-panel > .panel-section"],["Skulptera","#sculptPanel"],["Testa","#renderWorldControls"],["Export",".right-panel .panel-section:last-child"]]}
 };
 const $=id=>document.getElementById(id);
 export function initStudioMobileUX(){
