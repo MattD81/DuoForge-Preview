@@ -7,7 +7,8 @@ import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 import {lookdevSettings,lookdevShadowExtent} from "./lookdev-presets.mjs";
 
 export function initLookdevStudio({
- renderer,scene,root,ground,grid,sun,skyLight,notify=()=>{},isBusy=()=>false
+ renderer,scene,root,ground,grid,sun,skyLight,notify=()=>{},isBusy=()=>false,
+ isPreviewActive=()=>false
 }={}){
  if(!renderer||!scene||!root||!ground||!grid||!sun||!skyLight)
   throw Error("LookDev requires the existing DuoForge Studio scene and lights");
@@ -44,7 +45,7 @@ export function initLookdevStudio({
  fill.position.set(-7,5,3);rim.position.set(-5,7,-7);
  fill.castShadow=false;rim.castShadow=false;
  fill.userData.previewOnly=true;rim.userData.previewOnly=true;
- let active=false,dirty=false,disposed=false,baseline=null,preset="studio",exposure=1,
+ let active=false,dirty=false,disposed=false,suspended=false,baseline=null,preset="studio",exposure=1,
   showGrid=false,environment=null,failedEnvironment=false;
  function getEnvironment(){
   if(environment||failedEnvironment)return environment?.texture||null;
@@ -165,7 +166,19 @@ export function initLookdevStudio({
   const extent=fitShadows();
   $("lookdevStatus").textContent="Skuggor anpassade till modellen · frustum ±"+extent+" m";
  };
- function update(){if(!disposed&&dirty&&!isBusy())apply()}
+ function update(){
+  if(disposed)return;
+  const preview=Boolean(isPreviewActive());
+  if(preview&&!suspended){
+   // Render World reuses the global scene: don't leak our fill/rim into it.
+   scene.remove(fill,rim);
+   suspended=true;
+  }else if(!preview&&suspended){
+   suspended=false;
+   if(active&&baseline){scene.add(fill,rim)}
+  }
+  if(dirty&&!isBusy())apply();
+ }
  function dispose(){
   if(disposed)return;
   // Do not mutate another active renderer on page unload.
