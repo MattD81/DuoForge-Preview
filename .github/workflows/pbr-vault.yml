@@ -1,0 +1,46 @@
+name: Verify 360 Material Vault PBR
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/pbr-vault-**'
+      - 'workshop/studio/material-lab.mjs'
+      - 'workshop/studio/index.html'
+      - 'workshop/studio/mobile-studio-ux.mjs'
+      - 'tests/pbr-vault-**'
+      - '.github/workflows/pbr-vault.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vault:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check recipes, syntax and generated PBR channels
+        run: |
+          node --check workshop/studio/pbr-vault-catalog.mjs
+          node --check workshop/studio/pbr-vault-maps.mjs
+          node --check workshop/studio/pbr-vault-ui.mjs
+          node --check workshop/studio/material-lab.mjs
+          node --test tests/pbr-vault-core.test.mjs
+      - name: Install browser testing
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing DuoForge Studio
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-material-vault.log 2>&1 &
+      - name: Test imported/exported GLB PBR maps, ZIP and mobile
+        run: node tests/pbr-vault-browser.mjs
+      - name: Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbr-vault-screenshots
+          path: |
+            pbr-vault-desktop.png
+            pbr-vault-mobile.png
+          if-no-files-found: ignore
