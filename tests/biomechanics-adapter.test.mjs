@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import {createBiomechanicsAdapter} from "../games/rift-champions/character-forge/biomechanics-three.mjs";
+import {createBiomechanicsAdapter,auditGLBAnatomy} from "../games/rift-champions/character-forge/biomechanics-three.mjs";
 
 function skinnedDummy(){
  const root=new THREE.Group();
@@ -48,6 +48,23 @@ test("an unrigged decorative mesh is rejected and cannot silently fake full-body
  root.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial()));
  assert.throws(()=>createBiomechanicsAdapter(root),/SkinnedMesh/);
 });
+test("actual skin-weight auditing detects zero and non-normalized weights",()=>{
+ const root=skinnedDummy(),mesh=root.getObjectByName("connected-humanoid-mesh");
+ const n=mesh.geometry.getAttribute("position").count;
+ const idx=new Uint16Array(n*4),weights=new Float32Array(n*4);
+ for(let i=0;i<n;i++)weights[i*4]=1;
+ weights[0]=0;weights[4]=.4;
+ mesh.geometry.setAttribute("skinIndex",new THREE.Uint16BufferAttribute(idx,4));
+ mesh.geometry.setAttribute("skinWeight",new THREE.Float32BufferAttribute(weights,4));
+ const audit=auditGLBAnatomy(root);
+ assert.equal(audit.skinnedMeshes,1);
+ assert.equal(audit.skinnedVertices,n);
+ assert.ok(audit.sampledVertices>0);
+ assert.equal(audit.zeroWeightSamples,1);
+ assert.equal(audit.nonNormalizedSamples,1);
+ assert.ok(audit.bones>=18);
+});
+
 test("mixed coordinated movements reuse same bones without NaN",()=>{
  const root=skinnedDummy(),adapter=createBiomechanicsAdapter(root);
  adapter.setMotion("walk");
