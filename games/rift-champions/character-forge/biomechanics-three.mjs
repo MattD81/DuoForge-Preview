@@ -92,7 +92,7 @@ export function auditGLBAnatomy(root,{maxVertexSamples=2200}={}){
   for(const n of Object.keys(morphs))names.add(n);
   for(const b of node.skeleton?.bones||[])bones.add(b);
   const index=geometry?.getAttribute?.("skinIndex"),weight=geometry?.getAttribute?.("skinWeight");
-  if(!index||!weight||weight.count!==vertices){info.missingSkinWeights++;continue;}
+  if(!index||!weight||weight.count!==vertices){info.missingSkinWeights++;return;}
   const total=Math.min(Math.floor(maxVertexSamples),vertices),stride=Math.max(1,Math.floor(vertices/Math.max(total,1)));
   const channels=Math.min(weight.itemSize||0,4);
   for(let i=0,seen=0;i<vertices&&seen<total;i+=stride,seen++){
