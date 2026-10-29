@@ -210,33 +210,38 @@ export function initGpuDeluxeV5Studio({renderer,canvas,root,camera,isBusy=()=>fa
    camera.updateMatrixWorld(true);
    const camSig=v5CameraSignature(camera);
    if(camSig!==lastCamera){sampleCount=0;historyIdx=0;lastCamera=camSig;}
-   const renderFrame=Math.min(profile.maxSamples,sampleCount+1);
-   rayMaterial.uniforms.uTriangles.value=triTexture;
-   rayMaterial.uniforms.uNodes.value=nodeTexture;
-   rayMaterial.uniforms.uNodeCount.value=geometry.bvh.nodes;
-   rayMaterial.uniforms.uTriangleCount.value=geometry.bvh.triangles;
-   rayMaterial.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
-   rayMaterial.uniforms.uInvProjection.value.copy(camera.projectionMatrixInverse);
-   rayMaterial.uniforms.uResolution.value.set(...dim);
-   rayMaterial.uniforms.uFrame.value=renderFrame;
-   rayMaterial.uniforms.uSampleCount.value=preset==="balanced"?1:3;
-   rayMaterial.uniforms.uExposure.value=1.13;
-   quad.material=rayMaterial;
-   renderer.setRenderTarget(rayTarget);
-   renderer.clear();renderer.render(fsScene,quadCam);
-   // Ping-pong accumulation: no texture feedback with active render target.
-   const current=accum[historyIdx%2],previous=accum[(historyIdx+1)%2];
-   accumMaterial.uniforms.uCurrent.value=rayTarget.texture;
-   accumMaterial.uniforms.uHistory.value=previous.texture;
-   accumMaterial.uniforms.uSamples.value=renderFrame;
-   quad.material=accumMaterial;
-   renderer.setRenderTarget(current);renderer.clear();renderer.render(fsScene,quadCam);
-   presentMaterial.uniforms.uSource.value=current.texture;
+   // After accumulation converges, keep the final output without repeating
+   // expensive BVH rays. Rebuild only after camera/scene/profile changes.
+   if(sampleCount<profile.maxSamples){
+    const renderFrame=sampleCount+1;
+    rayMaterial.uniforms.uTriangles.value=triTexture;
+    rayMaterial.uniforms.uNodes.value=nodeTexture;
+    rayMaterial.uniforms.uNodeCount.value=geometry.bvh.nodes;
+    rayMaterial.uniforms.uTriangleCount.value=geometry.bvh.triangles;
+    rayMaterial.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
+    rayMaterial.uniforms.uInvProjection.value.copy(camera.projectionMatrixInverse);
+    rayMaterial.uniforms.uResolution.value.set(...dim);
+    rayMaterial.uniforms.uFrame.value=renderFrame;
+    rayMaterial.uniforms.uSampleCount.value=preset==="balanced"?1:3;
+    rayMaterial.uniforms.uExposure.value=1.13;
+    quad.material=rayMaterial;
+    renderer.setRenderTarget(rayTarget);
+    renderer.clear();renderer.render(fsScene,quadCam);
+    // Ping-pong accumulation: no feedback with the current render target.
+    const current=accum[historyIdx%2],previous=accum[(historyIdx+1)%2];
+    accumMaterial.uniforms.uCurrent.value=rayTarget.texture;
+    accumMaterial.uniforms.uHistory.value=previous.texture;
+    accumMaterial.uniforms.uSamples.value=renderFrame;
+    quad.material=accumMaterial;
+    renderer.setRenderTarget(current);renderer.clear();renderer.render(fsScene,quadCam);
+    historyIdx++;sampleCount=renderFrame;
+   }
+   const latest=accum[(historyIdx+1)%2];
+   presentMaterial.uniforms.uSource.value=latest.texture;
    presentMaterial.uniforms.uTexel.value.set(1/dim[0],1/dim[1]);
    presentMaterial.uniforms.uDenoise.value=preset==="balanced"?.35:.7;
    quad.material=presentMaterial;
    renderer.setRenderTarget(null);renderer.render(fsScene,quadCam);
-   historyIdx++;sampleCount=renderFrame;
    return true;
   }catch(error){
    console.error("GPU Deluxe V5 fallback",error);
