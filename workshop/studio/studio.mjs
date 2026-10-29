@@ -9,7 +9,7 @@ import {initRenderWorld} from "./render-world.mjs?v=research-3d-v1";
 import {registerRigClips,getRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
-import {initCreatureForge} from "./creature-forge.mjs";
+import {initCreatureForge,validateCreatureGLB} from "./creature-forge.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -467,8 +467,12 @@ async function toGLB(maxTextureSize=2048){
    if(!clips.includes(clip))clips.push(clip);
   }
  });
- return new Blob([await exporter.parseAsync(root,{binary:true,onlyVisible:true,
-  maxTextureSize:maxTextureSize===1024?1024:2048,animations:clips})],{type:"model/gltf-binary"});
+ const binary=await exporter.parseAsync(root,{binary:true,onlyVisible:true,
+  maxTextureSize:maxTextureSize===1024?1024:2048,animations:clips});
+ if(root.children.some(obj=>obj.userData?.duoforgeGenerator==="creature-forge@2")){
+  validateCreatureGLB(binary);
+ }
+ return new Blob([binary],{type:"model/gltf-binary"});
 }
 $("exportGLB").onclick=async()=>{
  try{notify("Skapar GLB …",7000);const blob=await toGLB();download(safeFilename()+".glb",blob);notify("GLB nedladdad ("+(blob.size/1024).toFixed(0)+" kB)");}
