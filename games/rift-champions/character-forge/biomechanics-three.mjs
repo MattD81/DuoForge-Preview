@@ -98,7 +98,7 @@ export function auditGLBAnatomy(root,{maxVertexSamples=2200}={}){
   for(let i=0,seen=0;i<vertices&&seen<total;i+=stride,seen++){
    let sum=0;
    for(let j=0;j<channels;j++){
-    const value=weight.array[i*weight.itemSize+j];
+    const value=weight[["getX","getY","getZ","getW"][j]](i); // handles normalized integer glTF attributes
     if(!Number.isFinite(value)||value<0)info.weightIssues++;
     else sum+=value;
    }
