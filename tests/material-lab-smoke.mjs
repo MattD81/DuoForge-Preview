@@ -90,6 +90,8 @@ try{
  mobile.on("pageerror",e=>failures.push("mobile: "+e.message));
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
  await mobile.waitForFunction(()=>document.querySelector("#materialSwatches [data-surface]")?.getAttribute("aria-pressed")==="true",{timeout:30000});
+ await mobile.locator('[data-mobile-tab="material"]').click();
+ assert.equal(await mobile.locator("#materialLabPanel").isVisible(),true);
  assert.equal(await mobile.locator("#materialSwatches [data-surface]").count(),17);
  await mobile.screenshot({path:"material-lab-mobile.png",fullPage:true});
  console.log("PASS: Material Lab renders on mobile");
