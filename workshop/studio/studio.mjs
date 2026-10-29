@@ -14,6 +14,7 @@ import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
 import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
+import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -51,7 +52,7 @@ transform.addEventListener("dragging-changed",e=>{orbit.enabled=!e.value});
 transform.addEventListener("mouseDown",()=>{pushHistory();});
 transform.addEventListener("mouseUp",()=>{updateInspector();refreshTree();dirty();});
 transform.addEventListener("objectChange",()=>{updateInspector();updateStats();});
-let livingRuntime=null,renderWorld=null,materialLab=null;
+let livingRuntime=null,renderWorld=null,materialLab=null,gpuV2=null;
 const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
@@ -85,7 +86,13 @@ function animate(){
   boundsHelper.setFromObject(selected);
   boundsHelper.visible=!new THREE.Box3().setFromObject(selected).isEmpty();
  }else boundsHelper.visible=false;
- if(!renderWorld?.render())renderer.render(scene,camera);
+ const timer=gpuV2?.timer;
+ timer?.poll();
+ timer?.begin();
+ try{
+  if(!gpuV2?.render()&&!renderWorld?.render())renderer.render(scene,camera);
+ }finally{timer?.end()}
+ gpuV2?.updateStatus();
 }animate();
 function cloneState(){
  const copy=root.clone(true);
@@ -572,6 +579,8 @@ initLocalImageTo3D({loadGLB,notify});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
 initFusionLab({root,renderer,canvas,camera,orbit,renderWorld,livingRuntime,getProjectName:()=>$("projectName").value,notify});
+gpuV2=initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,
+ isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
   if(file.size>50*1024*1024)throw Error("GLB är större än 50 MB.");

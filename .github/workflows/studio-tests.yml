@@ -20,6 +20,8 @@ on:
       - 'tests/fusion-engine.test.mjs'
       - 'tests/fusion-lab-smoke.mjs'
       - 'tests/gpu-deluxe.test.mjs'
+      - 'tests/gpu-deluxe-v2.test.mjs'
+      - 'tests/gpu-deluxe-v2-smoke.mjs'
       - 'tests/research-stack.test.mjs'
       - 'tests/research-stack-smoke.mjs'
       - 'tests/sites-cinema-bridge.test.mjs'
@@ -106,7 +108,11 @@ jobs:
           node --check tests/living-objects-smoke.mjs
           node --test tests/cinema-engine-core.test.mjs
           node --test tests/sites-cinema-bridge.test.mjs
-          node --test tests/fusion-engine.test.mjs tests/gpu-deluxe.test.mjs
+          node --check workshop/studio/gpu-deluxe-v2.mjs
+          node --check workshop/studio/gpu-deluxe-v2-effects.mjs
+          node --check workshop/studio/gpu-deluxe-v2-studio.mjs
+          node --check tests/gpu-deluxe-v2-smoke.mjs
+          node --test tests/fusion-engine.test.mjs tests/gpu-deluxe.test.mjs tests/gpu-deluxe-v2.test.mjs
           node --test tests/ocean-spectrum.test.mjs tests/research-3d.test.mjs tests/research-stack.test.mjs
           node --test tests/living-physics.test.mjs tests/world-planner.test.mjs tests/render-missions.test.mjs tests/surface-classifier.test.mjs tests/film-path.test.mjs tests/cinema-production.test.mjs tests/cinema-denoise.test.mjs tests/cinema-wavelet-denoise.test.mjs tests/cinema-video-assembly.test.mjs
       - name: Install Playwright (test-only)
@@ -131,6 +137,8 @@ jobs:
         run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
+      - name: Test GPU Deluxe V2 effects on desktop and mobile
+        run: node tests/gpu-deluxe-v2-smoke.mjs
       - name: Test free research stack in browser and mobile
         run: node tests/research-stack-smoke.mjs
       - name: Test Fusion Lab

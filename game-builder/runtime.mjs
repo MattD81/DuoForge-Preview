@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import {createOceanSurface} from "../workshop/studio/ocean-water.mjs";
 import {createGPUDeluxe} from "../workshop/studio/gpu-deluxe.mjs";
+import {createGpuTimer} from "../workshop/studio/gpu-deluxe-v2.mjs";
 import {normalizeConfig,levelEnemyCount} from "./planner.mjs";
 
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -41,7 +42,7 @@ function createActor(color,hero=false){
 export function startBuilderGame({host,config,onState=()=>{},controls=document,env=globalThis}={}){
  if(!host?.appendChild)throw Error("Game Builder needs a DOM host");
  const project=normalizeConfig(config),rand=seeded(project.seed);
- let renderer,scene,camera,gpu,water=null,player=null,foes=[],relics=[],portal=null,decor=[],worldRoot=null;
+ let renderer,scene,camera,gpu,gpuTimer=null,water=null,player=null,foes=[],relics=[],portal=null,decor=[],worldRoot=null;
  let frameHandle=0,disposed=false,started=true,stage=1,life=100,score=0,kills=0,seen=0;
  let last=0,frames=0,invuln=0,dash=0,jump=0,jumpVel=0,attackCD=0,hitFlash=0,stageNotice="Spela!";
  let elapsedTime=0,lookAhead=0,levelEnemies=0,levelItems=0;
@@ -274,7 +275,10 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   if(hitFlash>0)renderer.toneMappingExposure=1.25+hitFlash*2;
   else renderer.toneMappingExposure=1.23;
   if(gpu&&frames%1===0)gpu.tick(dt,{onResize:resize});
-  renderer.render(scene,camera);frames++;send();
+  gpuTimer?.poll();
+  if(frames%4===0)gpuTimer?.begin();
+  try{renderer.render(scene,camera)}finally{gpuTimer?.end()}
+  frames++;send();
  }
  function restart(){stage=1;started=true;last=0;life=100;buildLevel();}
  function destroy(){
@@ -285,7 +289,7 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   env.removeEventListener("resize",resize);
   if(worldRoot){scene.remove(worldRoot);disposeTree(worldRoot);}
   if(water){scene.remove(water.mesh);water.dispose();}
-  renderer?.dispose();renderer?.domElement?.remove();
+  gpuTimer?.dispose();renderer?.dispose();renderer?.domElement?.remove();
  }
  try{
   scene=new THREE.Scene();
@@ -304,6 +308,7 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   const sunlight=new THREE.DirectionalLight(project.weather==="sunset"?0xffd1a7:0xf1f5ff,2.9);
   sunlight.position.set(-12,24,16);scene.add(sunlight);
   gpu=createGPUDeluxe({renderer,canvas:renderer.domElement,env});
+  gpuTimer=createGpuTimer(renderer);
   gpu.configure({mode:project.quality,quality:"high"});
   env.addEventListener("resize",resize,{passive:true});
   buildLevel();resize();
