@@ -585,6 +585,7 @@ gpuV2=initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,
  isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),notify});
 gpuV5=initGpuDeluxeV5Studio({renderer,canvas,scene,root,camera,
  isBusy:()=>Boolean(renderWorld?.isActive()||livingRuntime?.isPlaying()),
+ isPbrBusy:()=>Boolean(renderWorld?.isActive()),
  getGpuTime:()=>gpuV2?.timer.snapshot()??null,notify});
 const sitesBridge=initSitesStudioBridge({
  importGLB:async(file,name)=>{
