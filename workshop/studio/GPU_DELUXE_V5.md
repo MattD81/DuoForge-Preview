@@ -6,7 +6,7 @@
 
 Välj **V5 Detail PBR** i samma Studio-panel. Detta är ett **full-geometriskt rasterläge**
 som använder Three.js befintliga WebGL-renderer, den riktiga scenens alla trianglar,
-GLB-texturer och skelettanimationer. En procedurgenererad RoomEnvironment-miljö
+GLB-texturer och skelettanimationer även under uppspelning. En procedurgenererad RoomEnvironment-miljö
 ger PBR-metaller och roughness-material lokala reflexioner via PMREM där det stöds.
 Inga modellfiler eller scener ändras eller laddas upp.
 
