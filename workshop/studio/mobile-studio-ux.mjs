@@ -12,7 +12,7 @@ const targets={
  dna:{title:"🧬 Shape DNA",side:"left",default:"#shapeDnaLab",
   shortcuts:[["DNA-varianter","#shapeDnaLab"],["Karaktär","#characterForge"]]},
  adjust:{title:"⚙ Redigera & exportera",side:"right",default:".right-panel > .panel-section",
-  shortcuts:[["Justera",".right-panel > .panel-section"],["Skulptera","#sculptPanel"],["Testa","#renderWorldControls"],["Export",".right-panel .panel-section:last-child"]]}
+  shortcuts:[["Justera",".right-panel > .panel-section"],["Skulptera","#sculptPanel"],["Testa","#renderWorldControls"],["GPU V2","#gpuDeluxeV2"],["GPU V5","#gpuDeluxeV5"],["Export",".right-panel .panel-section:last-child"]]}
 };
 const $=id=>document.getElementById(id);
 export function initStudioMobileUX(){
