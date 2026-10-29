@@ -21,7 +21,7 @@ try{
   assert.equal(await page.locator("#lookdevEnable").getAttribute("aria-pressed"),"true");
   await page.locator("#lookdevPreset").selectOption("neon");
   await page.waitForFunction(()=>document.querySelector("#lookdevStatus")?.textContent.includes("Neon Noir"),{timeout:20000});
-  await page.locator("#lookdevExposure").fill("120");
+  await page.locator("#lookdevExposure").evaluate(el=>{el.value="120";el.dispatchEvent(new Event("input",{bubbles:true}))});
   await page.locator("#lookdevFit").click();
   assert.match(await page.locator("#lookdevStatus").textContent(),/Skuggor anpassade/);
   await page.locator("#lookdevOff").click();
