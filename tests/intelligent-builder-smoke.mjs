@@ -46,7 +46,7 @@ try{
  const path=await download.path();
  const listing=execFileSync("unzip",["-l",path],{encoding:"utf8"});
  for(const file of ["index.html","project.json","package.json","games/game-builder/runtime.mjs",
-  "games/game-builder/planner.mjs","workshop/studio/gpu-deluxe.mjs",
+  "games/game-builder/planner.mjs","workshop/studio/gpu-deluxe.mjs","workshop/studio/gpu-deluxe-v2.mjs",
   "workshop/studio/ocean-water.mjs","workshop/studio/ocean-spectrum.mjs",
   "workshop/studio/atmosphere-scattering.mjs"]){
   assert.ok(listing.includes(file),"Export ZIP missing "+file);
