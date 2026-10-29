@@ -187,8 +187,14 @@ $('bioStart').addEventListener('click',()=>{
   $('bioStart').disabled=true;$('bioStop').disabled=false;
   $('bioStatus').textContent='AKTIV · '+r.mappedChannels+'/'+r.totalChannels+
    ' ledkanaler matchade i GLB · '+r.muscleGroups+' schematiska aktuatorer.\n'+
+   'Riktig GLB: '+r.anatomy.bones+' ben, '+r.anatomy.skinnedVertices+
+   ' skinnade vertex, '+r.anatomy.morphTargets+' morphtargets. '+
+   'Skinnvikter kontrollerade på '+r.anatomy.sampledVertices+
+   ' vertex-samples ('+r.anatomy.zeroWeightSamples+' nollvikter, '+
+   r.anatomy.nonNormalizedSamples+' onormaliserade).\n'+
    (r.unmapped.length?'Saknade ledkanaler: '+r.unmapped.length+
-    ' (framför allt fingrar och handleder; behöver fler ben i modellen).':'Alla ledkanaler hittades.');
+    ' (framför allt fingrar och handleder; kräver fler ben i modellen).':'Alla ledkanaler hittades.')+
+   (r.anatomy.warnings.length?'\nBegränsningar: '+r.anatomy.warnings.join(' '):'');
   bioHudLast=0;
  }catch(e){stopBio();$('bioStatus').textContent='Kan inte starta motorik: '+e.message;}
 });
