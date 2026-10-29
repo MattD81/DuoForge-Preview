@@ -42,3 +42,23 @@ Referenser och exakta länkar finns i [LEGAL_AND_SOURCES.md](LEGAL_AND_SOURCES.m
 ## Sökbar webbvy
 
 Efter merge och GitHub Pages-distribution: `https://mattd81.github.io/DuoForge-Preview/docs/3d-knowledge-base/`. Visar och filtrerar `knowledge.json`, och ger **lokala regelbaserade rekommendationer**. Ingen modellinferens sker och inga referensbilder skickas. Licensblockerade modeller är dolda som standard. En länk finns även i befintliga 3D Studio.
+
+## Shape DNA Lab — experimentell procedurskulpt (V1, 2026-10-29)
+
+Den befintliga 3D Studio innehåller ett separat Shape DNA Lab (under Character Forge) för att experimentellt **förbättra ytdetaljer på redan skapade/importerade meshar**, utan generativ AI eller server.
+
+- Välj en modell eller mesh och välj materialkategori: automatisk, sten, bark, organisk eller fjäll.
+- `360°-geometrikoll` granskar XYZ-utbredning, UV, mesh-storlek och tunna delar. **Den renderar inte 6 kamerabilder** och kan inte bedöma fotolikhet.
+- `Testa 3 DNA-varianter` provar tre **seedade**, reproducerbara, lokala morfologier utan att ändra originalet. Varje variant får en teknisk risk/stabilitetspoäng från verklig positions- och normalanalys, inte en AI- eller konstnärlig kvalitetsbedömning.
+- Ett val applicerar kopierad geometri utan att radera UV, material eller existerande skin index/weights, varefter vanlig GLB-export fungerar. Ångra/gör om ska bevara skinned mesh-bone wiring.
+- Deformerar former bara upp till cirka 1,2 % av lokalt mesh-diagonal, backar ned vid risk för triangelflip. Detta är **mikrodetalj och variantsökning** – inte bild-till-3D, 4K-baking, automatisk retopo eller Meshy-kvalitet.
+
+Denna metod utforskar hur **materialmedveten lokal skulpt + flerförslagssearch + inbyggd topologirisk** kan bli snabb och billig. Vi hävdar inte att metoden är unik i forskningsvärlden.
+
+Forskningsinspiration (ingen kod direkt kopierad):
+- [Fancy123 (CVPR 2025)](https://openaccess.thecvf.com/content/CVPR2025/html/Yu_Fancy123_One_Image_to_High-Quality_3D_Mesh_Generation_via_Plug-and-Play_CVPR_2025_paper.html): geometrisk och vy-konsistent efterbearbetning.
+- [Geometry in Style (CVPR 2025)](https://openaccess.thecvf.com/content/CVPR2025/html/Dinh_Geometry_in_Style_3D_Stylization_via_Surface_Normal_Deformation_CVPR_2025_paper.html): normalstyrd deformation, identitetsbevarande.
+- [MeshSplatting (CVPR 2026)](https://openaccess.thecvf.com/content/CVPR2026/html/Held_MeshSplatting_Differentiable_Rendering_with_Opaque_Meshes_CVPR_2026_paper.html): varför direkt mesh-kvalitet är avgörande.
+- [Khronos glTF](https://registry.khronos.org/glTF/): kvalitet ska överleva export och återimport.
+
+Implementation: `workshop/studio/shape-dna-core.mjs`, `shape-dna-studio.mjs`. Tester: `tests/shape-dna-core.test.mjs`, `tests/shape-dna-browser.mjs`. Begränsat till 95 000 verticer per urval för att skydda mobiler.
