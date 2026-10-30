@@ -1,0 +1,36 @@
+name: Test AURORA V5 Studio model
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/v5-aurora.mjs'
+      - 'workshop/studio/studio.mjs'
+      - 'tests/v5-aurora-smoke.mjs'
+      - '.github/workflows/v5-aurora.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aurora-v5-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  model-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and source integrity
+        run: |
+          node --check workshop/studio/v5-aurora.mjs
+          node --check workshop/studio/studio.mjs
+          node --check tests/v5-aurora-smoke.mjs
+      - name: Install test-only Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Serve existing Studio
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . > /tmp/aurora-v5.log 2>&1 &
+      - name: Verify AURORA model in desktop and mobile, export real GLB
+        run: node tests/v5-aurora-smoke.mjs
