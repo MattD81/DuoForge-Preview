@@ -5,6 +5,7 @@
  * an intentionally limited subset of the triangles, so prefer Detail PBR.
  */
 import * as THREE from "three";
+import {mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
 export const AURORA_V5_ID="v5-aurora";
 export const AURORA_V5_NAME="AURORA V5 · Hyper GT";
 export function createAuroraV5({quality="auto"}={}){
@@ -167,15 +168,21 @@ export function createAuroraV5({quality="auto"}={}){
    add(new THREE.SphereGeometry(.018,8,6),mats.silver,
     "41 · rim lock bolt",side*.227,Math.cos(a)*.29,Math.sin(a)*.29,wheel);
   }
-  // Short segments of actual tread geometry, rather than painted strips.
+  // Merge all tread blocks into ONE mesh/wheel. This preserves real
+  // geometry while saving >200 mobile GPU draw calls over separate objects.
+  const treadPieces=[];
   for(let k=0;k<radial;k++){
    const a=k*Math.PI*2/radial;
    for(const offset of [-.093,.093]){
-    const block=add(new THREE.BoxGeometry(.105,.028,.13),mats.rubber,
-     "42 · radial tire tread",offset,Math.cos(a)*.555,Math.sin(a)*.555,wheel);
-    block.rotation.x=a;
+    const block=new THREE.BoxGeometry(.105,.028,.13);
+    block.rotateX(a);
+    block.translate(offset,Math.cos(a)*.555,Math.sin(a)*.555);
+    treadPieces.push(block);
    }
   }
+  const treadGeometry=mergeGeometries(treadPieces,false);
+  for(const piece of treadPieces)piece.dispose();
+  if(treadGeometry)add(treadGeometry,mats.rubber,"42 · merged physical tire treads",0,0,0,wheel);
   const caliper=add(new THREE.BoxGeometry(.062,.145,.12),mats.amber,
    "43 · visible brake caliper",side*.19,-.03,-.2,wheel);
   caliper.rotation.x=.33;
