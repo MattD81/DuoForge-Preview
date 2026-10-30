@@ -19,6 +19,7 @@ import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
 import {initGpuDeluxeV5Studio} from "./gpu-deluxe-v5-studio.mjs";
+import {createAuroraV5,AURORA_V5_ID,AURORA_V5_NAME} from "./v5-aurora.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -578,8 +579,18 @@ window.addEventListener("keydown",event=>{
  }
 });
 
-// An editable starter kart makes the interface useful on its first visit.
-addPreset("cart","DuoForge Kart – startmodell");
+// Shared V5 showcase deep-link: generated locally; never loads arbitrary URLs.
+const auroraDemo=new URLSearchParams(window.location.search).get("demo")===AURORA_V5_ID;
+if(auroraDemo){
+ const demo=createAuroraV5({quality:"auto"});
+ root.add(demo);
+ demo.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true}});
+ $("projectName").value=AURORA_V5_NAME;
+ refreshTree();select(demo);updateStats();fitScene(demo);
+}else{
+ // Default start project and all saved user projects remain unchanged.
+ addPreset("cart","DuoForge Kart – startmodell");
+}
 livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSelected:()=>selected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene});
 initWorldBuilder({root,scene,sun,skyLight,pushHistory,refreshTree,updateStats,dirty,fitScene,notify,select});
 renderWorld=initRenderWorld({scene,renderer,camera,orbit,transform,root,grid,axes,ground,skyLight,sun,canvas,getSelected:()=>selected,notify,select,filename:safeFilename,boundsHelper});
@@ -626,5 +637,13 @@ const sitesBridge=initSitesStudioBridge({
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
 initStudioMobileUX();
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
-notify("3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
+notify(auroraDemo
+ ? "AURORA V5 laddad · redigera modellen eller välj Exportera GLB. För full detalj, använd V5 Detail PBR när den finns."
+ : "3D-studion är redo. Välj ett objekt och använd Flytta / Rotera / Skala.",4300);
+if(auroraDemo&&document.querySelector("#gpuV5Detail")){
+ // Only the full-fidelity V5 path is suitable for this high-detail mesh.
+ document.querySelector("#gpuV5Preset").value="cinematic";
+ document.querySelector("#gpuV5Preset").dispatchEvent(new Event("change",{bubbles:true}));
+ document.querySelector("#gpuV5Detail").click();
+}
 
