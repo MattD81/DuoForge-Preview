@@ -6,6 +6,7 @@ on:
       - 'index.html'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
+      - 'tests/v5-aurora-smoke.mjs'
       - 'tests/character-forge-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
       - 'tests/living-physics.test.mjs'
@@ -57,6 +58,8 @@ jobs:
           node --check workshop/studio/fusion-engine.mjs
           node --check workshop/studio/fusion-lab.mjs
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/v5-aurora.mjs
+          node --check tests/v5-aurora-smoke.mjs
           node --check workshop/studio/research-ui.mjs
           node --check workshop/studio/research-performance.mjs
           node --check workshop/studio/research-stack-core.mjs
@@ -137,6 +140,8 @@ jobs:
         run: node tests/steering-controls-smoke.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
+      - name: Test original AURORA V5 model, mobile viewport and GLB export
+        run: node tests/v5-aurora-smoke.mjs
       - name: Test GPU Deluxe V2 effects on desktop and mobile
         run: node tests/gpu-deluxe-v2-smoke.mjs
       - name: Test free research stack in browser and mobile
