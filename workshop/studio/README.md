@@ -10,6 +10,9 @@ A self-contained, browser-based 3D editor at `/workshop/studio/`. It works with 
 - Basic **real mesh vertex sculpting**: draw over a selected mesh to move vertices, change brush size/strength, recalculate surface normals, undo changes (maximum 250,000 vertices).
 - Primitive geometry, reusable procedural house/cart/tree presets from GitHub catalog.
 - GLB import **without guessing or modifying model axes**; manual rotation by gizmos and inspector.
+- **Mina GLB-modeller (local asset vault):** Imported .glb files are displayed immediately and then saved in browser-local IndexedDB (max 50 MB per file). Save any selected edited model to the same library. Re-insert saved models into a different scene from the mobile/desktop creation panel. Quick scale ×2 / ×10 is undoable.
+  - SHA-256 deduplication of identical bytes, separate small metadata index, atomic save/delete, and no automatic cloud upload. IndexedDB storage can be cleared by the browser or limited by private mode/device quota.
+  - Assets are shared among pages **on the same origin only** (this GitHub Pages preview). Sites lives at another domain and does **not** automatically see these assets. To transfer now, export/import .glb manually; account sync requires a future authenticated backend adapter.
 - GLB export, editable Three.js scene JSON export/import, PNG screenshots.
 - Browser-local saved scenes in IndexedDB, no cloud sync.
 - Undo/redo (up to 35 steps), duplication, deletion and place object on ground.
