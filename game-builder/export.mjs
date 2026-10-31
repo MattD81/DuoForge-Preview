@@ -1,4 +1,5 @@
 /** ZIP Store (method 0): dependency-free, standards-compliant archives. */
+import {assertSafeGlb,MAX_ASSETS,publicAssetRecord,creditsText,safeAssetFile} from "./safe-assets.mjs";
 const encoder=new TextEncoder();
 const u16=(v)=>[v&255,(v>>>8)&255],u32=(v)=>[v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
 const CRC_TABLE=Uint32Array.from({length:256},(_,i)=>{let c=i;for(let j=0;j<8;j++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);return c>>>0;});
@@ -44,7 +45,7 @@ export const STANDALONE_HTML=`<!doctype html>
 <button data-move="up" aria-label="Framåt">▲</button><button data-move="left" aria-label="Vänster">◀</button><button data-move="down" aria-label="Bakåt">▼</button><button data-move="right" aria-label="Höger">▶</button>
 </div><div class="actions"><button data-action="jump">HOPP</button><button data-action="dash">DASH</button><button data-action="attack">⚔ ATTACK</button></div></div>
 <p class="help">WASD / piltangenter · J attack · K dash · mellanslag hopp · mobil: knappar · ansluten gamepad: vänsterspak, A/B/X.</p>
-<div id="error" role="alert"></div></main>
+<div id="error" role="alert"></div><p class="help"><a href="./CREDITS.md" target="_blank" rel="noopener noreferrer" style="color:#89e8cb">Skaparkrediter, källor och frivilligt stöd till upphovspersoner ↗</a></p></main>
 <script type="module">
 import {startBuilderGame} from "./games/game-builder/runtime.mjs";
 try{
@@ -53,14 +54,24 @@ try{
  const config=await response.json();
  document.title=config.title+" – DuoForge";document.getElementById("title").textContent="◈ "+config.title;
  const game=startBuilderGame({host:document.getElementById("playArea"),controls:document.getElementById("controls"),config,
+  assets:(config.assetManifest||[]).map(a=>({...a,url:"./"+a.file})),
   onState:s=>{document.getElementById("status").textContent="BANA "+Math.min(s.stage,s.levels)+"/"+s.levels+" • ♥ "+s.life+" • ✦ "+s.collected+"/"+s.target+" • "+s.notice;}});
  document.getElementById("restart").addEventListener("click",()=>game.restart());
 }catch(error){document.getElementById("error").textContent="Spelstart misslyckades: "+String(error.message||error);}
 </script></body></html>`;
-export async function collectGameFiles(config,{fetcher=fetch,base=import.meta.url}={}){
+export async function collectGameFiles(config,{fetcher=fetch,base=import.meta.url,assets=[]}={}){
+ if(assets.length>MAX_ASSETS)throw Error("För många externa GLB-modeller.");
+ for(const a of assets){
+  if(!["CC0-1.0","OWNER-ATTESTED"].includes(a.license)||!a.declaration||!a.creator)
+   throw Error("Modell saknar godkänt rättighetsintyg.");
+  assertSafeGlb(a.bytes);
+ }
+ const safeManifest=assets.map(publicAssetRecord);
  const files=[
   ["games/game-builder/runtime.mjs","./runtime.mjs"],
   ["games/game-builder/planner.mjs","./planner.mjs"],
+  ["games/game-builder/model-runtime.mjs","./model-runtime.mjs"],
+  ["games/game-builder/safe-assets.mjs","./safe-assets.mjs"],
   ["workshop/studio/gpu-deluxe.mjs","../workshop/studio/gpu-deluxe.mjs"],
   ["workshop/studio/gpu-deluxe-v2.mjs","../workshop/studio/gpu-deluxe-v2.mjs"],
   ["workshop/studio/ocean-water.mjs","../workshop/studio/ocean-water.mjs"],
@@ -79,7 +90,9 @@ export async function collectGameFiles(config,{fetcher=fetch,base=import.meta.ur
  }));
  return [
   {name:"index.html",data:STANDALONE_HTML},
-  {name:"project.json",data:JSON.stringify(config,null,2)+"\n"},
+  {name:"project.json",data:JSON.stringify({...config,assetManifest:safeManifest},null,2)+"\n"},
+  {name:"CREDITS.md",data:creditsText(assets)},
+  {name:"ASSET_MANIFEST.json",data:JSON.stringify(safeManifest,null,2)+"\n"},
   {name:"package.json",data:JSON.stringify({name:"duoforge-builder-game",version:"1.0.0",
    type:"module",private:true,dependencies:{three:"0.180.0"}},null,2)+"\n"},
   {name:"README.md",data:"# "+config.title+"\n\nSkapat med DuoForge Intelligent Game Builder V1.\n"+
@@ -88,7 +101,8 @@ export async function collectGameFiles(config,{fetcher=fetch,base=import.meta.ur
    "Gratis WebGL/Three.js, inga betalda AI-API:er. Kräver internet för Three.js CDN.\n"+
    "Verklig spelkod finns under games/game-builder/ och delad Ocean Cinema-kod under workshop/studio/.\n"+
    "Skapande sker med regelbaserad prompttolkning, inte generativ AI.\n"},
-  ...sources
+  ...sources,
+  ...assets.map(a=>({name:safeAssetFile(a.id),data:a.bytes}))
  ];
 }
 export async function downloadGame(config,options={}){
