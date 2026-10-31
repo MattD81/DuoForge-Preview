@@ -10,7 +10,7 @@ const DB_VERSION = 1;
 const $ = id => document.getElementById(id);
 
 export function cleanAssetName(name) {
- return String(name || "Min modell").replace(/\.glb$/i, "").trim().slice(0, 80) || "Min modell";
+ return String(name || "Min modell").trim().replace(/\.glb$/i, "").trim().slice(0, 80) || "Min modell";
 }
 export async function validateGLB(blob) {
  if (!blob || typeof blob.size !== "number" || blob.size < 20 || blob.size > MAX_VAULT_BYTES)
