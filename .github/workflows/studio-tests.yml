@@ -39,6 +39,7 @@ on:
       - 'tests/material-lab-smoke.mjs'
       - 'tests/one-click-texturing.test.mjs'
       - 'tests/one-click-texturing-browser.mjs'
+      - 'tests/sites-one-click-bridge.test.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 concurrency:
@@ -107,7 +108,7 @@ jobs:
           node --check workshop/studio/one-click-texturing-core.mjs
           node --check workshop/studio/one-click-texturing.mjs
           node --check tests/one-click-texturing-browser.mjs
-          node --test tests/pbr-vault-core.test.mjs tests/one-click-texturing.test.mjs
+          node --test tests/pbr-vault-core.test.mjs tests/one-click-texturing.test.mjs tests/sites-cinema-bridge.test.mjs tests/sites-one-click-bridge.test.mjs
           node --check workshop/studio/surface-classifier.mjs
           node --check tests/material-lab-smoke.mjs
           node --check tests/render-world-smoke.mjs
