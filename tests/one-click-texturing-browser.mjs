@@ -32,6 +32,7 @@ try{
  const desktop=await browser.newPage({viewport:{width:1450,height:900},acceptDownloads:true});
  await open(desktop);
  assert.equal(await desktop.locator("#oneClickTexturing").count(),1);
+ assert.equal(await desktop.locator("#oneClickPreset option").count(),360);
  // Existing PBR maps must survive one-click unless user explicitly opts in.
  await desktop.locator('[data-vault-id="marble-original"] .vault-pick').click();
  await desktop.locator("#vaultQuality").selectOption("128");
@@ -40,6 +41,8 @@ try{
  await desktop.locator("#oneClickApply").click();
  await desktop.waitForFunction(()=>document.querySelector("#oneClickStatus")?.textContent.includes("redan importerade"),{timeout:10000});
  await desktop.locator("#undo").click();
+ await desktop.locator("#hierarchy .tree-row").first().click();
+ await desktop.waitForFunction(()=>document.querySelector("#oneClickApply")?.disabled===false);
  // Reproducible smart one-click PBR, three texture maps and GLB export.
  await desktop.locator("#oneClickResolution").selectOption("256");
  await desktop.locator("#oneClickSeed").fill("11");
