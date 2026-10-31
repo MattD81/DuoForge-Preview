@@ -44,6 +44,26 @@
   <p class="hint">WASD/piltangenter – gå · J – hugg · K – dash · Mellanslag – hopp · ansluten gamepad: vänsterspak + A/B/X.</p>
   <div class="exportbar"><button type="button" id="export" class="primary">⬇ Exportera spelbar ZIP</button><div class="exportinfo">Innehåller riktig spelkod, <code>project.json</code> och delade grafikmoduler. Kör på webbserver eller importera via GitHub.</div></div>
  </section>
+ <section class="asset-library card" aria-labelledby="assetTitle">
+  <div class="sectiontag">03 / MAGIC ASSET LIBRARY · CC0 FIRST</div>
+  <h2 id="assetTitle">Bygg med riktiga GLB-modeller</h2>
+  <p>Hämta ett objekt från originalskaparen, kontrollera <strong>just ditt paket</strong>, och importera en självständig GLB. Ingen tredjepartsfil hämtas automatiskt och inget laddas upp till en server.</p>
+  <div class="creator-list" id="creatorList" aria-label="Materialskapare och frivilligt stöd"></div>
+  <div class="asset-editor">
+   <label for="modelSource">Var kommer modellen ifrån?</label>
+   <select id="modelSource"><option value="own">Eget originalverk – jag äger rättigheterna</option></select>
+   <label for="modelSourceUrl">Direktlänk till originalmodell eller källpaket (krävs för CC0)</label>
+   <input id="modelSourceUrl" type="url" inputmode="url" placeholder="https://skaparen.example/paket/modell" autocomplete="off">
+   <label for="modelFile">Välj GLB (högst 8 MB)</label>
+   <input id="modelFile" type="file" accept=".glb,model/gltf-binary">
+   <label class="rights"><input id="modelRights" type="checkbox"> Jag intygar att jag har rätt att använda, exportera och dela just den här modellen och dess inbäddade texturer. Jag förstår att felaktiga intyg kan innebära upphovsrättsintrång.</label>
+   <button type="button" class="primary" id="importGlb">＋ Lägg till GLB i spelvärlden</button>
+   <div id="assetsFeedback" class="feedback" aria-live="polite">Max sex GLB-modeller per spel. Filer ligger bara i denna öppna flik tills du exporterar ZIP.</div>
+  </div>
+  <div class="sectiontag">PLACERA OCH SKALA DIREKT I VÄRLDEN</div>
+  <div id="placedAssets" class="placed-assets"></div>
+  <p class="legal-note">CC0 kräver normalt inte krediter, men DuoForge visar ändå skaparna och deras donationssidor. Donationer är frivilliga. Betalda paket, okänd licens, varumärkesskyddade objekt och osäkra tredjepartsfiler får inte importeras utan särskild granskning. En uppladdares intyg är inte en oberoende licenskontroll.</p>
+ </section>
 </div>
 <footer><strong>DUOFORGE INTELLIGENT GAME BUILDER V1</strong><span>Spelbar 3D-mall • Regelbaserad svensk prompttolkning • Sparas i din webbläsare, inte i Sites • Ingen generativ AI • Öppen preview på GitHub Pages</span></footer>
 </main>

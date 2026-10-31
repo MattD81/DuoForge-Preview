@@ -5,6 +5,22 @@ import {spawn,execFileSync} from "node:child_process";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
+// A valid minimal binary glTF triangle, embedded geometry and no remote assets.
+function triangleGlb(){
+ const json={asset:{version:"2.0"},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],
+  meshes:[{primitives:[{attributes:{POSITION:0}}]}],buffers:[{byteLength:36}],
+  bufferViews:[{buffer:0,byteOffset:0,byteLength:36}],
+  accessors:[{bufferView:0,componentType:5126,count:3,type:"VEC3",min:[0,0,0],max:[1,1,0]}]};
+ const raw=Buffer.from(JSON.stringify(json)),n=(raw.length+3)&~3,total=12+8+n+8+36;
+ const b=Buffer.alloc(total,0x20);
+ b.writeUInt32LE(0x46546c67,0);b.writeUInt32LE(2,4);b.writeUInt32LE(total,8);
+ b.writeUInt32LE(n,12);b.writeUInt32LE(0x4e4f534a,16);
+ raw.copy(b,20);
+ const off=20+n;b.writeUInt32LE(36,off);b.writeUInt32LE(0x004e4942,off+4);
+ new Float32Array(b.buffer,b.byteOffset+off+8,9).set([0,0,0,1,0,0,0,1,0]);
+ return b;
+}
+
 const browser=await chromium.launch({headless:true,args:[
  "--no-sandbox","--use-gl=angle","--use-angle=swiftshader",
  "--enable-webgl","--disable-gpu-sandbox"]});
@@ -17,6 +33,19 @@ try{
  const first=await page.evaluate(()=>window.__duoforgeBuilder.config);
  assert.equal(first.world,"forest");assert.equal(first.revision,1);
  assert.ok(await page.locator("#viewport canvas").count()>0);
+ // Provenance must be visible and GLB should actually load into the playable scene.
+ assert.equal(await page.locator("#creatorList .creator").count(),4);
+ assert.equal(await page.locator("#creatorList a").filter({hasText:"Stöd skaparen"}).count(),4);
+ await page.locator("#modelSource").selectOption("own");
+ await page.locator("#modelRights").check();
+ await page.locator("#modelFile").setInputFiles({name:"TestTriangle.glb",mimeType:"model/gltf-binary",buffer:triangleGlb()});
+ await page.locator("#importGlb").click();
+ await page.waitForFunction(()=>window.__duoforgeBuilder?.assetCount===1,{timeout:10000});
+ await page.waitForFunction(()=>window.__duoforgeBuilder?.game?.assetsLoaded===1,{timeout:20000});
+ assert.equal(await page.locator("#placedAssets .asset-item").count(),1);
+ await page.locator("#placedAssets input[type=range]").first().evaluate(el=>{
+  el.value="2.5";el.dispatchEvent(new Event("input",{bubbles:true}));
+ });
  await page.screenshot({path:"game-builder-desktop.png"});
  await page.locator("#prompt").fill("Skapa ett vikingaäventyr på ett stormigt hav med fyra banor, tre monster och fem kristaller.");
  await page.locator("#build").click();
@@ -39,6 +68,13 @@ try{
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.__duoforgeBuilder?.active,{timeout:35000});
  assert.equal((await page.evaluate(()=>window.__duoforgeBuilder.config)).world,"ocean");
+ // Local binary files deliberately never survive a page reload; request reimport.
+ assert.equal(await page.evaluate(()=>window.__duoforgeBuilder.assetCount),0);
+ await page.locator("#modelSource").selectOption("own");
+ await page.locator("#modelRights").check();
+ await page.locator("#modelFile").setInputFiles({name:"TestTriangle.glb",mimeType:"model/gltf-binary",buffer:triangleGlb()});
+ await page.locator("#importGlb").click();
+ await page.waitForFunction(()=>window.__duoforgeBuilder?.game?.assetsLoaded===1,{timeout:20000});
  const downloadPromise=page.waitForEvent("download",{timeout:30000});
  await page.locator("#export").click();
  const download=await downloadPromise;
@@ -53,6 +89,12 @@ try{
  }
  const project=JSON.parse(execFileSync("unzip",["-p",path,"project.json"],{encoding:"utf8"}));
  assert.equal(project.id,first.id);assert.equal(project.world,"ocean");
+ assert.equal(project.assetManifest.length,1);
+ assert.match(listing,/CREDITS.md/);
+ assert.match(listing,/ASSET_MANIFEST.json/);
+ assert.match(listing,/assets\/model-.*\.glb/);
+ const credits=execFileSync("unzip",["-p",path,"CREDITS.md"],{encoding:"utf8"});
+ assert.match(credits,/Eget originalverk/);
  const runtime=execFileSync("unzip",["-p",path,"games/game-builder/runtime.mjs"],{encoding:"utf8"});
  assert.match(runtime,/from "\.\.\/\.\.\/workshop\/studio\/ocean-water\.mjs"/);
  // Verify the exported archive is a *playable independent website*, not

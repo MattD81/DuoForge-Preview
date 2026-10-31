@@ -35,3 +35,13 @@ CI verifierar faktiska WebGL-spelytor, iPhone-emulerat responsivt läge, sparnin
 - `export.mjs` = lokal ZIP Store/CRC32 och inhämtning av bara offentliga statiska modul-filer från samma Preview-host.
 
 **Nästa riktiga integrationsfas:** Via en auktoriserad Sites-kodåtkomst, exponerade MCP-verktyg eller en dokumenterad versionerad API koppla plan/projektdiff till ett existerande Sites-spel. Gör det först när källan går att läsa/testa. GitHub Preview och Sites delar inte automatiskt databas eller spelprojekt.
+
+## Magic Asset Library — juridiskt försiktig beta
+
+Under `/game-builder/` finns nu i den här utvecklingsgrenen en separat **GLB-import i befintliga spelvärlden**, med x/z-position, rotation, direkt storleksändring och stöd för modellens första animation. Modellen sparas i den öppna fliken och i den exporterade ZIP-filen. Importerade modeller ligger **inte** i Sites och överlever **inte sidomladdning** förrän man exporterat spel-ZIP.
+
+Source Library visar **Kenney, två uttryckligen CC0-licensierade KayKit-paket och Poly Haven**, officiell licenskälla och verifierad frivillig stöd-/donationslänk. En uppladdning kräver uttryckligt rättighetsintyg. Filer med okänd licens, fel källa, extern GLB-textur, storlek över 8 MB eller obekräftat ursprung blockeras. Det är inte en frisedel för andra filer i samma webbshop. Krediter och ursprung följer med som `CREDITS.md` + `ASSET_MANIFEST.json` i ZIP-exporten.
+
+All kod och policy, avgränsning till Preview och framtida granskning inför Sites finns i [ASSET_POLICY.md](./ASSET_POLICY.md). **Rapier/Yuka/Navcat, extern asset-spegel, större Asset Vault och generativ AI är inte installerade av denna ändring.**
+
+Tester: `node --test tests/safe-asset-library.test.mjs tests/intelligent-builder.test.mjs` samt befintlig browser-smoke i Actions.
