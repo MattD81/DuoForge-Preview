@@ -621,6 +621,10 @@ const sitesBridge=initSitesStudioBridge({
   }
   $("filmOpen").click();
  },
+ textureSelected:async settings=>{
+  if(!materialLab?.oneClickTexture)throw Error("DuoForge Material Lab saknas.");
+  return materialLab.oneClickTexture(settings);
+ },
  setOcean:settings=>{
   if(!renderWorld.isActive())renderWorld.start();
   const control={height:"oceanHeightLive",speed:"oceanSpeedLive",
