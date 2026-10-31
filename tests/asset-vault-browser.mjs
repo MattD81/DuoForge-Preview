@@ -27,7 +27,8 @@ try{
  console.log("PASS: model can be scaled with one tap and inspector updates");
  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#exportGLB").click()]);
  assert.match(download.suggestedFilename(),/\.glb$/);
- const buffer=await import("node:fs").then(fs=>fs.readFileSync(download.path()));
+ const filePath=await download.path();
+ const buffer=await import("node:fs").then(fs=>fs.readFileSync(filePath));
  await page.locator("#importFile").setInputFiles({name:"test-upload.glb",mimeType:"model/gltf-binary",buffer});
  await page.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="3",{timeout:30000});
  await page.waitForFunction(()=>document.querySelectorAll("#assetVaultList .asset-vault-row").length===2);
