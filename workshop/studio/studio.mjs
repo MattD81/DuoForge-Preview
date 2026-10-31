@@ -423,13 +423,13 @@ function addPreset(kind,name){
   part(new THREE.BoxGeometry(.75,1.35,.07),0x614333,0,.68,1.43);
   for(const x of [-.95,.95])part(new THREE.BoxGeometry(.55,.55,.08),0x6fa6c7,x,1.75,1.45);
  }else if(kind==="cart"){
-  part(new THREE.BoxGeometry(2.35,.5,3.5),0x22bf93,0,.77,0);
-  part(new THREE.BoxGeometry(1.65,.7,1.8),0x375875,0,1.3,-.2);
+  part(new THREE.BoxGeometry(2.35,.5,3.5),0x22bf93,0,.77,0).name="body_chassis";
+  part(new THREE.BoxGeometry(1.65,.7,1.8),0x375875,0,1.3,-.2).name="body_cabin";
   for(const x of [-1.21,1.21])for(const z of [-1.1,1.1]){
-   part(new THREE.CylinderGeometry(.42,.42,.31,32),0x151d27,x,.43,z,0,0,Math.PI/2);
-   part(new THREE.CylinderGeometry(.23,.23,.33,24),0xb5cad1,x,.43,z,0,0,Math.PI/2);
+   part(new THREE.CylinderGeometry(.42,.42,.31,32),0x151d27,x,.43,z,0,0,Math.PI/2).name="wheel_tire";
+   part(new THREE.CylinderGeometry(.23,.23,.33,24),0xb5cad1,x,.43,z,0,0,Math.PI/2).name="rim_metal";
   }
-  part(new THREE.BoxGeometry(1.45,.22,.23),0x9fb7b9,0,.52,1.82);
+  part(new THREE.BoxGeometry(1.45,.22,.23),0x9fb7b9,0,.52,1.82).name="bumper_metal";
  }else if(kind==="tree"){
   part(new THREE.CylinderGeometry(.18,.28,2.4,12),0x68452b,0,1.2,0);
   for(const [y,height,r] of [[2.7,2.6,1.2],[3.4,2.1,.95],[4,1.5,.65]])part(new THREE.ConeGeometry(r,height,10),0x247a54,0,y,0);
