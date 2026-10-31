@@ -35,7 +35,7 @@ test("smart assignment handles vehicle parts, materials, names and generic fallb
  assert.equal(chooseKind({name:"roof_window",vehicle:true}),"glass");
  assert.equal(chooseKind({name:"body_chassis",vehicle:true}),"paint");
  assert.equal(chooseKind({name:"LED_strip"}),"neon");
- assert.equal(chooseKind({name:"House wood deck"}),"wood");
+ assert.equal(chooseKind({name:"oak wood deck"}),"wood");
  assert.equal(chooseKind({name:"unknown mesh",metalness:.95}),"brushed");
  assert.equal(chooseKind({name:"unknown mesh",metalness:0}),"concrete");
 });
