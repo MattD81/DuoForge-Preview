@@ -51,7 +51,10 @@ function mount(){
  $("identity").textContent="Projekt "+config.id+" · version "+config.revision+" · sparas lokalt";
  $("restart").disabled=false;
  try{
-  game=startBuilderGame({host:$("viewport"),controls:$("controls"),config,onState:onGameState});
+  game=startBuilderGame({host:$("viewport"),controls:$("controls"),config,onState:onGameState,
+   assets,onAssetEvent:event=>{
+    $("assetsFeedback").textContent=event.status==="error"?"Modellfel: "+event.message:"GLB synlig i spelvärlden.";
+   }});
   $("renderState").textContent="● 3D-motorn igång";
  }catch(error){
   $("renderState").textContent="⨯ Renderingsfel";
@@ -83,6 +86,7 @@ $("undo").addEventListener("click",()=>{
 });
 $("newProject").addEventListener("click",()=>{
  // Deliberate user action: create a truly separate project ID.
+ assets=[];renderAssets();
  history=[];config=normalizeConfig({id:"duoforge-"+Date.now().toString(36),revision:1,
   title:"Mitt nya 3D-spel"});
  store();mount();
@@ -99,7 +103,7 @@ $("export").addEventListener("click",async()=>{
  if(busy)return;
  busy=true;$("export").disabled=true;$("export").textContent="◌ Packar spelet…";
  try{
-  const report=await downloadGame(config);
+  const report=await downloadGame(config,{assets});
   showFeedback("✓ Exporterade "+report.name+" med "+report.files+" filer ("+
    Math.round(report.bytes/1024)+" KB). Kör från en webbserver och importera via GitHub till DuoForge.");
  }catch(error){
@@ -111,6 +115,6 @@ renderPlan(planGame("Skapa 3D-spel i "+({ocean:"hav",forest:"skog",city:"stad",r
 showFeedback("✓ Intelligenta Game Builder är redo. Det här är en lokal 3D-mall med regelbaserad prompttolkning. Förändringar sparas i webbläsaren. Använd textfältet för att förbättra samma spel.");
 Object.defineProperty(window,"__duoforgeBuilder",{value:Object.freeze({
  get config(){return config},get history(){return history.map(x=>x.revision)},
- get active(){return !!game},get game(){return game?.state||null},
+ get active(){return !!game},get game(){return game?.state||null},get assetCount(){return assets.length},
  plan:prompt=>planGame(prompt,config),version:BUILDER_VERSION
 })});
