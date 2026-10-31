@@ -2,7 +2,7 @@
 // integration, not a way to read private Sites data on the GitHub host.
 // No server, external API, AI key, paid credits or automatic publication.
 export const BRIDGE_PROTOCOL="duoforge-cinema-bridge@1";
-export const STUDIO_ACTIONS=Object.freeze(["IMPORT_GLB","OPEN_CINEMA","SET_OCEAN","PING"]);
+export const STUDIO_ACTIONS=Object.freeze(["IMPORT_GLB","OPEN_CINEMA","SET_OCEAN","TEXTURE_SELECTED","PING"]);
 export const TRUSTED_SITES_ORIGINS=Object.freeze([
  "https://duoforge-gaming.cuddlyelk8.chatgpt.site"
 ]);
@@ -33,6 +33,20 @@ export function normalizeBridgeOcean(data){
  if(!Object.keys(out).length)throw Error("Inga havsinställningar angavs.");
  return out;
 }
+export function normalizeTextureOptions(data){
+ if(!data||typeof data!=="object"||Array.isArray(data))throw Error("Ogiltigt textureringskommando.");
+ const keys=new Set(["mode","presetId","seed","palette","wear","tile","resolution","overwrite"]);
+ if(Object.keys(data).some(key=>!keys.has(key)))throw Error("Okänd textureringsparameter.");
+ if(data.mode!==undefined&&!["smart","single"].includes(data.mode))throw Error("Otillåtet materialläge.");
+ if(data.presetId!==undefined&&(typeof data.presetId!=="string"||!/^[a-z0-9-]{1,72}$/.test(data.presetId)))
+  throw Error("Ogiltigt material-ID.");
+ if(data.overwrite!==undefined&&typeof data.overwrite!=="boolean")throw Error("overwrite måste vara boolean.");
+ const ranges={seed:[0,63],palette:[0,15],wear:[0,15],tile:[0,3]};
+ for(const [key,[min,max]]of Object.entries(ranges))if(key in data&&
+  (!Number.isInteger(data[key])||data[key]<min||data[key]>max))throw Error("Otillåtet texturvärde: "+key);
+ if("resolution" in data&&![128,256,512,1024].includes(data.resolution))throw Error("Otillåten upplösning.");
+ return {...data,overwrite:data.overwrite===true};
+}
 export function makeBridgeReply(action,requestId,ok,extra={}){
  return {protocol:BRIDGE_PROTOCOL,type:"RESULT",action,requestId:safeId(requestId),ok,...extra};
 }
@@ -46,7 +60,7 @@ export function validateBridgeGLB(value){
  return true;
 }
 export function initSitesStudioBridge({
- win=window,importGLB,openCinema,setOcean,allowLocalhost=false
+ win=window,importGLB,openCinema,setOcean,textureSelected=null,allowLocalhost=false
 }={}){
  if(typeof importGLB!=="function"||typeof openCinema!=="function"||typeof setOcean!=="function")
   throw Error("Sites Studio-anslutningen saknar riktiga funktioner.");
@@ -78,6 +92,11 @@ export function initSitesStudioBridge({
     const settings=normalizeBridgeOcean(msg.settings);
     setOcean(settings);
     post(makeBridgeReply(action,requestId,true,{settings}));
+   }else if(action==="TEXTURE_SELECTED"){
+    if(typeof textureSelected!=="function")throw Error("Textureringsmotorn är inte tillgänglig.");
+    const options=normalizeTextureOptions(msg.options||{});
+    const result=await textureSelected(options);
+    post(makeBridgeReply(action,requestId,true,{result}));
    }else if(action==="OPEN_CINEMA"){
     openCinema();
     post(makeBridgeReply(action,requestId,true,{world:"ocean"}));
