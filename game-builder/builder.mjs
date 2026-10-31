@@ -1,14 +1,15 @@
 import {BUILDER_VERSION,normalizeConfig,planGame} from "./planner.mjs";
 import {startBuilderGame} from "./runtime.mjs";
 import {downloadGame} from "./export.mjs";
-import {CREATOR_SOURCES,MAX_ASSETS,assertSafeGlb,acceptAssetProvenance,cleanPlacement} from "./safe-assets.mjs";
+import {setupSafeAssetPanel} from "./asset-ui.mjs";
 
 const $=id=>document.getElementById(id);
 const STORAGE="duoforge-intelligent-builder-v1";
 const SUPPORTED={world:{ocean:"Hav",forest:"Skog",city:"Stad",ruins:"Ruiner"},
  weather:{storm:"Storm",sunset:"Solnedgång",clear:"Dagsljus",night:"Natt"},
  genre:{arena:"Strid",adventure:"Äventyr"},quality:{auto:"Adaptiv GPU",quality:"Hög grafik",performance:"Prestanda"}};
-let game=null,config=null,history=[],busy=false,assets=[];
+let game=null,config=null,history=[],busy=false,assets=[],assetPanel=null;
+function renderAssets(){assetPanel?.renderAssets(assets);}
 function store(){
  try{localStorage.setItem(STORAGE,JSON.stringify({config,history:history.slice(-10)}));}catch{}
 }
@@ -110,6 +111,9 @@ $("export").addEventListener("click",async()=>{
   showFeedback("Exporten misslyckades: "+String(error.message||error)+". Projektet är kvar i webbläsaren.",true);
  }finally{busy=false;$("export").disabled=false;$("export").textContent="⬇ Exportera spelbar ZIP";}
 });
+assetPanel=setupSafeAssetPanel({getAssets:()=>assets,
+ onChange:next=>{assets=next;renderAssets();mount();},
+ onPlacement:(id,placement)=>game?.updateAssetPlacement(id,placement)});
 revive();mount();
 renderPlan(planGame("Skapa 3D-spel i "+({ocean:"hav",forest:"skog",city:"stad",ruins:"ruiner"}[config.world]),config));
 showFeedback("✓ Intelligenta Game Builder är redo. Det här är en lokal 3D-mall med regelbaserad prompttolkning. Förändringar sparas i webbläsaren. Använd textfältet för att förbättra samma spel.");
