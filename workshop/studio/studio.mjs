@@ -621,6 +621,10 @@ const sitesBridge=initSitesStudioBridge({
   }
   $("filmOpen").click();
  },
+ exportGLB:async maxTextureSize=>{
+  if(!root.children.length)throw Error("Ingen modell att exportera.");
+  return toGLB(maxTextureSize);
+ },
  textureSelected:async settings=>{
   if(!materialLab?.oneClickTexture)throw Error("DuoForge Material Lab saknas.");
   return materialLab.oneClickTexture(settings);
