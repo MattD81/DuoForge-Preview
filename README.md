@@ -1,56 +1,67 @@
-# DuoForge — Build a World Together
+# 🎮 DuoForge — Build a World Together
 
-**En gemensam spelvärld. Inte bara en spelgenerator.**  
-**A shared game world. Not just another game generator.**
+> **🚧 PUBLIC BETA · UNDER ACTIVE DEVELOPMENT**  
+> DuoForge is an evolving game-creation platform. Features, game content and performance may change; bugs and unfinished experiences are expected. This repository is a **public preview**, not the complete production source.
 
-[**ENTER THE REAL DUOFORGE GAME WORLD**](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games) · [Community showcase](https://mattd81.github.io/DuoForge-Preview/showcase/) · [Game Builder preview](https://mattd81.github.io/DuoForge-Preview/game-builder/)
+**Build worlds. Create games. Play together.**  
+DuoForge explores a shared creative space where game makers, artists and players can develop experiences together.
 
----
+### ▶️ [PLAY GAMES — OPEN DUOFORGE BETA](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games)
 
-## The vision
+**Want to try it now?** Open the Games page above to discover and play available experiences. No GitHub installation is required to visit the game catalogue.
 
-Most tools help one person create **a game**. DuoForge exists to help people imagine, build, test and grow **a game world together**.
+[![Status: Public Beta](https://img.shields.io/badge/status-public%20beta-f59e0b)](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games)
+![Development: Active](https://img.shields.io/badge/development-active-16a34a)
+![Platform: Web](https://img.shields.io/badge/platform-web%20%26%20mobile-2563eb)
 
-One person imagines a town. Another gives its characters life. A developer adds gameplay. Players test and share ideas. Over time the same world becomes richer without losing its creators or history.
+![DuoForge project banner](assets/duoforge-banner.svg)
 
-**We want the GitHub community to understand this purpose, not copy our platform.** Our private DuoForge Sites application is the product. GitHub provides the transparent engineering journey and selected public experiments.
+## Discover DuoForge
 
-## Explore what exists
-
-| Destination | Purpose |
+| Explore | Description |
 | --- | --- |
-| [DuoForge game world](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games) | Our existing platform and the place to discover and play games. |
-| [Community showcase](https://mattd81.github.io/DuoForge-Preview/showcase/) | A public introduction to the collaborative world-building vision, **not** a cloned application. |
-| [Game Builder V1 preview](https://mattd81.github.io/DuoForge-Preview/game-builder/) | Playable, rule-based WebGL game creation experiment, incremental updates and ZIP export. **Not a general LLM.** |
-| [3D workshop preview](https://mattd81.github.io/DuoForge-Preview/workshop/) | Public 3D and graphics experiments. |
+| 🎮 **[Play Games — main platform](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games)** | The main place to discover and test available games. |
+| 🌍 [Community showcase](https://mattd81.github.io/DuoForge-Preview/showcase/) | Learn about our collaborative game-world vision. |
+| 🧩 [Game Builder preview](https://mattd81.github.io/DuoForge-Preview/game-builder/) | Experimental browser-based game creation. |
+| 🛠️ [3D Studio preview](https://mattd81.github.io/DuoForge-Preview/workshop/studio/) | Explore evolving 3D creation tools. |
+| 🕹️ [Public GitHub preview](https://mattd81.github.io/DuoForge-Preview/) | Independent technical demonstrations and experiments. |
 
-## Create together: the direction we're heading
+## Our vision
 
-**Imagine → Create → Play → Review → Grow.**
+**Imagine → Create → Play → Improve → Share.**
 
-- **World builders:** places, stories and missions.
-- **Artists:** characters, models, environments and animations.
-- **Developers:** mechanics, engine technology and reviewable code.
-- **Players:** discovering, testing and helping improve the same world.
+A world builder creates a place. An artist brings its characters to life. A developer adds gameplay. Players test the experience and help it evolve. DuoForge aims to make those contributions part of a growing creative ecosystem.
 
-Shared editing, comprehensive cross-project synchronization and Playable Pull Requests are **future goals**, not shipped features. The public previews are not automatically connected to the private Sites database.
+### What we're working on
 
-## What makes it different
+- **Game creation:** approachable tools and prototypes for building playable experiences.
+- **3D tools:** model editing, materials, GLB workflows and visual experiments.
+- **Rendering:** experiments with real-time graphics, lighting and performance.
+- **Mobile play:** responsive layouts, touch controls and gamepad experiments.
+- **Collaboration:** a long-term direction for sharing worlds, assets and contributions.
 
-1. **One world, many creators:** keep identity, ownership, history and contribution credit.
-2. **Reusable creations:** share and develop approved components rather than duplicate whole games.
-3. **Play to verify:** changes should be testable, reproducible and easy to review.
-4. **Creators stay in control:** authorized collaboration, opt-in sharing and protected private code.
-5. **One actual platform:** DuoForge Sites remains the product; GitHub is its carefully curated public engineering showcase.
+These are **areas of development**, not a claim that every capability is complete or integrated in production.
 
-Read the [community vision](docs/COMMUNITY_VISION.md) and [public/private boundary](docs/PUBLIC_BOUNDARY.md).
+## 📸 Project visuals
+
+![DuoForge creation pipeline](assets/duoforge-workflow.svg)
+
+The graphics above are **illustrative project artwork**, not screenshots of the live application. To evaluate the actual product, use the live links above.
+
+## 🧪 Beta notice
+
+This is a work in progress. Some previews may differ from the main DuoForge platform, and not every experiment is connected to production. If something fails, please report the game or preview URL, device/browser, steps to reproduce and expected behaviour.
+
+[**Report a bug or suggest an improvement**](https://github.com/MattD81/DuoForge-Preview/issues)
 
 ## For developers
 
-This public repository contains deliberately shared preview experiments, game demos, tests and GitHub Actions. **It is not an open publication of the underlying Sites platform.** A passing workflow only verifies the tests in that workflow.
+This repository publishes selected previews and technical experiments. The full DuoForge Sites platform and private projects are **not** published here. Please respect contributors' work, third-party licenses and the boundary between public demonstrations and private production code.
 
-**IP and licensing:** Source visibility alone grants no general license to copy, relicense or commercialize this project. Third-party packages retain their own licenses. Never submit private credentials, source, user data or unpublished assets.
+**Maintainer:** [MattD81](https://github.com/MattD81)  
+**Project:** DuoForge — bygg spel tillsammans  
+**Tagline:** *Build a world together. Make every creator part of the adventure.*
 
-**Original idea and platform:** DuoForge — bygg spel tillsammans  
-**Public experiments:** [MattD81/DuoForge-Preview](https://github.com/MattD81/DuoForge-Preview)  
-**Mission:** *Build a world together. Make every creator part of the adventure.*
+---
+
+**🚀 [PLAY THE DUOFORGE GAMES BETA →](https://duoforge-gaming.cuddlyelk8.chatgpt.site/games)**
