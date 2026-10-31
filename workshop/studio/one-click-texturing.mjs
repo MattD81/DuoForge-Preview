@@ -118,15 +118,15 @@ export function initOneClickTexturing({getSelected,pushHistory,dirty,refreshTree
   updateStatus("Ny variant "+seed+"/64 vald. Tryck Texturera markerad modell.");
  };
  async function apply(){
-  if(busy)return;
+  if(busy)throw Error("Textureringen är redan upptagen.");
   const meshes=toMeshes(getSelected());
-  if(!meshes.length)return updateStatus("Markera en modell eller mesh först.");
-  if(meshes.length>500)return updateStatus("Modellen har över 500 meshar. Välj mindre grupper för att skydda mobilens minne.");
+  if(!meshes.length)throw Error("Markera en modell eller mesh först.");
+  if(meshes.length>500)throw Error("Max 500 meshar per texturering för att skydda mobilens minne.");
   const overwrite=q("oneClickOverwrite").checked;
   const pending=meshes.filter(mesh=>overwrite||!hasImportedTexture(mesh));
   if(!pending.length){
    updateStatus("Alla "+meshes.length+" meshar har redan importerade texturer. Bocka i Ersätt om de ska skrivas över.");
-   return;
+   return {changed:0,total:meshes.length,protected:meshes.length};
   }
   busy=true;selectionUpdate();
   try{
@@ -170,15 +170,38 @@ export function initOneClickTexturing({getSelected,pushHistory,dirty,refreshTree
        skippedUV?" "+skippedUV+" utan UV hoppades över.":"")+
       (meshes.length-pending.length?" "+(meshes.length-pending.length)+" importerade texturer bevarades.":"");
     updateStatus(summary);notify("✨ 1-klick: "+changed+" meshar klara för GLB-export.",3800);
-   }else updateStatus("Kunde inte skapa användbar UV på de markerade delarna.");
+    return {changed,total:meshes.length,protected:meshes.length-pending.length,skippedUV,materials:kinds.length,resolution:size};
+   }else throw Error("Kunde inte skapa användbar UV på de markerade delarna.");
   }catch(error){
    console.error("DuoForge OneClick:",error);
    updateStatus("Texturering misslyckades: "+error.message);
    notify("Texturering misslyckades: "+error.message,5000);
+   throw error;
   }finally{busy=false;selectionUpdate()}
  }
- button.onclick=apply;
+ // Called only by the trusted Sites Studio bridge; validate values before applying.
+ async function runCommand(options={}){
+  if(!options||typeof options!=="object"||Array.isArray(options))throw Error("Ogiltiga textureringsinställningar.");
+  const allowed=new Set(["mode","presetId","resolution","seed","palette","wear","tile","overwrite"]);
+  if(Object.keys(options).some(k=>!allowed.has(k)))throw Error("Okänd textureringsinställning.");
+  if(options.mode!==undefined&&options.mode!=="smart"&&options.mode!=="single")throw Error("Okänt materialläge.");
+  if(options.presetId!==undefined&&!getVaultPreset(options.presetId))throw Error("Okänt PBR-recept.");
+  if(options.overwrite!==undefined&&typeof options.overwrite!=="boolean")throw Error("overwrite måste vara boolean.");
+  const settings=validateOptions({resolution:options.resolution??256,seed:options.seed??0,
+   palette:options.palette??0,wear:options.wear??0,tile:options.tile??2});
+  if(options.mode!==undefined)q("oneClickMode").value=options.mode;
+  if(options.presetId!==undefined)q("oneClickPreset").value=options.presetId;
+  q("oneClickPreset").disabled=q("oneClickMode").value!=="single";
+  q("oneClickResolution").value=String(settings.resolution);
+  numberInput.value=String(settings.seed+1);
+  q("oneClickPalette").value=String(settings.palette);
+  q("oneClickWear").value=String(settings.wear);
+  q("oneClickTile").value=String(settings.tile);
+  q("oneClickOverwrite").checked=options.overwrite===true;
+  return apply();
+ }
+ button.onclick=()=>{apply().catch(error=>updateStatus("Texturering misslyckades: "+error.message))};
  selectionUpdate();
  updateStatus("Välj objekt och klicka en gång. "+formatCount(VARIATION_SPACE)+" möjliga inställningskombinationer.");
- return {selectionChanged:selectionUpdate};
+ return {selectionChanged:selectionUpdate,apply:runCommand};
 }
