@@ -70,10 +70,13 @@ export function acceptAssetProvenance({sourceId,assetSourceUrl,rightsConfirmed,n
  if(!assetUrl)throw Error("Ange en HTTPS-länk till just den modell eller det källpaket som filen kommer från.");
  const sourceHost=new URL(source.home).hostname;
  const host=new URL(assetUrl).hostname;
- const permitted=sourceId==="kenney"?host==="kenney.nl"||host==="www.kenney.nl":
+ const urlPath=new URL(assetUrl).pathname;
+ const permitted=sourceId==="kenney"?
+   (host==="kenney.nl"||host==="www.kenney.nl")&&urlPath.startsWith("/assets/")&&urlPath.length>"/assets/".length:
    sourceId.startsWith("kaykit")?
-    (host==="github.com"&&new URL(assetUrl).pathname.startsWith(new URL(source.home).pathname))||
-    host==="kaylousberg.itch.io":host==="polyhaven.com"||host==="www.polyhaven.com";
+    (host==="github.com"&&urlPath.startsWith(new URL(source.home).pathname))||
+    (host==="kaylousberg.itch.io"&&urlPath.length>1):
+    (host==="polyhaven.com"||host==="www.polyhaven.com")&&urlPath.startsWith("/a/")&&urlPath.length>3;
  if(!permitted)throw Error("Länken matchar inte skaparen/källpaketet. Kontakta projektägaren för manuell licensgranskning.");
  return Object.freeze({name:label,creator:source.credit,sourceUrl:assetUrl,license:"CC0-1.0",
   licenseUrl:source.license,donateUrl:source.donate,
