@@ -135,5 +135,5 @@ export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTre
  oneClick=initOneClickTexturing({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector,safeUV,selectionChanged,surfaceLibrary});
  vault=initPbrVault({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector,safeUV,selectionChanged});
  selectionChanged();
- return {selectionChanged};
+ return {selectionChanged,oneClickTexture:options=>{if(!oneClick)throw Error('One-Click Texturing är inte tillgängligt.');return oneClick.apply(options)}};
 }
