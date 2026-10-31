@@ -6,6 +6,8 @@ on:
       - 'index.html'
       - 'workshop/models.json'
       - 'tests/studio-smoke.mjs'
+      - 'tests/asset-vault.test.mjs'
+      - 'tests/asset-vault-browser.mjs'
       - 'tests/v5-aurora-smoke.mjs'
       - 'tests/character-forge-smoke.mjs'
       - 'tests/living-objects-smoke.mjs'
@@ -61,6 +63,9 @@ jobs:
           node --check workshop/studio/fusion-engine.mjs
           node --check workshop/studio/fusion-lab.mjs
           node --check workshop/studio/studio.mjs
+          node --check workshop/studio/asset-vault.mjs
+          node --check tests/asset-vault-browser.mjs
+          node --test tests/asset-vault.test.mjs
           node --check workshop/studio/v5-aurora.mjs
           node --check tests/v5-aurora-smoke.mjs
           node --check workshop/studio/research-ui.mjs
@@ -147,6 +152,8 @@ jobs:
         run: node tests/render-world-smoke.mjs
       - name: Verify Vortex steering on keyboard, gamepad and mobile
         run: node tests/steering-controls-smoke.mjs
+      - name: Test local GLB vault, persistence, scaling and mobile
+        run: node tests/asset-vault-browser.mjs
       - name: Test editing and downloads in Chromium
         run: node tests/studio-smoke.mjs
       - name: Test original AURORA V5 model, mobile viewport and GLB export

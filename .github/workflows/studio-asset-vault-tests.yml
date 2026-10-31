@@ -1,0 +1,36 @@
+name: Verify DuoForge Local GLB Asset Vault
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/asset-vault.mjs'
+      - 'workshop/studio/studio.mjs'
+      - 'workshop/studio/mobile-studio-ux.mjs'
+      - 'workshop/studio/index.html'
+      - 'tests/asset-vault*'
+      - '.github/workflows/studio-asset-vault-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  asset-vault:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax and GLB validation
+        run: |
+          node --check workshop/studio/asset-vault.mjs
+          node --check workshop/studio/studio.mjs
+          node --check tests/asset-vault-browser.mjs
+          node --test tests/asset-vault.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Start static server
+        run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-vault.log 2>&1 &
+      - name: Test import, persistence, scaling and mobile UX
+        run: node tests/asset-vault-browser.mjs
