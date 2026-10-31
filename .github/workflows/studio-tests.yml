@@ -133,6 +133,8 @@ jobs:
         run: npx playwright install chromium --only-shell
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Verify single-click texturing, protected materials and GLB maps in desktop/mobile
+        run: node tests/one-click-texturing-browser.mjs
       - name: Test Film Studio cinematic video rendering, Full HD PNG and storyboard
         run: node tests/film-studio-smoke.mjs
       - name: Verify cross-origin Sites↔Cinema integration with a real GLB
@@ -141,8 +143,6 @@ jobs:
         run: node tests/ocean-world-smoke.mjs
       - name: Test PBR Material Lab and real GLB embedded texture roundtrip
         run: node tests/material-lab-smoke.mjs
-      - name: Verify single-click texturing, protected materials and GLB maps in desktop/mobile
-        run: node tests/one-click-texturing-browser.mjs
       - name: Test render-world environments, controls and preview restoration
         run: node tests/render-world-smoke.mjs
       - name: Verify Vortex steering on keyboard, gamepad and mobile
