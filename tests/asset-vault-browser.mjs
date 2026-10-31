@@ -38,6 +38,7 @@ try{
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
  await mobile.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
  assert.equal(await mobile.locator("#assetVaultPanel").count(),1);
+ await mobile.locator('[data-mobile-tab="scene"]').click();
  await mobile.locator('[data-mobile-tab="create"]').click();
  await mobile.locator(".mobile-sheet-shortcuts button", {hasText:"Mina GLB"}).click();
  await mobile.locator("#assetVaultScale2").scrollIntoViewIfNeeded();
