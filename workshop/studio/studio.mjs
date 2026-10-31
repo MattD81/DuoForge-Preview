@@ -17,6 +17,7 @@ import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
 import {initResearchStack} from "./research-stack-ui.mjs";
 import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
+import {initChatImportBridge} from "./chat-import-bridge.mjs";
 import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
 import {initGpuDeluxeV5Studio} from "./gpu-deluxe-v5-studio.mjs";
 import {createAuroraV5,AURORA_V5_ID,AURORA_V5_NAME} from "./v5-aurora.mjs";
@@ -593,8 +594,8 @@ if(auroraDemo){
  demo.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true}});
  $("projectName").value=AURORA_V5_NAME;
  refreshTree();select(demo);updateStats();fitScene(demo);
-}else{
- // Default start project and all saved user projects remain unchanged.
+}else if(!new URLSearchParams(window.location.search).has("df_glb")){
+ // Default start project; deep-linked GLB opens into a clean scene.
  addPreset("cart","DuoForge Kart – startmodell");
 }
 livingRuntime=initLivingObjects({scene,root,camera,orbit,transform,canvas,getSelected:()=>selected,select,notify,pushHistory,dirty,refreshTree,updateInspector,updateStats,fitScene});
@@ -683,3 +684,6 @@ if(auroraDemo&&document.querySelector("#gpuV5Detail")){
  document.querySelector("#gpuV5Detail").click();
 }
 
+
+// Public chat link handoff. Runs after the editor, import loader and mobile UX are ready.
+initChatImportBridge({loadGLB,notify});
