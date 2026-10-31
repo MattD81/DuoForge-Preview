@@ -1,13 +1,14 @@
 import {BUILDER_VERSION,normalizeConfig,planGame} from "./planner.mjs";
 import {startBuilderGame} from "./runtime.mjs";
 import {downloadGame} from "./export.mjs";
+import {CREATOR_SOURCES,MAX_ASSETS,assertSafeGlb,acceptAssetProvenance,cleanPlacement} from "./safe-assets.mjs";
 
 const $=id=>document.getElementById(id);
 const STORAGE="duoforge-intelligent-builder-v1";
 const SUPPORTED={world:{ocean:"Hav",forest:"Skog",city:"Stad",ruins:"Ruiner"},
  weather:{storm:"Storm",sunset:"Solnedgång",clear:"Dagsljus",night:"Natt"},
  genre:{arena:"Strid",adventure:"Äventyr"},quality:{auto:"Adaptiv GPU",quality:"Hög grafik",performance:"Prestanda"}};
-let game=null,config=null,history=[],busy=false;
+let game=null,config=null,history=[],busy=false,assets=[];
 function store(){
  try{localStorage.setItem(STORAGE,JSON.stringify({config,history:history.slice(-10)}));}catch{}
 }
