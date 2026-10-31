@@ -20,6 +20,7 @@ import {initSitesStudioBridge} from "./sites-cinema-bridge.mjs";
 import {initGpuDeluxeV2Studio} from "./gpu-deluxe-v2-studio.mjs";
 import {initGpuDeluxeV5Studio} from "./gpu-deluxe-v5-studio.mjs";
 import {createAuroraV5,AURORA_V5_ID,AURORA_V5_NAME} from "./v5-aurora.mjs";
+import {initAssetVault} from "./asset-vault.mjs";
 
 const $=id=>document.getElementById(id);
 const canvas=$("scene");
@@ -62,7 +63,7 @@ const frameClock=new THREE.Clock();
 const boundsHelper=new THREE.BoxHelper(new THREE.Object3D(),0x4df5c0);
 boundsHelper.visible=false;scene.add(boundsHelper);
 
-let selected=null, isDirty=false, projectId=null;
+let selected=null, isDirty=false, projectId=null, assetVault=null;
 const sculpt={enabled:false,dragging:false,mesh:null};
 const past=[],future=[],MAX_HISTORY=35;
 const loader=new GLTFLoader(),exporter=new GLTFExporter();
@@ -407,7 +408,12 @@ $("importFile").onchange=async e=>{
  const file=e.target.files?.[0];e.target.value="";
  if(!file)return;if(!file.name.toLowerCase().endsWith(".glb"))return notify("Välj en .glb-fil.");
  if(file.size>50*1024*1024)return notify("Max 50 MB per GLB i denna testversion.");
- try{notify("Läser GLB …",5000);await loadGLB(file,file.name.replace(/\.glb$/i,""))}
+ try{
+  notify("Läser GLB …",5000);
+  await loadGLB(file,file.name.replace(/\.glb$/i,""));
+  // Saving to local IndexedDB must never prevent a successful import.
+  await assetVault?.rememberImport(file);
+ }
  catch(err){console.error(err);notify("Importfel: "+err.message,5000)}
 };
 function addPreset(kind,name){
@@ -598,6 +604,24 @@ materialLab=initMaterialLab({getSelected:()=>selected,notify,pushHistory,dirty,r
 initCharacterForge({root,select,pushHistory,refreshTree,updateStats,fitScene,dirty,notify});
 initShapeDnaLab({root,getSelected:()=>selected,notify,pushHistory,dirty,refreshTree,updateStats,updateInspector});
 initLocalImageTo3D({loadGLB,notify});
+assetVault=initAssetVault({
+ loadGLB,
+ getSelected:()=>selected,
+ exportSelectedGLB:async()=>{
+  if(!selected||!selectedInsideRoot(selected))throw Error("Markera först en modell i scenen.");
+  const buffer=await exporter.parseAsync(selected,{binary:true,onlyVisible:true,maxTextureSize:2048});
+  return new Blob([buffer],{type:"model/gltf-binary"});
+ },
+ scaleSelected:factor=>{
+  if(!selected||!selectedInsideRoot(selected))return notify("Markera först en modell att skala.");
+  const sizes=selected.scale.toArray().map(value=>value*factor);
+  if(sizes.some(n=>!Number.isFinite(n)||n<=0||n>10000))return notify("Modellen är redan för stor för denna skalning.");
+  pushHistory();selected.scale.multiplyScalar(factor);
+  updateInspector();refreshTree();updateStats();fitScene(selected);dirty();
+  notify("Markerad modell förstorad ×"+factor+".");
+ },
+ notify
+});
 initResearchPanel({root,toGLB,download,safeFilename,notify});
 initResearchStack({root,renderer,canvas,toGLB,getProjectName:()=>$("projectName").value,getProjectId:()=>projectId,notify});
 initFusionLab({root,renderer,canvas,camera,orbit,renderWorld,livingRuntime,getProjectName:()=>$("projectName").value,notify});
