@@ -14,7 +14,7 @@ DuoForge explores a shared creative space where game makers, artists and players
 ![Development: Active](https://img.shields.io/badge/development-active-16a34a)
 ![Platform: Web](https://img.shields.io/badge/platform-web%20%26%20mobile-2563eb)
 
-![DuoForge project banner](assets/duoforge-banner.svg)
+
 
 ## Discover DuoForge
 
@@ -42,11 +42,9 @@ A world builder creates a place. An artist brings its characters to life. A deve
 
 These are **areas of development**, not a claim that every capability is complete or integrated in production.
 
-## 📸 Project visuals
+## 📸 Real platform screenshots
 
-![DuoForge creation pipeline](assets/duoforge-workflow.svg)
-
-The graphics above are **illustrative project artwork**, not screenshots of the live application. To evaluate the actual product, use the live links above.
+Screenshots will be added only after they have been captured from the running DuoForge platform and verified as authentic. Until then, use the live Games and Studio links above to see the actual product.
 
 ## 🧪 Beta notice
 
