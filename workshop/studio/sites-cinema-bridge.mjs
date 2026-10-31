@@ -2,7 +2,7 @@
 // integration, not a way to read private Sites data on the GitHub host.
 // No server, external API, AI key, paid credits or automatic publication.
 export const BRIDGE_PROTOCOL="duoforge-cinema-bridge@1";
-export const STUDIO_ACTIONS=Object.freeze(["IMPORT_GLB","OPEN_CINEMA","SET_OCEAN","TEXTURE_SELECTED","PING"]);
+export const STUDIO_ACTIONS=Object.freeze(["IMPORT_GLB","OPEN_CINEMA","SET_OCEAN","TEXTURE_SELECTED","EXPORT_GLB","PING"]);
 export const TRUSTED_SITES_ORIGINS=Object.freeze([
  "https://duoforge-gaming.cuddlyelk8.chatgpt.site"
 ]);
@@ -60,7 +60,7 @@ export function validateBridgeGLB(value){
  return true;
 }
 export function initSitesStudioBridge({
- win=window,importGLB,openCinema,setOcean,textureSelected=null,allowLocalhost=false
+ win=window,importGLB,openCinema,setOcean,textureSelected=null,exportGLB=null,allowLocalhost=false
 }={}){
  if(typeof importGLB!=="function"||typeof openCinema!=="function"||typeof setOcean!=="function")
   throw Error("Sites Studio-anslutningen saknar riktiga funktioner.");
@@ -69,6 +69,7 @@ export function initSitesStudioBridge({
  const wanted=url.searchParams.get("parentOrigin");
  if(!trustedSitesOrigin(wanted,{allowLocalhost}))return {enabled:false,dispose(){}};
  const post=(value)=>win.parent.postMessage({protocol:BRIDGE_PROTOCOL,...value},wanted);
+ const postTransfer=(value,transfer)=>win.parent.postMessage({protocol:BRIDGE_PROTOCOL,...value},wanted,transfer);
  let busy=false,disposed=false;
  async function handle(event){
   if(disposed||event.source!==win.parent||event.origin!==wanted)return;
@@ -97,6 +98,12 @@ export function initSitesStudioBridge({
     const options=normalizeTextureOptions(msg.options||{});
     const result=await textureSelected(options);
     post(makeBridgeReply(action,requestId,true,{result}));
+   }else if(action==="EXPORT_GLB"){
+    if(typeof exportGLB!=="function")throw Error("GLB-exporten är inte tillgänglig.");
+    const blob=await exportGLB(1024);
+    if(!(blob instanceof Blob)||blob.size<20||blob.size>LIMIT)throw Error("GLB exporten saknas eller är över 50 MB.");
+    const buffer=await blob.arrayBuffer();
+    postTransfer(makeBridgeReply(action,requestId,true,{bytes:buffer.byteLength,buffer}),[buffer]);
    }else if(action==="OPEN_CINEMA"){
     openCinema();
     post(makeBridgeReply(action,requestId,true,{world:"ocean"}));
