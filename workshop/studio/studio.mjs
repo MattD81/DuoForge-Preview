@@ -622,8 +622,12 @@ const sitesBridge=initSitesStudioBridge({
   $("filmOpen").click();
  },
  exportGLB:async maxTextureSize=>{
-  if(!root.children.length)throw Error("Ingen modell att exportera.");
-  return toGLB(maxTextureSize);
+  if(!selected||!selectedInsideRoot(selected))throw Error("Välj modellen innan export till Sites.");
+  // Export ONLY selected asset. Default kart and unrelated private scene objects
+  // must never enter a separate user's archive by accident.
+  const buffer=await exporter.parseAsync(selected,{binary:true,onlyVisible:true,
+   maxTextureSize:maxTextureSize===1024?1024:2048});
+  return new Blob([buffer],{type:"model/gltf-binary"});
  },
  textureSelected:async settings=>{
   if(!materialLab?.oneClickTexture)throw Error("DuoForge Material Lab saknas.");
