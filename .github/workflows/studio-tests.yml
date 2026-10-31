@@ -37,6 +37,8 @@ on:
       - 'tests/render-missions.test.mjs'
       - 'tests/surface-classifier.test.mjs'
       - 'tests/material-lab-smoke.mjs'
+      - 'tests/one-click-texturing.test.mjs'
+      - 'tests/one-click-texturing-browser.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 concurrency:
@@ -102,6 +104,10 @@ jobs:
           node --check workshop/studio/render-missions.mjs
           node --check workshop/studio/procedural-materials.mjs
           node --check workshop/studio/material-lab.mjs
+          node --check workshop/studio/one-click-texturing-core.mjs
+          node --check workshop/studio/one-click-texturing.mjs
+          node --check tests/one-click-texturing-browser.mjs
+          node --test tests/pbr-vault-core.test.mjs tests/one-click-texturing.test.mjs
           node --check workshop/studio/surface-classifier.mjs
           node --check tests/material-lab-smoke.mjs
           node --check tests/render-world-smoke.mjs
@@ -134,6 +140,8 @@ jobs:
         run: node tests/ocean-world-smoke.mjs
       - name: Test PBR Material Lab and real GLB embedded texture roundtrip
         run: node tests/material-lab-smoke.mjs
+      - name: Verify single-click texturing, protected materials and GLB maps in desktop/mobile
+        run: node tests/one-click-texturing-browser.mjs
       - name: Test render-world environments, controls and preview restoration
         run: node tests/render-world-smoke.mjs
       - name: Verify Vortex steering on keyboard, gamepad and mobile
@@ -178,5 +186,6 @@ jobs:
             film-studio-mobile.png
             material-world-desktop.png
             material-lab-mobile.png
+            one-click-mobile.png
           if-no-files-found: ignore
 
