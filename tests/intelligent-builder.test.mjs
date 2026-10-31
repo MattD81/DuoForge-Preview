@@ -86,6 +86,9 @@ test("ZIP includes real 3D runtime, GPU Deluxe, Ocean Cinema and npm three depen
  };
  const files=await collectGameFiles(normalizeConfig({title:"Test",world:"ocean"}),{fetcher,base:"https://example.com/game-builder/export.mjs"});
  assert.ok(files.some(x=>x.name==="project.json"));
+ assert.ok(files.some(x=>x.name==="CREDITS.md"));
+ assert.ok(files.some(x=>x.name==="games/game-builder/model-runtime.mjs"));
+ assert.ok(files.some(x=>x.name==="games/game-builder/safe-assets.mjs"));
  assert.ok(files.some(x=>x.name==="workshop/studio/ocean-spectrum.mjs"));
  assert.ok(files.some(x=>x.name==="workshop/studio/gpu-deluxe.mjs"));
  assert.ok(files.some(x=>x.name==="workshop/studio/gpu-deluxe-v2.mjs"));
@@ -93,7 +96,7 @@ test("ZIP includes real 3D runtime, GPU Deluxe, Ocean Cinema and npm three depen
  assert.ok(files.find(x=>x.name==="games/game-builder/runtime.mjs").data.includes("../../workshop/studio/"));
  assert.equal(JSON.parse(files.find(x=>x.name==="package.json").data).dependencies.three,"0.180.0");
  assert.match(STANDALONE_HTML,/startBuilderGame/);
- assert.equal(names.length,7);
+ assert.equal(names.length,9);
  const archive=zipStore(files);
  assert.ok(archive.byteLength>1000);
 });
