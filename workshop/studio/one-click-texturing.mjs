@@ -3,8 +3,8 @@
 // Does not change other objects, imported texture maps (by default) or Sites data.
 import * as THREE from "three";
 import {generateVaultPixels} from "./pbr-vault-maps.mjs";
-import {getVaultPreset} from "./pbr-vault-catalog.mjs";
-import {VARIATION_SPACE,ONE_CLICK_VERSION,chooseKind,recipeForKind,validateOptions} from "./one-click-texturing-core.mjs";
+import {getVaultPreset,VAULT_PRESETS} from "./pbr-vault-catalog.mjs";
+import {VARIATION_SPACE,ONE_CLICK_VERSION,chooseKind,makeRecipe,recipeForKind,validateOptions} from "./one-click-texturing-core.mjs";
 
 const $=id=>document.getElementById(id);
 const limit=(n,a=0,b=255)=>Math.max(a,Math.min(b,n));
@@ -84,6 +84,8 @@ export function initOneClickTexturing({getSelected,pushHistory,dirty,refreshTree
   '<div class="section-heading"><h2>✨ 1-klick texturering</h2><span class="mini-pill">23,5 miljoner kombinationer</span></div>',
   '<p class="hint">Färdiga PBR-recept från vårt Material Vault. Identifierar modellens delar och skapar färg-, normal- och roughness/metallic-kartor på mobilen eller datorn. Varianter genereras vid behov – inte miljontals sparade filer.</p>',
   '<div class="one-click-grid">',
+  '<label>Arbetsläge<select id="oneClickMode"><option value="smart">Smart – material per del</option><option value="single">Ett PBR-material på alla delar</option></select></label>',
+  '<label>Välj bland 360 recept<select id="oneClickPreset" disabled aria-label="Välj PBR-recept"></select></label>',
   '<label>Texturupplösning<select id="oneClickResolution"><option value="128">128 · lätt mobil</option><option value="256" selected>256 · balanserad</option><option value="512">512 · detalj</option><option value="1024">1024 · hög (stor modell kan nedskalas)</option></select></label>',
   '<label>Texturskala<select id="oneClickTile"><option value="0">0,5×</option><option value="1">1×</option><option value="2" selected>2×</option><option value="3">4×</option></select></label>',
   '<label>Variantfrö <input id="oneClickSeed" type="number" min="1" max="64" step="1" value="1"></label>',
@@ -97,6 +99,8 @@ export function initOneClickTexturing({getSelected,pushHistory,dirty,refreshTree
  ].join("");
  host.insertBefore(section,host.querySelector("#pbrVault"));
  const q=id=>section.querySelector("#"+id),button=q("oneClickApply"),status=q("oneClickStatus");
+ for(const p of VAULT_PRESETS){const option=document.createElement("option");option.value=p.id;option.textContent=p.label;q("oneClickPreset").add(option)}
+ q("oneClickMode").onchange=()=>{q("oneClickPreset").disabled=q("oneClickMode").value!=="single"};
  const numberInput=q("oneClickSeed");
  let busy=false;
  function selectionUpdate(){button.disabled=busy||toMeshes(getSelected()).length===0}
@@ -127,11 +131,14 @@ export function initOneClickTexturing({getSelected,pushHistory,dirty,refreshTree
   busy=true;selectionUpdate();
   try{
    const settings=readOptions(),vehicle=/\b(vehicle|kart|car|bil|fordon|racer)\b/i.test(getSelected()?.name||"");
+   const single=q("oneClickMode").value==="single";
+   const selectedPreset=getVaultPreset(q("oneClickPreset").value)||VAULT_PRESETS[0];
+   const chosenRecipe=single?makeRecipe({base:selectedPreset.base,variant:selectedPreset.variant,...settings}):null;
    const jobs=pending.map(mesh=>{
     const first=Array.isArray(mesh.material)?mesh.material[0]:mesh.material;
     const kind=chooseKind({name:mesh.name,parent:mesh.parent?.name,vehicle,
      metalness:first?.metalness,color:first?.color?"#"+first.color.getHexString():""});
-    return {mesh,kind,recipe:recipeForKind(kind,settings)};
+    return {mesh,kind:single?"one-pbr":kind,recipe:chosenRecipe||recipeForKind(kind,settings)};
    });
    const kinds=[...new Set(jobs.map(x=>x.kind))];
    // Downshift expensive runs before allocation. 1024 × 3 maps × many kinds
