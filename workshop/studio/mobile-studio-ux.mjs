@@ -4,7 +4,7 @@
 const mobileQuery=window.matchMedia("(max-width: 720px), (max-height: 500px) and (pointer: coarse)");
 const targets={
  create:{title:"✦ Skapa 3D",side:"left",default:"#characterForge",
-  shortcuts:[["Karaktär","#characterForge"],["Värld","#worldBuilderPanel"],["Former",".primitive-grid"],["Bibliotek","#library"]]},
+  shortcuts:[["Karaktär","#characterForge"],["Värld","#worldBuilderPanel"],["Former",".primitive-grid"],["Mina GLB","#assetVaultPanel"],["GitHub-modeller","#library"]]},
  scene:{title:"▤ Objekt & historik",side:"left",default:".left-panel > .panel-section",
   shortcuts:[["Objekt","#hierarchy"],["Ångra","#undo"],["Gör om","#redo"]]},
  material:{title:"◈ Material & texturer",side:"right",default:"#materialLabPanel",
