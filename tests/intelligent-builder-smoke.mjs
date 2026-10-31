@@ -68,6 +68,13 @@ try{
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.__duoforgeBuilder?.active,{timeout:35000});
  assert.equal((await page.evaluate(()=>window.__duoforgeBuilder.config)).world,"ocean");
+ // Local binary files deliberately never survive a page reload; request reimport.
+ assert.equal(await page.evaluate(()=>window.__duoforgeBuilder.assetCount),0);
+ await page.locator("#modelSource").selectOption("own");
+ await page.locator("#modelRights").check();
+ await page.locator("#modelFile").setInputFiles({name:"TestTriangle.glb",mimeType:"model/gltf-binary",buffer:triangleGlb()});
+ await page.locator("#importGlb").click();
+ await page.waitForFunction(()=>window.__duoforgeBuilder?.game?.assetsLoaded===1,{timeout:20000});
  const downloadPromise=page.waitForEvent("download",{timeout:30000});
  await page.locator("#export").click();
  const download=await downloadPromise;
