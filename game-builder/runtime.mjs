@@ -9,6 +9,8 @@ import {createOceanSurface} from "../workshop/studio/ocean-water.mjs";
 import {createGPUDeluxe} from "../workshop/studio/gpu-deluxe.mjs";
 import {createGpuTimer} from "../workshop/studio/gpu-deluxe-v2.mjs";
 import {normalizeConfig,levelEnemyCount} from "./planner.mjs";
+import {createPlacedModel} from "./model-runtime.mjs";
+import {MAX_ASSETS,cleanPlacement} from "./safe-assets.mjs";
 
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const EPS=.00001;
@@ -39,9 +41,12 @@ function createActor(color,hero=false){
  weapon.position.set(.66,.85,.12);root.add(weapon);
  return {root,joints,body,materials:[armor,skin,metal,boots]};
 }
-export function startBuilderGame({host,config,onState=()=>{},controls=document,env=globalThis}={}){
+export function startBuilderGame({host,config,onState=()=>{},controls=document,env=globalThis,
+ assets=[],onAssetEvent=()=>{}}={}){
  if(!host?.appendChild)throw Error("Game Builder needs a DOM host");
  const project=normalizeConfig(config),rand=seeded(project.seed);
+ const modelAssets=assets.slice(0,MAX_ASSETS),modelInstances=new Map();
+ let worldSerial=0;
  let renderer,scene,camera,gpu,gpuTimer=null,water=null,player=null,foes=[],relics=[],portal=null,decor=[],worldRoot=null;
  let frameHandle=0,disposed=false,started=true,stage=1,life=100,score=0,kills=0,seen=0;
  let last=0,frames=0,invuln=0,dash=0,jump=0,jumpVel=0,attackCD=0,hitFlash=0,stageNotice="Spela!";
@@ -101,6 +106,26 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
    collected:seen,target:levelItems,notice:stageNotice,won:stage>project.levels,
    backend:renderer?.capabilities?.isWebGL2?"WebGL2":"WebGL",
    fps:gpu?.info().fps??null,world:project.world,quality:project.quality}));
+ }
+ function attachImportedModels(){
+  const container=worldRoot,ticket=++worldSerial;
+  modelInstances.clear();
+  for(const asset of modelAssets){
+   createPlacedModel(asset,container).then(handle=>{
+    if(disposed||worldSerial!==ticket||worldRoot!==container){handle.dispose();return;}
+    modelInstances.set(asset.id,handle);
+    onAssetEvent({id:asset.id,status:"loaded"});
+   }).catch(error=>{
+    if(!disposed&&worldSerial===ticket)onAssetEvent({id:asset.id,status:"error",message:String(error.message||error)});
+   });
+  }
+ }
+ function updateAssetPlacement(id,placement){
+  const model=modelAssets.find(a=>a.id===id);
+  if(!model)return false;
+  model.placement=cleanPlacement(placement);
+  modelInstances.get(id)?.applyPlacement(model.placement);
+  return true;
  }
  function buildLevel(){
   if(worldRoot){scene.remove(worldRoot);disposeTree(worldRoot);}
@@ -172,6 +197,7 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   disk.position.y=1.7;portal.add(disk);
   portal.userData.ring=ring;portal.userData.disk=disk;
   if(stage===1){life=100;score=0;kills=0;}
+  attachImportedModels();
   send(true);
  }
  function isClear(){return seen>=levelItems&&foes.every(f=>f.dead);}
@@ -252,6 +278,7 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
    else buildLevel();
    send(true);
   }
+  for(const entry of modelInstances.values())entry.update(dt);
   water?.update(time);
  }
  function resize(){
@@ -287,7 +314,9 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   controls.removeEventListener("pointerdown",onPointerDown);
   for(const event of ["pointerup","pointercancel","lostpointercapture"])controls.removeEventListener(event,onPointerUp);
   env.removeEventListener("resize",resize);
+  worldSerial++;
   if(worldRoot){scene.remove(worldRoot);disposeTree(worldRoot);}
+  modelInstances.clear();
   if(water){scene.remove(water.mesh);water.dispose();}
   gpuTimer?.dispose();renderer?.dispose();renderer?.domElement?.remove();
  }
@@ -314,6 +343,6 @@ export function startBuilderGame({host,config,onState=()=>{},controls=document,e
   buildLevel();resize();
   frameHandle=env.requestAnimationFrame(tick);
  }catch(error){destroy();throw error;}
- return Object.freeze({restart,destroy,get state(){return Object.freeze({stage,life,score,active:started})},
+ return Object.freeze({restart,destroy,updateAssetPlacement,get state(){return Object.freeze({stage,life,score,active:started,assetsLoaded:modelInstances.size})},
   get config(){return project}});
 }
