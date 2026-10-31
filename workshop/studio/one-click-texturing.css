@@ -1,0 +1,29 @@
+/* One-Click Texturing: embedded in existing Material Lab, touch-first. */
+.one-click-texturing{margin:10px 0 14px;padding:13px;border:1px solid #397d62;border-radius:12px;
+ background:linear-gradient(148deg,#0e3027,#122534);color:#e9fff4}
+.one-click-texturing .section-heading{display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.one-click-texturing h2{font-size:16px;margin:0;color:#c7ffe4}
+.one-click-texturing .mini-pill{padding:4px 7px;border-radius:20px;background:#246444;color:#e2ffeb;font-size:10px}
+.one-click-texturing .hint{color:#b8dbcc;font-size:11px;line-height:1.55;margin:7px 0}
+.one-click-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px;margin:12px 0}
+.one-click-grid label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;color:#d0efdf}
+.one-click-grid label:first-child{grid-column:1/-1}
+.one-click-grid input,.one-click-grid select{width:100%;min-width:0;padding:8px;min-height:42px;border:1px solid #4c806a;
+ border-radius:8px;background:#0a2420;color:#e7fff4;font-size:13px}
+.one-click-grid input[type=range]{accent-color:#37d49f;padding:0}
+.one-click-check{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:12px;line-height:1.4;color:#d8f7e8}
+.one-click-check input{accent-color:#41d59a;width:18px;height:18px;flex-shrink:0}
+.one-click-actions{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:7px}
+.one-click-actions button{min-width:0;min-height:44px;padding:8px;font-size:12px;white-space:normal}
+.one-click-actions .accent{border:1px solid #34ce96;background:#27b886;color:#09261f;font-weight:800}
+.one-click-actions .accent:disabled{opacity:.45}
+#oneClickStatus{margin-top:12px;min-height:35px;color:#b6f5d5;line-height:1.5;font-size:12px;overflow-wrap:anywhere}
+@media(max-width:720px){
+ .one-click-texturing{padding:11px 9px}
+ .one-click-grid input,.one-click-grid select{font-size:16px;min-height:44px}
+ .one-click-actions button{min-height:48px}
+}
+@media(max-width:360px){.one-click-grid{grid-template-columns:minmax(0,1fr)}
+ .one-click-grid label:first-child{grid-column:auto}
+ .one-click-actions{grid-template-columns:minmax(0,1fr)}
+}

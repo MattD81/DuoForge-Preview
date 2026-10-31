@@ -2,6 +2,7 @@ import * as THREE from "three";
 import {SURFACE_PRESETS,createSurfaceLibrary,surfacePreset,hasSurfaceTexture} from "./procedural-materials.mjs";
 import {classifySurfaceName} from "./surface-classifier.mjs";
 import {initPbrVault} from "./pbr-vault-ui.mjs";
+import {initOneClickTexturing} from "./one-click-texturing.mjs";
 
 const $=id=>document.getElementById(id);
 function isTextured(mesh){
@@ -31,7 +32,7 @@ function safeUV(mesh){
 }
 export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector}){
  const surfaceLibrary=createSurfaceLibrary("medium");
- let preset="paint",tintEdited=false,vault=null;
+ let preset="paint",tintEdited=false,vault=null,oneClick=null;
  const container=$("materialSwatches");
  function chosen(){
   let item=getSelected();
@@ -68,6 +69,7 @@ export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTre
   $("surfaceTarget").textContent=obj?obj.name+" • "+count+" mesh"+(count===1?"":"ar"):"Markera ett objekt i scenen";
   $("applySurface").disabled=!count;$("autoSurface").disabled=!count;
   vault?.selectionChanged();
+  oneClick?.selectionChanged();
   return count;
  }
  function assign(mesh,type,tint,repeat){
@@ -130,7 +132,8 @@ export function initMaterialLab({getSelected,notify,pushHistory,dirty,refreshTre
  $("applySurface").onclick=applyChosen;
  $("autoSurface").onclick=autoFinish;
  updateSwatches();
+ oneClick=initOneClickTexturing({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector,safeUV,selectionChanged,surfaceLibrary});
  vault=initPbrVault({getSelected,notify,pushHistory,dirty,refreshTree,updateInspector,safeUV,selectionChanged});
  selectionChanged();
- return {selectionChanged};
+ return {selectionChanged,oneClickTexture:options=>{if(!oneClick)throw Error('One-Click Texturing är inte tillgängligt.');return oneClick.apply(options)}};
 }

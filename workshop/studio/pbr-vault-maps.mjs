@@ -63,16 +63,20 @@ function modulation(u,v,p,seed){
  return {relief:clamp(relief*detail,-1,1),contrast};
 }
 function baseRGB(hex){return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))}
-export function generateVaultPixels(id,size=128){
+export function generateVaultPixels(id,size=128,options={}){
  const p=getVaultPreset(id);
  if(!p)throw Error("Okänt material-ID: "+String(id).slice(0,60));
  const n=Math.round(size);
  if(!Number.isFinite(n)||n<16||n>1024||n&(n-1))throw Error("Texturupplösning måste vara 16–1024 och tvåpotens.");
  const color=new Uint8ClampedArray(n*n*4),orm=new Uint8ClampedArray(n*n*4),normal=new Uint8ClampedArray(n*n*4),
        height=new Float32Array(n*n);
+ // Optional recipe seed changes the procedural source, preserving edge tiling.
+ // Default 0 keeps pre-existing 360 Material Vault textures pixel-identical.
+ const offset=Math.max(0,Math.min(63,Math.trunc(Number(options?.seed)||0)));
+ const actualSeed=offset?(p.seed^Math.imul(offset,0x9e3779b1))>>>0:p.seed;
  const rgb=baseRGB(p.color);
  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-  const i=y*n+x,off=i*4,s=modulation(x/n,y/n,p,p.seed),rel=s.relief;
+  const i=y*n+x,off=i*4,s=modulation(x/n,y/n,p,actualSeed),rel=s.relief;
   // Keep physically plausible metallic status; oxidised regions of rusty metal are less metallic.
   const rust=p.pattern==="rust"?clamp((rel+.5)*.7):0;
   const r=clamp(p.roughness*(.85+.24*Math.abs(rel))+.055*rel,.035,1);

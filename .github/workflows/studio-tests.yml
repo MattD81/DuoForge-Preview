@@ -37,6 +37,9 @@ on:
       - 'tests/render-missions.test.mjs'
       - 'tests/surface-classifier.test.mjs'
       - 'tests/material-lab-smoke.mjs'
+      - 'tests/one-click-texturing.test.mjs'
+      - 'tests/one-click-texturing-browser.mjs'
+      - 'tests/sites-one-click-bridge.test.mjs'
       - '.github/workflows/studio-tests.yml'
   workflow_dispatch:
 concurrency:
@@ -102,6 +105,10 @@ jobs:
           node --check workshop/studio/render-missions.mjs
           node --check workshop/studio/procedural-materials.mjs
           node --check workshop/studio/material-lab.mjs
+          node --check workshop/studio/one-click-texturing-core.mjs
+          node --check workshop/studio/one-click-texturing.mjs
+          node --check tests/one-click-texturing-browser.mjs
+          node --test tests/pbr-vault-core.test.mjs tests/one-click-texturing.test.mjs tests/sites-cinema-bridge.test.mjs tests/sites-one-click-bridge.test.mjs
           node --check workshop/studio/surface-classifier.mjs
           node --check tests/material-lab-smoke.mjs
           node --check tests/render-world-smoke.mjs
@@ -126,6 +133,8 @@ jobs:
         run: npx playwright install chromium --only-shell
       - name: Start local static server
         run: python3 -m http.server 8080 --bind 127.0.0.1 --directory . >/tmp/duoforge-server.log 2>&1 &
+      - name: Verify single-click texturing, protected materials and GLB maps in desktop/mobile
+        run: node tests/one-click-texturing-browser.mjs
       - name: Test Film Studio cinematic video rendering, Full HD PNG and storyboard
         run: node tests/film-studio-smoke.mjs
       - name: Verify cross-origin Sites↔Cinema integration with a real GLB
@@ -178,5 +187,6 @@ jobs:
             film-studio-mobile.png
             material-world-desktop.png
             material-lab-mobile.png
+            one-click-mobile.png
           if-no-files-found: ignore
 
