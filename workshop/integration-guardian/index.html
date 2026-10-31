@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="DuoForge Integration Guardian kontrollerar modulernas källfiler och kopplingar i GitHub Preview.">
+<title>DuoForge Integration Guardian v1</title>
+<style>
+:root{color-scheme:dark;--bg:#08111d;--panel:#111f31;--line:#263a50;--text:#edf5fb;--muted:#9bb0c1;--green:#65d7a3;--red:#ff8b8b;--amber:#ffd17a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#173351 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{width:min(100% - 32px,940px);margin:0 auto;padding:28px 0 56px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+a{color:#9de7c4}header a{white-space:nowrap}
+h1{font-size:clamp(1.8rem,5vw,3rem);line-height:1.05;margin:0 0 10px}
+h2{font-size:1rem;margin:0}
+p{color:var(--muted)}
+.eyebrow{color:var(--green);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.75rem}
+.lead{max-width:720px;margin:0 0 20px}
+.summary{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;background:#0e1b2a;border:1px solid var(--line);border-radius:14px;margin:20px 0}
+#summary{font-weight:700}
+button{border:0;border-radius:10px;background:#49c790;color:#07140f;font:700 1rem inherit;padding:12px 18px;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid #b9f5da;outline-offset:3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#142338,#0e1928);padding:16px;min-height:122px}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.state{font-size:.8rem;font-weight:700;white-space:nowrap}
+.state.good{color:var(--green)}.state.bad{color:var(--red)}.state.wait{color:var(--amber)}
+.card p{font-size:.88rem;margin:10px 0 0}
+.note{margin-top:24px;padding:16px;border-left:3px solid #438b79;background:#0d1b27;border-radius:0 10px 10px 0;font-size:.9rem}
+footer{margin-top:26px;color:var(--muted);font-size:.8rem}
+@media(max-width:560px){main{width:min(100% - 22px,940px);padding-top:18px}header{align-items:flex-start}button{width:100%}.summary{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main>
+<header><a href="../studio/">← Tillbaka till 3D Studio</a><span class="eyebrow">DuoForge · v1</span></header>
+<p class="eyebrow">Integrationskontroll</p>
+<h1>Integration Guardian</h1>
+<p class="lead">Kontrollerar att utvalda moduler i GitHub Preview finns, importeras av 3D Studio och har ett startanrop. Kör kontrollen efter kodändringar.</p>
+<div class="summary" aria-live="polite"><span id="summary">Kontrollen startar …</span><button id="refresh" type="button">Kör kontroll igen</button></div>
+<section id="results" class="grid" aria-label="Integrationsstatus"></section>
+<div class="note"><strong>Avgränsning:</strong> Kontrollen granskar källfilerna i GitHub Preview. Den kan inte läsa eller verifiera den privata Sites-produktionens källkod, databaser, autentisering eller anslutna användarkonton. Ett grönt resultat bekräftar statisk inkoppling, inte att varje funktion har körts på den här enheten.</div>
+<footer id="environment"></footer>
+</main>
+<script type="module" src="./guardian.mjs"></script>
+</body>
+</html>
