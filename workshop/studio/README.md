@@ -52,3 +52,15 @@ Known limitations: Full generative 3D from arbitrary images (including hidden su
 tests/character-forge-smoke.mjs covers generating a volumetric character, editing it, exporting GLB, silhouette import and a mobile smoke check.
 
 Optional TripoSR implementation and instructions: services/image-to-3d/README.md. The AI generation button checks for an authorized service on your own computer; it never claims AI is available when the model/server is missing.
+
+## One-click PBR texturing (GitHub preview, v1)
+
+The existing **Material Lab → ✨ 1-klick texturering** is a browser-only finish step. Select an entire GLB/model group or mesh, press the green button and DuoForge uses part names, parent names and basic material signals to choose **procedural PBR textures**. Optionally switch to **Ett PBR-material** and choose any of 360 vault recipes. The feature reuses Material Vault, UV fallback, undo/history, local project saves and GLB export. No new login, paid AI API, image service or separate platform.
+
+- True local base color (sRGB), tangent normal (+Y) and packed linear ORM (occlusion R, roughness G, metallic B) pixels; glTF roughness/metalness are bound to G/B. The red AO channel is included but not separately bound to models without UV2.
+- 360 preset recipes × 64 deterministic seeds × 16 palette tones × 16 weathering levels × 4 UV scales = **23,592,960 parameter combinations**. This is **not** 23.6 million saved texture files, trained AI models or a claim that every combination looks perceptually unique. Seeds alter original procedural noise, generated only on demand.
+- Smart per-part grouping and neutral fallback. Glass and neon use the existing physical shaders; no object recognition AI is claimed. Imported photo/PBR textures are preserved unless the user explicitly checks the overwrite box.
+- Configurable 128/256/512/1024 textures; automatic limits keep large scenes responsive on mobile. Models missing UVs use the existing limited planar fallback, which can stretch on complex meshes.
+- Export GLB to move applied PBR textures into games or film tools. Undo restores the earlier material state. GitHub preview changes do not install themselves into the separate Sites production platform.
+
+Tests: node --test tests/one-click-texturing.test.mjs and node tests/one-click-texturing-browser.mjs after running the static test server and installing Playwright.
