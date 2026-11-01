@@ -120,7 +120,7 @@ export function mountArchitectUI({getConfig,getHistory,getGame,getAssets,applyPa
  const fields=$("architectFields");
  for(const [key,choices]of Object.entries(CHOICES))fields.append(field(FIELD_NAMES[key],key,choices));
  for(const key of ["levels","enemies","collectibles"])fields.append(field(FIELD_NAMES[key],key));
- const form=$("architectForm");let dirty=false,currentPane="settings",activeStep="idea",device="wide";
+ const form=$("architectForm");let dirty=false,currentPane="settings",activeStep="idea",device=window.matchMedia?.("(max-width: 600px)")?.matches?"phone":"wide";
  let notifiedTimer=0,debounce=0;
  const toast=node("div","architect-toast");toast.role="status";document.body.append(toast);
  function notice(message){toast.textContent=message;toast.classList.add("show");clearTimeout(notifiedTimer);notifiedTimer=setTimeout(()=>toast.classList.remove("show"),3300);}
@@ -180,6 +180,9 @@ export function mountArchitectUI({getConfig,getHistory,getGame,getAssets,applyPa
  }
  const stageToolbar=stage.querySelector(".game-toolbar");
  stageToolbar?.after(devices);
+ stage.classList.toggle("device-phone",device==="phone");
+ stage.classList.toggle("device-wide",device==="wide");
+ requestAnimationFrame(()=>window.dispatchEvent(new Event("resize")));
  function drawFlow(){
   const config=getConfig();graph.replaceChildren();
   const lines=graphFor(config);
