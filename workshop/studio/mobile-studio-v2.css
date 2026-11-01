@@ -44,7 +44,7 @@
   padding:8px 11px;font-size:12px}
  .toolbar>.tool-segment:not(:first-child){display:none}
  .toolbar .tool-segment:first-child button{min-width:54px;padding:8px 6px;font-size:12px}
- #mobileEditorToolsMore{display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+ #mobileEditorToolsMore{display:inline-flex;pointer-events:auto!important;align-items:center;justify-content:center;min-height:40px;
   border:1px solid #4e9c83;color:#edfff6;background:#10382ddd;border-radius:10px;
   padding:8px;font-size:12px;font-weight:700;backdrop-filter:blur(6px)}
  body.mobile-editor-extras-open .toolbar>.tool-segment:not(:first-child){display:flex}
