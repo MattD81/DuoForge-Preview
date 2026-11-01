@@ -35,7 +35,7 @@ function checkLine(ok,title,description){
 function optionFor(select,value,label){
  const option=node("option","",label);option.value=value;select.append(option);
 }
-function cleanPair(value,min,max){
+export function cleanPair(value,min,max){
  const n=Math.round(Number(value));
  return Number.isFinite(n)?Math.min(max,Math.max(min,n)):min;
 }
@@ -53,7 +53,7 @@ function displayNode(icon,title,description){
  const copy=node("div");copy.append(node("b","",title),node("small","",description));box.append(copy);
  return box;
 }
-function graphFor(config){
+export function graphFor(config){
  return [
   ["◎","Spelstart",config.genre==="arena"?"Arenaspel i vald 3D-värld":"Äventyrsläge i vald 3D-värld"],
   ["▧","Bygg värld",CHOICES.world.find(x=>x[0]===config.world)?.[1]||config.world],
@@ -246,16 +246,13 @@ export function mountArchitectUI({getConfig,getHistory,getGame,getAssets,applyPa
   for(const [value,label]of [[config.levels,"Banor"],[config.enemies,"Fiender"],[config.collectibles,"Föremål"]]){
    const stat=node("div","architect-stat");stat.append(node("b","",value),node("small","",label));stats.append(stat);
   }
-  // Intentional: preview form resets only after explicit committed changes.
-  if(!dirty){
-   for(const control of form.querySelectorAll("[name]"))control.value=String(config[control.name]);
-  }
+  // Only committed game updates call refresh; preserve all changes through the original config.
   dirty=false;
   for(const control of form.querySelectorAll("[name]"))control.value=String(config[control.name]);
   setDirty();drawFlow();drawIdeaPreview();
   if(state?.assetsLoaded)$("architectRevision").title=state.assetsLoaded+" modeller aktiva i spelet";
  }
  refresh();
- go("idea"); // establishes accessible current-step indicator
+ stepButtons.get("idea")?.setAttribute("aria-current","step");
  return Object.freeze({refresh,runChecks,go,selectPane});
 }
