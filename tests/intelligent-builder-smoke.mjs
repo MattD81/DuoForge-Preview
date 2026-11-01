@@ -33,6 +33,11 @@ try{
  const first=await page.evaluate(()=>window.__duoforgeBuilder.config);
  assert.equal(first.world,"forest");assert.equal(first.revision,1);
  assert.ok(await page.locator("#viewport canvas").count()>0);
+ // Architect is an integrated workbench, not a disconnected mock screen.
+ assert.equal(await page.locator(".architect-shell").count(),1);
+ assert.equal(await page.locator("#architectInspector").count(),1);
+ assert.equal(await page.locator("[data-step]").count(),4);
+ assert.equal(await page.locator("#architectForm [name]").count(),8);
  // Provenance must be visible and GLB should actually load into the playable scene.
  assert.equal(await page.locator("#creatorList .creator").count(),4);
  assert.equal(await page.locator("#creatorList a").filter({hasText:"Stöd skaparen"}).count(),4);
@@ -65,6 +70,19 @@ try{
  const reverted=await page.evaluate(()=>window.__duoforgeBuilder.config);
  assert.equal(reverted.levels,4);assert.equal(reverted.enemies,3);
  assert.equal(reverted.id,first.id);
+ // Visual inspector writes to the exact same saved project and undo stack.
+ await page.locator('#architectForm [name="enemies"]').fill("2");
+ await page.locator("#architectApply").click();
+ await page.waitForFunction(()=>window.__duoforgeBuilder.config.enemies===2);
+ const visuallyEdited=await page.evaluate(()=>window.__duoforgeBuilder.config);
+ assert.equal(visuallyEdited.id,first.id);
+ assert.equal(visuallyEdited.revision,reverted.revision+1);
+ await page.locator('[data-pane="test"]').click();
+ await page.locator("#architectRunTest").click();
+ assert.equal(await page.locator("#architectChecks .architect-check").count(),8);
+ assert.ok((await page.locator("#architectChecks .result.fail").count())===0);
+ await page.locator("#undo").click();
+ await page.waitForFunction(()=>window.__duoforgeBuilder.config.enemies===3);
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>window.__duoforgeBuilder?.active,{timeout:35000});
  assert.equal((await page.evaluate(()=>window.__duoforgeBuilder.config)).world,"ocean");
@@ -129,6 +147,12 @@ try{
  assert.ok(total<=392,"Mobile horizontal scrolling: "+total);
  assert.equal(await mobile.locator("#viewport canvas").count(),1);
  assert.equal(await mobile.locator('[data-action="attack"]').isVisible(),true);
+ await mobile.locator('[data-step="logic"]').click();
+ assert.equal(await mobile.locator("#architectGraph .architect-node").count(),5);
+ await mobile.locator('[data-step="play"]').click();
+ await mobile.locator('[data-device="phone"]').click();
+ const phoneShell=await mobile.locator(".stage.device-phone .world-shell").boundingBox();
+ assert.ok(phoneShell&&phoneShell.width<=390,"Portrait 9:16 preview outside mobile viewport");
  const button=await mobile.locator('[data-move="right"]').boundingBox();
  assert.ok(button&&button.x>=0&&button.x+button.width<=392,"Touch input clipped on 390px iPhone");
  await mobile.screenshot({path:"game-builder-mobile.png"});
