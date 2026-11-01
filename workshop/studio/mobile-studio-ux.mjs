@@ -57,7 +57,8 @@ export function initStudioMobileUX(){
   quick.append(b);
  }
  viewport.append(quick);
- // Start with the 3D model visible. A tool drawer opens only on a deliberate tap.\n let active="create",open=false;
+ // Start with the 3D model visible. A tool drawer opens only on a deliberate tap.
+ let active="create",open=false;
  const headerObserver=new ResizeObserver(entries=>{
   if(mobileQuery.matches&&entries[0]){
    const height=entries[0].target.getBoundingClientRect().height;
