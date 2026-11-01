@@ -159,6 +159,35 @@ function v(a,b){return [a,height(a,b)+.11,b];}
 const a=v(x,z),b=v(x+q,z),c=v(x+q,z+q),d=v(x,z+q);
 triangle(arr,a,d,c,[25,61,64],5);triangle(arr,a,c,b,[27,68,73],5);}});}
 function grassSoft(x,z,size=1){addObject(x,z,2.4*size,arr=>{const y=height(x,z);for(let k=0;k<4;k++){const rx=x+(k-1.5)*.22*size,rz=z+((k%2)-.5)*.18*size,h=(.8+k*.18)*size;triangle(arr,[rx-.12*size,y,rz],[rx+.15*size,y,rz],[rx+.04*size,y+h,rz-.12*size],[34,57,37],6);}});}
+
+function extraTerrainSoft(){
+ const zones=[[-18,15,26,15],[12,29,21,16],[37,66,20,17],[67,108,23,16],[-76,95,17,16],[17,-21,24,16]];
+ for(const [cx,cz,rx,rz] of zones)addObject(cx,cz,Math.max(rx,rz)+4,arr=>{
+  for(let j=0;j<7;j++){
+   const x=cx+(random()-.5)*rx*1.65,z=cz+(random()-.5)*rz*1.65,r=1.3+random()*3.7,rz2=r*(.42+random()*.8),n=5+Math.floor(random()*3),ph=random()*6.283,pts=[];
+   for(let k=0;k<n;k++){let a=ph+k*6.283/n,rr=.67+random()*.42,xx=x+Math.cos(a)*r*rr,zz=z+Math.sin(a)*rz2*rr;pts.push([xx,height(xx,zz)+.105,zz]);}
+   const m=[x,height(x,z)+.11,z],col=j%3===0?[64,66,63]:[51,54,49];
+   for(let k=0;k<n;k++)triangle(arr,m,pts[k],pts[(k+1)%n],col,9);
+   if(j%2===0)triangle(arr,pts[0],pts[2],pts[3],[29,32,30],9);
+  }
+  for(let j=0;j<105;j++){
+   const x=cx+(random()-.5)*rx*2,z=cz+(random()-.5)*rz*2,y=height(x,z)+.12,w=.05+random()*.22,h=.025+random()*.13;
+   triangle(arr,[x-w,y,z-w],[x+w,y,z-w*.2],[x,y+h,z+w],j%5===0?[89,84,73]:[121,115,100],8);
+   if(j%4===0){let g=.18+random()*.46;triangle(arr,[x-g*.14,y,z],[x+g*.14,y,z],[x+g*.1,y+g,z+.05],[46,76,43],6);}
+  }
+ });
+}
+function extraBuildingSoft(x,z,w,d,h){
+ addObject(x,z,Math.max(w,d)*1.8,arr=>{
+  let y=height(x,z)-.12,roof=y+h*.69,peak=roof+h*.32;
+  box(arr,x,y,z,w,h*.68,d,[99,97,88],4);
+  for(const sign of [-1,1]){let a=[x,peak,z-d*.54],b=[x+sign*w*.54,roof,z-d*.54],c=[x+sign*w*.54,roof,z+d*.54],dd=[x,peak,z+d*.54];triangle(arr,a,b,c,[48,49,48],9);triangle(arr,a,c,dd,[55,54,51],9);}
+  for(let k=0;k<6;k++)box(arr,x-w*.4+k*w*.15,y+.6,z-d*.53,.13,h*.51,.12,[69,65,56],4);
+  for(const side of [-1,1])for(let k=0;k<2;k++){let xx=x+side*w*.25,yy=y+1.1+k*1.7;box(arr,xx,yy,z-d*.545,w*.18,h*.19,.12,[19,26,29]);box(arr,xx,yy,z-d*.58,.08,h*.19,.17,[117,110,96],4);box(arr,xx,yy+h*.09,z-d*.59,w*.18,.08,.17,[107,99,87],4);}
+  box(arr,x,y,z+d*.55,w*.22,h*.48,.13,[25,28,27],4);
+ });
+}
+
 function gravelSoft(cx,cz,rx=4,rz=3,count=24){addObject(cx,cz,Math.max(rx,rz)+2,arr=>{for(let i=0;i<count;i++){const px=cx+(random()-.5)*rx*2,pz=cz+(random()-.5)*rz*2;if(((px-cx)/rx)**2+((pz-cz)/rz)**2>1.1)continue;const y=height(px,pz)+.02,s=.18+random()*.38;triangle(arr,[px-s,y,pz],[px+s,y,pz-.02],[px,y+.05+random()*.13,pz+s*.25],[114+Math.floor(random()*20),109+Math.floor(random()*14),97+Math.floor(random()*12)],8);if(i%5===0)triangle(arr,[px-s*.55,y+.01,pz+s*.1],[px+s*.35,y+.01,pz-s*.25],[px,y+.1,pz-s*.1],[76,74,70],8);}});}
 function grassThingSoft(x,z,s=.9){addObject(x,z,3.5*s,arr=>{const y=height(x,z)+.03;triangle(arr,[x-s*.65,y,z],[x+s*.55,y,z-s*.05],[x,y+s*.46,z+s*.28],[29,36,24],7);triangle(arr,[x-s*.34,y+.06,z+s*.02],[x+s*.42,y+.07,z+s*.04],[x,y+s*.28,z-s*.42],[18,22,17],7);triangle(arr,[x-.08*s,y+s*.26,z+s*.08],[x-.02*s,y+s*.25,z+s*.08],[x-.05*s,y+s*.35,z+s*.12],[132,154,88],2);triangle(arr,[x+.03*s,y+s*.25,z+s*.08],[x+.09*s,y+s*.26,z+s*.08],[x+.06*s,y+s*.35,z+s*.12],[132,154,88],2);});}
 // Black tidal pools wrap around the stranded hull without affecting walking physics.
@@ -172,6 +201,8 @@ for(let i=0;i<18;i++){const x=-52+random()*165,z=8+random()*120;if(Math.hypot(x+
 for(let i=0;i<75;i++){const x=-55+random()*162,z=12+random()*112;if(Math.hypot(x+48,z-58)<15)continue;addObject(x,z,2.5,arr=>{const y=height(x,z);box(arr,x,y-.06,z,.12+random()*.16,.08,.65+random()*1.2,[76,65,48],4);if(i%3===0)triangle(arr,[x-.45,y,z],[x+.45,y,z],[x,y+.25,z+.23],[47,63,42],6);});}
 // GLB spruce LODs around the old houses, woodland and the Eiffel tower.
 for(const [x,z,s,l] of [[-26,30,.85,1],[-37,40,1.05,1],[-9,39,.9,1],[12,34,.94,1],[29,58,1.1,1],[-65,89,1.0,2],[-75,33,1.2,2],[50,55,1.1,2],[54,103,.96,1],[99,103,.88,1],[105,83,1.05,1],[64,120,.86,2],[41,98,1.2,2],[113,116,.92,2]])spruceGLBSoft(x,z,s,l);
+extraTerrainSoft();
+for(const p of [[-6,18,9,7,5.8],[10,18,7,6,5.1],[27,36,8,6,5.5],[40,42,10,7,6.1],[50,123,9,7,5.3],[88,128,7,6,5],[-69,117,9,7,5.6],[-87,112,7,6,4.8],[29,-33,8,7,5.2]])extraBuildingSoft(...p);
 oldHouse(-23,49,8,6,5.2);oldHouse(-12,57,7,5,4.7);oldHouse(-31,63,9,6.5,5.5);oldHouse(-40,52,6.5,5,4.2);oldHouse(60,84,8.2,6.2,5.1);oldHouse(92,86,7.2,5.4,4.7);oldHouse(79,109,8.4,6.2,5.0);
 function askSceneSoft(x,z,offset,mesh,palette,step=7){addObject(x,z,70,arr=>{for(let i=0;i<mesh.byteLength;i+=20*step){const pts=[];for(let j=0;j<3;j++){const o=i+j*6;pts.push([x+mesh.getInt16(o,true)/256,offset+mesh.getInt16(o+2,true)/256,z+mesh.getInt16(o+4,true)/256]);}const ci=mesh.getUint8(i+18),mat=mesh.getUint8(i+19);triangle(arr,pts[0],pts[1],pts[2],palette[ci],mat);}});}
 ship(-48,58);
@@ -481,6 +512,7 @@ else if(vMat>3.5&&vMat<4.5){vec3 boards=atlas(5.,uv);vec3 bark=atlas(3.,uv*.87);
 else if(vMat>4.5&&vMat<5.5){float wave=sin(vP.x*.61+uTime*1.25)*sin(vP.z*.38-uTime*1.15);float ripple=grain(vP.xz*.15+vec2(uTime*.028,-uTime*.018));float foam=smoothstep(.68,.9,ripple*.76+wave*.18);base=mix(vec3(.027,.075,.083),vec3(.12,.20,.195),.5+wave*.30)+foam*vec3(.075,.10,.085);rough=.18;wet=.7;n=normalize(n+vec3(cos(vP.x*.61+uTime*1.25)*.11,.96,sin(vP.z*.38-uTime*1.15)*.12));}
 else if(vMat>5.5&&vMat<6.5){vec3 leaf=atlas(7.,vP.xz*.3+vUv*.19);float shift=grain(vP.xz*.14+vUv*.24);base=mix(vC*.54+leaf*.46,vC*.78+leaf*.22,shift);base*=.92;rough=.95;}
 else if(vMat>6.5&&vMat<7.5){float fur=grain(vUv*vec2(3.4,4.8)+vP.xz*.19);base=mix(vec3(.045,.052,.035),vec3(.13,.15,.095),fur*.45);rough=.96;}
+else if(vMat>8.5&&vMat<9.5){float speck=grain(vP.xz*.7)*.45+micro*.55;float crack=1.-smoothstep(.02,.10,abs(grain(vP.xz*.14+vec2(.17,.32))-.51));base=mix(vec3(.18,.20,.19),vec3(.31,.31,.29),speck);base*=mix(.77,1.12,clamp(dot(vC,vec3(.333))*2.3,0.,1.));base=mix(base,vec3(.065,.072,.065),crack*.25);rough=.96;}
 else if(vMat>7.5){base=mix(atlas(1.,uv*.87),atlas(2.,uv*.74),.26+g*.27);base*=mix(.72,1.15,clamp(dot(vC,vec3(.333))*1.8,0.,1.));rough=.98;}
 else{base=mix(vC,atlas(2.,uv),.42);rough=.85;}
 vec3 sunDir=normalize(vec3(-.52,.82,.36));float ndl=max(0.,dot(n,sunDir));float hemi=clamp(n.y*.5+.5,0.,1.);float ambient=.38+.24*hemi+.16*uLight;vec3 lit=base*(ambient+ndl*(.25+.42*uLight));
@@ -519,6 +551,33 @@ box(x,y,z,.27*s,h,.29*s,[.31,.30,.26],false,4);
 box(x+.7*s,y+h*.52,z,.17*s,h*.52,.19*s,[.25,.25,.21],false,4);
 box(x-.8*s,y+h*.64,z+.3*s,.13*s,h*.38,.16*s,[.25,.24,.21],false,4);}
 function grassCluster(x,z){let y=height(x,z);for(let k=0;k<7;k++){let a=random()*6.283,rx=x+(random()-.5)*.45,rz=z+(random()-.5)*.45,h=.32+random()*.74,w=.028+random()*.046,bend=.12+random()*.17,dx=Math.cos(a),dz=Math.sin(a);let c=[.12+random()*.075,.23+random()*.15,.09+random()*.09];tri([rx-dz*w,y,rz+dx*w],[rx+dz*w,y,rz-dx*w],[rx+dx*bend,y+h,rz+dz*bend],c,6,[[0,0],[1,0],[.5,h]]);}}
+
+function extraTerrainGL(){
+ const zones=[[-18,15,26,15],[12,29,21,16],[37,66,20,17],[67,108,23,16],[-76,95,17,16],[17,-21,24,16]];
+ for(const [cx,cz,rx,rz] of zones){
+  for(let j=0;j<7;j++){
+   const x=cx+(random()-.5)*rx*1.65,z=cz+(random()-.5)*rz*1.65,r=1.3+random()*3.7,rz2=r*(.42+random()*.8),n=5+Math.floor(random()*3),ph=random()*6.283,pts=[];
+   for(let k=0;k<n;k++){let a=ph+k*6.283/n,rr=.67+random()*.42,xx=x+Math.cos(a)*r*rr,zz=z+Math.sin(a)*rz2*rr;pts.push([xx,height(xx,zz)+.105,zz]);}
+   const m=[x,height(x,z)+.11,z],col=j%3===0?[.25,.26,.24]:[.21,.22,.20];
+   for(let k=0;k<n;k++)tri(m,pts[(k+1)%n],pts[k],col,9);
+   if(j%2===0)tri(pts[0],pts[3],pts[2],[.11,.13,.12],9);
+  }
+  for(let j=0;j<105;j++){
+   const x=cx+(random()-.5)*rx*2,z=cz+(random()-.5)*rz*2,y=height(x,z)+.12,w=.05+random()*.22,h=.025+random()*.13;
+   tri([x-w,y,z-w],[x,y+h,z+w],[x+w,y,z-w*.2],j%5===0?[.36,.34,.29]:[.47,.45,.39],8);
+   if(j%4===0){let g=.18+random()*.46;tri([x-g*.14,y,z],[x+g*.1,y+g,z+.05],[x+g*.14,y,z],[.19,.30,.16],6,[[0,0],[.5,g],[1,0]]);}
+  }
+ }
+}
+function extraBuildingGL(x,z,w,d,h){
+ let y=height(x,z)-.12,roof=y+h*.69,peak=roof+h*.32;
+ box(x,y,z,w,h*.68,d,[.42,.42,.39],true,4);
+ for(const sign of [-1,1]){let a=[x,peak,z-d*.54],b=[x+sign*w*.54,roof,z-d*.54],c=[x+sign*w*.54,roof,z+d*.54],dd=[x,peak,z+d*.54];tri(a,c,b,[.24,.25,.24],9);tri(a,dd,c,[.25,.26,.25],9);}
+ for(let k=0;k<6;k++)box(x-w*.4+k*w*.15,y+.6,z-d*.53,.13,h*.51,.12,[.33,.30,.26],false,4);
+ for(const side of [-1,1])for(let k=0;k<2;k++){let xx=x+side*w*.25,yy=y+1.1+k*1.7;box(xx,yy,z-d*.545,w*.18,h*.19,.12,[.07,.09,.10],false,4);box(xx,yy,z-d*.58,.08,h*.19,.17,[.44,.41,.36],false,4);box(xx,yy+h*.09,z-d*.59,w*.18,.08,.17,[.42,.39,.35],false,4);}
+ box(x,y,z+d*.55,w*.22,h*.48,.13,[.08,.10,.09],false,4);
+}
+
 function gravelPatch(cx,cz,rx=4,rz=3,count=24){for(let i=0;i<count*2;i++){let px=cx+(random()-.5)*rx*2,pz=cz+(random()-.5)*rz*2;if(((px-cx)/rx)**2+((pz-cz)/rz)**2>1.1)continue;let y=height(px,pz)+.035,s=.11+random()*.26;tri([px-s,y,pz-s*.2],[px+s*.7,y,pz-s*.5],[px+s*.2,y+.05+random()*.06,pz+s],[.38,.37,.33],8);}}
 function grassThing(x,z,s=.9){let y=height(x,z)+.03;tri([x-s*.65,y,z],[x+s*.55,y,z-s*.05],[x,y+s*.46,z+s*.28],[.11,.14,.10],7,[[0,0],[1,0],[.5,1]]);tri([x-s*.34,y+.06,z+s*.02],[x+s*.42,y+.07,z+s*.04],[x,y+s*.28,z-s*.42],[.07,.09,.06],7,[[0,0],[1,0],[.5,1]]);tri([x-.08*s,y+s*.26,z+s*.08],[x-.02*s,y+s*.25,z+s*.08],[x-.05*s,y+s*.35,z+s*.12],[.52,.62,.34],2,[[0,0],[1,0],[.5,1]]);tri([x+.03*s,y+s*.25,z+s*.08],[x+.09*s,y+s*.26,z+s*.08],[x+.06*s,y+s*.35,z+s*.12],[.52,.62,.34],2,[[0,0],[1,0],[.5,1]]);}
 function tidalWater(cx,cz,rx,rz){const step=3.;for(let x=cx-rx;x<cx+rx;x+=step)for(let z=cz-rz;z<cz+rz;z+=step){let nx=(x+step*.5-cx)/rx,nz=(z+step*.5-cz)/rz;
@@ -550,6 +609,8 @@ function ironTower(x,z,s=.17){const y=height(x,z)-.4,base=120*s,h=326*s,cap=8*s;
 ruin(-16,-30,12,11,8);ruin(13,-45,10,12,6);ruin(-35,-52,13,10,10);ruin(35,-75,16,12,8);ruin(70,30,15,14,8);ruin(-80,-58,18,14,10);
 // Authentic optimized spruce GLB geometry, with 3 distance-detail budgets.
 for(const [x,z,s,l] of [[-26,30,.85,0],[-37,40,1.05,0],[-9,39,.9,0],[12,34,.94,1],[29,58,1.1,1],[-65,89,1.0,2],[-75,33,1.2,2],[50,55,1.1,2],[54,103,.96,0],[99,103,.88,0],[105,83,1.05,1],[64,120,.86,2],[41,98,1.2,1],[113,116,.92,2],[6,62,1.0,1],[-25,97,.8,1],[84,127,.9,2],[114,53,1.2,2]])spruceGLB(x,z,s,l);
+extraTerrainGL();
+for(const p of [[-6,18,9,7,5.8],[10,18,7,6,5.1],[27,36,8,6,5.5],[40,42,10,7,6.1],[50,123,9,7,5.3],[88,128,7,6,5],[-69,117,9,7,5.6],[-87,112,7,6,4.8],[29,-33,8,7,5.2]])extraBuildingGL(...p);
 derelictHouse(-23,49,8,6,5.2);derelictHouse(-12,57,7,5,4.7);derelictHouse(-31,63,9,6.5,5.5);derelictHouse(-40,52,6.5,5,4.2);derelictHouse(60,84,8.2,6.2,5.1);derelictHouse(92,86,7.2,5.4,4.7);derelictHouse(79,109,8.4,6.2,5.0);
 askSceneWebGL(-48,58,height(-48,58)+5.8,askShipMesh,askShipColors);
 askSceneWebGL(78,86,height(78,86)+.44,askTowerMesh,askTowerColors);
