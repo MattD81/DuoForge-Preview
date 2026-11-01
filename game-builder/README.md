@@ -45,3 +45,19 @@ Source Library visar **Kenney, två uttryckligen CC0-licensierade KayKit-paket o
 All kod och policy, avgränsning till Preview och framtida granskning inför Sites finns i [ASSET_POLICY.md](./ASSET_POLICY.md). **Rapier/Yuka/Navcat, extern asset-spegel, större Asset Vault och generativ AI är inte installerade av denna ändring.**
 
 Tester: `node --test tests/safe-asset-library.test.mjs tests/intelligent-builder.test.mjs` samt befintlig browser-smoke i Actions.
+
+
+## Architect V1 – visuell spelstudio (november 2026)
+
+**UI över samma fungerande Game Builder, inte en ny plattform.** `architect-ui.mjs` och `architect-ui.css` lägger till en responsiv fyrastegsstudio: **Idé → Spelregler → Provspela → Leverera**. Den öppnas på den befintliga `/game-builder/`-adressen och använder befintliga `builder.mjs`, `planner.mjs`, WebGL-runtime, GLB-import, versionshistorik och ZIP-export.
+
+- **Idé:** svensk prompttolkning med förhandsgranskning av vilka stödda spelvärden som hittats, med varningar för begränsningar.
+- **Spelregler:** visuell inspector med redigerbara fält för värld, ljus/väder, genre, figur, grafik, banor, fiender och föremål. En tillämpning uppdaterar samma projekt-ID, uppdaterar runtime, ökar revisionen och fungerar med **Ångra**.
+- **Logikvy:** visar motorns faktiskt implementerade nivå-/fiende-/samlings-/portalflöde utifrån sparad config. Detta är en **visning av befintlig mekanik**, inte en fritt programmerbar Blueprint-editor.
+- **Provspela:** växla mellan responsiva förhandsvisningar av 16:9 och 9:16 utan att byta motor. Detta simulerar bildförhållanden, inte verklig iPhone-/TV-hårdvara.
+- **Test:** explicit, lokal kontroll av runtime, canvas, kontroller, projekt-ID/revision, localStorage, ZIP-webb-API och GLB-gräns. Fysisk gamepad och Safari/TV-prestanda måste testas manuellt.
+- **Leverera:** återanvänder existerande ZIP-export. Det finns ingen osäker direktpublicering till Sites.
+
+**Ärlig status:** Inga nya AI-modeller/AI-API:er har anslutits; textförståelsen är fortsatt lokal och regelbaserad. Det finns ingen tillgång till produktionskoden i Sites, så den här ändringen kan köras i GitHub Preview men är **inte** installerad i den publicerade huvudplattformen. För AI-agenter, valfria logiknoder och Sites-projektpublicering behövs dokumenterade, auktoriserade API:er och end-to-end-tester.
+
+**Tester:** `node --test tests/architect-ui.test.mjs tests/intelligent-builder.test.mjs` och `node tests/intelligent-builder-smoke.mjs` via befintligt testsystem.
