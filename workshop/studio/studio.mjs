@@ -11,7 +11,7 @@ import {registerRigClips} from "./cinema-rig.mjs";
 import {initMaterialLab} from "./material-lab.mjs";
 import {initCharacterForge} from "./character-forge.mjs";
 import {initShapeDnaLab} from "./shape-dna-studio.mjs";
-import {initStudioMobileUX} from "./mobile-studio-ux.mjs";
+import {initStudioMobileUX} from "./mobile-studio-ux.mjs";\nimport {initMobileStudioComfort} from "./mobile-studio-comfort.mjs";
 import {initLocalImageTo3D} from "./image-to-3d-client.mjs";
 import {initResearchPanel} from "./research-ui.mjs";
 import {initFusionLab} from "./fusion-lab.mjs";
@@ -672,7 +672,7 @@ const sitesBridge=initSitesStudioBridge({
  allowLocalhost:location.hostname==="127.0.0.1"||location.hostname==="localhost"
 });
 past.length=0;future.length=0;updateUndoButtons();isDirty=false;$("saveIndicator").textContent="Startmodell – inte sparad";
-initStudioMobileUX();
+initStudioMobileUX();\ninitMobileStudioComfort();
 loadLibrary().catch(err=>{console.error(err);$("library").textContent="Modellbiblioteket kunde inte laddas.";});
 notify(auroraDemo
  ? "AURORA V5 laddad · redigera modellen eller välj Exportera GLB. För full detalj, använd V5 Detail PBR när den finns."
