@@ -33,7 +33,11 @@ try{
  console.log("PASS: Open Research Panel, GLB validation, indexed dedupe, report, extension guard");
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
- await mobile.waitForSelector("#freeResearchLab",{timeout:30000});
+ // Mobile Studio hides the right sidebar until its Justera drawer is selected.
+ // Exercise the real mobile navigation instead of waiting for a hidden panel.
+ await mobile.locator('#mobileStudioDock [data-mobile-tab="adjust"]').click();
+ await mobile.locator("#freeResearchLab").waitFor({state:"visible",timeout:30000});
  assert.equal(await mobile.locator("#stackSplat").count(),1);
- console.log("PASS: mobile Open Research Panel loads");
+ assert.equal(await mobile.locator("#mobileRightEditor").getAttribute("aria-hidden"),"false");
+ console.log("PASS: mobile Open Research Panel is reachable through Justera drawer");
 }finally{await browser.close();}
