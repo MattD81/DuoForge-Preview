@@ -35,14 +35,16 @@ try{
  const portrait=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2,acceptDownloads:true});
  await boot(portrait);
  await portrait.waitForSelector("#mobileStudioDock",{state:"visible"});
- assert.equal(await portrait.locator(".left-panel").isVisible(),true);
+ assert.equal(await portrait.locator(".left-panel").isVisible(),false,"mobile scene starts expanded");
  assert.equal(await portrait.locator(".right-panel").isVisible(),false);
  let g=await geometry(portrait);
  assert.ok(g.bounds["#scene"].height>=220,"portrait canvas height "+g.bounds["#scene"].height);
  assert.ok(g.scrollX<=g.innerWidth+1,"no horizontal page scroll");
  assert.ok(g.scrollY<=g.innerHeight+1,"no long page scroll");
  assert.ok(g.bounds[".left-panel"].y>=g.bounds[".viewport"].bottom-1||g.bounds[".left-panel"].y>=g.bounds[".viewport"].y,"sheet should be separate from canvas");
- // The existing Character Forge creates real geometry while controls are inside the mobile sheet.
+ // The existing Character Forge creates real geometry after requesting the tool drawer.
+ await portrait.locator('[data-mobile-tab="create"]').click();
+ assert.equal(await portrait.locator(".left-panel").isVisible(),true);
  await portrait.locator("#forgeCreate").click();
  await portrait.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
  assert.equal(await portrait.locator(".mobile-canvas-action[data-forward='undo']").isDisabled(),false);
@@ -50,9 +52,10 @@ try{
  await portrait.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1");
  await portrait.locator(".mobile-canvas-action[data-forward='redo']").click();
  await portrait.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="2");
- // Save and export are prioritized in the mobile topbar; original data stays in IndexedDB/GLB.
- await portrait.locator("#saveProject").click();
+ // Save is one tap. All original export commands remain in the header's explicit menu.
+ await portrait.locator("#mobileQuickSave").click();
  await portrait.waitForFunction(()=>document.querySelector("#saveIndicator")?.textContent?.includes("Sparad lokalt"));
+ await portrait.locator("#mobileHeaderMore").click();
  const [dl]=await Promise.all([portrait.waitForEvent("download"),portrait.locator("#exportGLB").click()]);
  assert.ok((await dl.path())!==null);
  // One-tap tab changes reveal independent drawers without duplicating controls.
