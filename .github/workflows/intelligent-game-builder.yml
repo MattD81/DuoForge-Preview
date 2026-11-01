@@ -6,6 +6,7 @@ on:
       - 'tests/intelligent-builder*.mjs'
       - 'tests/safe-asset-library.test.mjs'
       - 'tests/cloud-assistant.test.mjs'
+      - 'tests/intelligence-core.test.mjs'
       - '.github/workflows/intelligent-game-builder.yml'
       - 'workshop/studio/gpu-deluxe.mjs'
       - 'workshop/studio/ocean-water.mjs'
@@ -30,10 +31,12 @@ jobs:
           node --check game-builder/export.mjs
           node --check game-builder/builder.mjs
           node --check game-builder/cloud-assistant.mjs
+          node --check game-builder/intelligence-core.mjs
+          node --check game-builder/intelligence-ui.mjs
           node --check game-builder/safe-assets.mjs
           node --check game-builder/asset-ui.mjs
           node --check game-builder/model-runtime.mjs
-          node --test tests/intelligent-builder.test.mjs tests/safe-asset-library.test.mjs tests/cloud-assistant.test.mjs
+          node --test tests/intelligent-builder.test.mjs tests/safe-asset-library.test.mjs tests/cloud-assistant.test.mjs tests/intelligence-core.test.mjs
       - name: Install Chromium to test actual WebGL
         timeout-minutes: 4
         run: |

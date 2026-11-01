@@ -1,0 +1,36 @@
+/* Intelligence Core is an additive 4th tab inside the EXISTING Architect panel. */
+.architect-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+.architect-tabs .architect-tab{min-width:0;overflow-wrap:anywhere}
+.intel-pane{min-width:0}
+.intel-pane h3{margin:9px 0}
+.intel-pane h4{margin:17px 0 8px;color:#e0ffef;font-size:13px}
+.intel-summary{padding:10px 12px;border:1px solid #426e63;background:#0c2a2d;border-radius:11px;color:#ceffe8!important}
+.intel-button{display:block;width:100%;min-height:43px;white-space:normal;margin:9px 0}
+.intel-results{display:grid;gap:8px;margin:12px 0;max-height:425px;overflow:auto}
+.intel-result,.intel-tip{padding:10px 11px;background:#102636;border:1px solid #305468;border-radius:11px;min-width:0}
+.intel-result-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.intel-result-head strong,.intel-tip strong{font-size:12px;color:#ecf8f4}
+.intel-result p,.intel-tip p{margin:6px 0!important;font-size:11px;overflow-wrap:anywhere}
+.intel-result small{font-size:11px;color:#94b8b8;line-height:1.5;display:block}
+.intel-badge{font-size:10px;font-weight:800;border:1px solid #3c806a;color:#91eac0;border-radius:6px;padding:4px 5px}
+.intel-fail .intel-badge{border-color:#bf6662;color:#ffc2bb}
+.intel-warn .intel-badge{border-color:#a5844a;color:#f6d393}
+.intel-manual .intel-badge{border-color:#496e89;color:#b7d7eb}
+.intel-field{display:grid!important;gap:5px;margin:12px 0 4px}
+.intel-input,.intel-textarea{font:inherit;width:100%;max-width:100%;min-width:0;
+ box-sizing:border-box;background:#0b1b2a;color:#ecfff9;border:1px solid #3c5b69;
+ border-radius:10px;padding:10px}
+.intel-textarea{resize:vertical}
+.intel-advice{margin-top:8px;font-size:11px;color:#e6efef;overflow-wrap:anywhere}
+.intel-advice p{margin:6px 0}
+.intel-advice small{color:#9dc2b3}
+.intel-knowledge{display:grid;gap:8px;margin-top:10px}
+.intel-tip a,.intel-actions a{font-size:11px;color:#8aebbc;text-decoration:underline}
+.intel-disclaimer{font-size:11px!important;border-top:1px solid #315059;margin-top:17px;padding-top:12px}
+.intel-actions{display:flex;gap:15px;flex-wrap:wrap;padding-bottom:5px}
+@media(max-width:700px){
+ .architect-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .architect-tabs .architect-tab{min-height:44px;font-size:12px}
+ .intel-results{max-height:none}
+ .intel-button{min-height:46px}
+}
