@@ -32,7 +32,7 @@ test("known error types return guidance without executing any repair",()=>{
   assert.equal(diagnoseGameError("Failed to resolve module specifier three").code,"MODULE_MISSING");
   assert.equal(diagnoseGameError("Kunde inte starta WebGL: context lost").code,"WEBGL");
   assert.equal(diagnoseGameError("Modellfel: tree.glb failed").code,"MODEL");
-  assert.equal(diagnoseGameError("").code,undefined);
+  assert.equal(diagnoseGameError(""),null);
   assert.equal(diagnoseGameError("unexpected token").code,"UNKNOWN");
 });
 test("knowledge is curated, bounded, and attributed to original references",()=>{
