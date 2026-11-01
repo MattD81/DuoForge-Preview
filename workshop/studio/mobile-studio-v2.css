@@ -37,6 +37,11 @@
  .mobile-sheet-open .workspace .sidebar input,.mobile-sheet-open .workspace .sidebar select{max-width:100%}
  .toolbar{position:absolute;top:9px;left:9px;right:9px;width:auto;max-width:calc(100% - 18px);
   flex-wrap:wrap;z-index:5;align-items:start}
+ /* Launch Render World BELOW edit tools so it cannot swallow taps on controls. */
+ .viewport>.render-launch{position:absolute;top:auto!important;bottom:71px!important;
+  left:10px!important;right:auto!important;width:auto;max-width:65%;z-index:4}
+ .viewport>.render-launch button{min-height:42px;max-width:100%;white-space:normal;line-height:1.15;
+  padding:8px 11px;font-size:12px}
  .toolbar>.tool-segment:not(:first-child){display:none}
  .toolbar .tool-segment:first-child button{min-width:54px;padding:8px 6px;font-size:12px}
  #mobileEditorToolsMore{display:inline-flex;align-items:center;justify-content:center;min-height:40px;
