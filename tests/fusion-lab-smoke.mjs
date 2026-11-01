@@ -35,7 +35,10 @@ try{
  console.log("PASS: Fusion Lab, SceneDNA planning, 5-shot export/playback, adaptive start/stop");
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
- await mobile.waitForSelector("#fusionLab",{timeout:30000});
+ // Fusion Lab lives in the right sidebar, which the mobile editor keeps
+ // hidden until the user selects the Justera tools drawer.
+ await mobile.locator('#mobileStudioDock [data-mobile-tab="adjust"]').click();
+ await mobile.locator("#fusionLab").waitFor({state:"visible",timeout:30000});
  await mobile.locator("#fusionAnalyze").click();
  test.match(await mobile.locator("#fusionResult").textContent(),/SceneDNA/);
  console.log("PASS: Fusion Lab mobile UI and analysis");
