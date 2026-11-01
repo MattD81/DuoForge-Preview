@@ -3,6 +3,7 @@ import {startBuilderGame} from "./runtime.mjs";
 import {downloadGame} from "./export.mjs";
 import {setupSafeAssetPanel} from "./asset-ui.mjs";
 import {mountArchitectUI} from "./architect-ui.mjs";
+import {mountCloudAssistant} from "./cloud-assistant.mjs";
 
 const $=id=>document.getElementById(id);
 const STORAGE="duoforge-intelligent-builder-v1";
@@ -135,6 +136,8 @@ revive();mount();
 renderPlan(planGame("Skapa 3D-spel i "+({ocean:"hav",forest:"skog",city:"stad",ruins:"ruiner"}[config.world]),config));
 showFeedback("✓ Architect V1 är redo. Bygg och justera samma 3D-projekt med regelbaserad texttolkning eller visuella inställningar. Ingen extern AI har körts.");
 architect=mountArchitectUI({getConfig:()=>config,getHistory:()=>history,getGame:()=>game,getAssets:()=>assets,applyPatch:applyArchitectPatch});
+// Optional, secure AI assistant: does not modify or replace the local playable game flow.
+mountCloudAssistant({getProject:()=>config,getPrompt:()=>$("prompt").value});
 Object.defineProperty(window,"__duoforgeBuilder",{value:Object.freeze({
  get config(){return config},get history(){return history.map(x=>x.revision)},
  get active(){return !!game},get game(){return game?.state||null},get assetCount(){return assets.length},
