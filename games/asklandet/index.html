@@ -39,6 +39,7 @@ window.__askAtmos=(()=>{
 // World coordinates and the player-facing camera agree with the existing WebGL edition.
 window.__asklandetSoft3D=function(reason){
 'use strict';
+document.body.classList.add('ask-day');document.querySelector('#light').textContent='Ljus: dagsljus';
 const old=document.querySelector('#game');
 const canvas=document.createElement('canvas'); canvas.id='game'; canvas.setAttribute('aria-label','Asklandet – spelbar 3D-värld');
 old.replaceWith(canvas);
