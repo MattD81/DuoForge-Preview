@@ -4,13 +4,14 @@ import {downloadGame} from "./export.mjs";
 import {setupSafeAssetPanel} from "./asset-ui.mjs";
 import {mountArchitectUI} from "./architect-ui.mjs";
 import {mountCloudAssistant} from "./cloud-assistant.mjs";
+import {mountIntelligenceCenter} from "./intelligence-ui.mjs";
 
 const $=id=>document.getElementById(id);
 const STORAGE="duoforge-intelligent-builder-v1";
 const SUPPORTED={world:{ocean:"Hav",forest:"Skog",city:"Stad",ruins:"Ruiner"},
  weather:{storm:"Storm",sunset:"Solnedgång",clear:"Dagsljus",night:"Natt"},
  genre:{arena:"Strid",adventure:"Äventyr"},quality:{auto:"Adaptiv GPU",quality:"Hög grafik",performance:"Prestanda"}};
-let game=null,config=null,history=[],busy=false,assets=[],assetPanel=null,architect=null;
+let game=null,config=null,history=[],busy=false,assets=[],assetPanel=null,architect=null,intelligence=null;
 function renderAssets(){assetPanel?.renderAssets(assets);}
 function store(){
  try{localStorage.setItem(STORAGE,JSON.stringify({config,history:history.slice(-10)}));}catch{}
@@ -80,6 +81,7 @@ function mount(){
  }
  $("undo").disabled=!history.length;
  architect?.refresh();
+ intelligence?.invalidate();
 }
 async function updateFromPrompt(){
  if(busy)return;
@@ -136,6 +138,7 @@ revive();mount();
 renderPlan(planGame("Skapa 3D-spel i "+({ocean:"hav",forest:"skog",city:"stad",ruins:"ruiner"}[config.world]),config));
 showFeedback("✓ Architect V1 är redo. Bygg och justera samma 3D-projekt med regelbaserad texttolkning eller visuella inställningar. Ingen extern AI har körts.");
 architect=mountArchitectUI({getConfig:()=>config,getHistory:()=>history,getGame:()=>game,getAssets:()=>assets,applyPatch:applyArchitectPatch});
+intelligence=mountIntelligenceCenter({getConfig:()=>config,getGame:()=>game,getAssets:()=>assets});
 // Optional, secure AI assistant: does not modify or replace the local playable game flow.
 mountCloudAssistant({getProject:()=>config,getPrompt:()=>$("prompt").value});
 Object.defineProperty(window,"__duoforgeBuilder",{value:Object.freeze({
