@@ -1,5 +1,185 @@
 <!doctype html><html lang="sv"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Shoot UP · Asklandet</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172025;color:#f1e9ce;font-family:system-ui,sans-serif}#game{display:block;width:100%;height:100%;touch-action:none}header{position:fixed;top:max(24px,env(safe-area-inset-top));left:26px;pointer-events:none;text-shadow:0 2px 14px #000}small{font-size:10px;letter-spacing:3px;color:#b7d3bd}h1{font-size:27px;letter-spacing:6px;margin:5px 0}header p{font-size:12px;max-width:260px}aside{position:fixed;top:max(24px,env(safe-area-inset-top));right:22px;display:flex;align-items:center;gap:8px}aside span{font-size:11px;letter-spacing:2px;margin-right:8px}button{font:inherit;color:#e9eedb;background:#182a2cdb;border:1px solid #7da29170;border-radius:8px;padding:10px 14px;cursor:pointer;touch-action:none}button:focus-visible{outline:3px solid #bdffca}#cross{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#def4d588;pointer-events:none}#hint{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:12px;background:#101c22a8;padding:10px 16px;border-radius:20px;white-space:nowrap;pointer-events:none}#intro{position:fixed;left:7vw;top:26%;width:min(440px,86vw);padding:26px;background:linear-gradient(110deg,#111e25ee,#111e2580);border-left:2px solid #b6d1a4;backdrop-filter:blur(7px)}h2{font-size:clamp(34px,5vw,60px);line-height:1.06;font-weight:500;margin:18px 0}#intro p{font-size:14px;line-height:1.7;color:#d4d8cb}#intro #start{background:#b5cf9d;color:#17241e;font-weight:700;padding:14px 24px;border:0}.muted{font-size:11px!important}#move,nav{display:none}#error{position:fixed;inset:25%;padding:24px;background:#392b29;border:1px solid #fda}#error[hidden]{display:none}@media(pointer:coarse){#move{display:block;position:fixed;bottom:max(35px,env(safe-area-inset-bottom));left:25px;width:112px;height:112px;border-radius:50%;background:#29453b55;border:1px solid #d7efc95c;touch-action:none}#move i{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:#adc89c88;pointer-events:none}nav{display:flex;position:fixed;right:22px;bottom:max(38px,env(safe-area-inset-bottom));gap:12px}nav button{min-width:58px;min-height:58px;background:#29453bc9}#hint{bottom:12px;font-size:10px;max-width:90vw;white-space:normal;text-align:center}aside{top:auto;bottom:175px;right:14px;flex-direction:column;align-items:flex-end}aside button{font-size:10px;padding:7px}header{left:18px;top:max(16px,env(safe-area-inset-top))}h1{font-size:22px}#intro{top:15%;padding:18px;max-height:80dvh;overflow-y:auto}#intro h2{font-size:36px}}@media(max-height:480px){#intro{top:4%;padding:12px;max-height:93dvh;overflow-y:auto}#intro h2{font-size:28px;margin:8px 0}#intro p{margin:8px 0}header p{display:none}aside{bottom:auto;top:15px;flex-direction:row}aside span{display:none}}
-[hidden]{display:none!important}</style><canvas id="game" aria-label="Asklandet, öppen 3D-värld"></canvas><header><small>SHOOT UP / EXPEDITION 01</small><h1>ASKLANDET</h1><p id="quest">Hitta tre reliker. Väcka tornet.</p></header><aside><span id="count">0 / 3 RELIKER</span><button id="quality">Grafik: mellan</button><button id="light">Ljus: skymning</button><button id="pause">Pausa</button></aside><div id="cross">+</div><div id="hint">WASD rörelse · dra för att se · E använd · mellanslag hoppa</div><section id="intro"><small>EN VÄRLD EFTER TYSTNADEN</small><h2>Något lyser<br>under askan.</h2><p>Följ ljusen genom kullar, gamla risiga hus och ett stort övergivet ångfartyg. Samla tre reliker och återvänd till det höga tornet.</p><button id="start">Utforska världen →</button><button id="startShip" type="button" style="display:block;margin-top:12px;background:#223e39;color:#e5ffd9;border:1px solid #aed3a5">⛴ Starta vid skeppsvraket</button><a href="?lite=1" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">Mobilt kartläge (om 3D inte fungerar)</a><a href="?classic=1" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">Öppna klassiska skjutspelsläget</a><p class="muted">Mobil: vänster styr rörelse, dra på höger sida för att se.</p></section><div id="move" aria-label="Styrspak"><i></i></div><nav><button id="jump" aria-label="Hoppa">↑</button><button id="use">Använd</button></nav><div id="error" role="alert" hidden></div><script>window.__asklandetLite=function(reason){
+[hidden]{display:none!important}</style><canvas id="game" aria-label="Asklandet, öppen 3D-värld"></canvas><header><small>SHOOT UP / EXPEDITION 01</small><h1>ASKLANDET</h1><p id="quest">Hitta tre reliker. Väcka tornet.</p></header><aside><span id="count">0 / 3 RELIKER</span><button id="quality">Grafik: mellan</button><button id="light">Ljus: skymning</button><button id="pause">Pausa</button></aside><div id="cross">+</div><div id="hint">WASD rörelse · dra för att se · E använd · mellanslag hoppa</div><section id="intro"><small>EN VÄRLD EFTER TYSTNADEN</small><h2>Något lyser<br>under askan.</h2><p>Följ ljusen genom kullar, gamla risiga hus och ett stort övergivet ångfartyg. Samla tre reliker och återvänd till det höga tornet.</p><button id="start">Utforska världen →</button><button id="startShip" type="button" style="display:block;margin-top:12px;background:#223e39;color:#e5ffd9;border:1px solid #aed3a5">⛴ Starta vid skeppsvraket</button><a href="?3d=software" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">3D-läge för alla mobiler (utan WebGL)</a><a href="?classic=1" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">Öppna klassiska skjutspelsläget</a><p class="muted">Mobil: vänster styr rörelse, dra på höger sida för att se.</p></section><div id="move" aria-label="Styrspak"><i></i></div><nav><button id="jump" aria-label="Hoppa">↑</button><button id="use">Använd</button></nav><div id="error" role="alert" hidden></div><script>// Asklandet Software 3D: perspective triangle renderer for browsers where WebGL is unavailable.
+// World coordinates and the player-facing camera agree with the existing WebGL edition.
+window.__asklandetSoft3D=function(reason){
+'use strict';
+const old=document.querySelector('#game');
+const canvas=document.createElement('canvas'); canvas.id='game'; canvas.setAttribute('aria-label','Asklandet – spelbar 3D-värld');
+old.replaceWith(canvas);
+const ctx=canvas.getContext('2d',{alpha:false});
+const err=document.querySelector('#error');
+if(!ctx){err.hidden=false;err.textContent='3D-ritning kunde inte starta i den här webbläsaren.';return;}
+const $=id=>document.getElementById(id);
+$('quality').textContent='3D: kompatibel';
+$('hint').textContent='Vänster: gå · dra på högra sidan: se · Använd: undersök';
+$('quest').textContent='Utforska skeppsvraket, byn och tre reliker.';
+const player={x:0,z:24,y:0,yaw:0,pitch:0,vy:0};
+const keys=Object.create(null),stick={x:0,y:0};
+let active=false,paused=false,last=0,frame=0,look=null,pointerId=null,chooseQuality=1,time=0,jumpWanted=false,useWanted=false;
+const relics=[{x:-78,z:-58,name:'Observatoriet',got:false},{x:72,z:32,name:'Rostgården',got:false},{x:28,z:-103,name:'Gläntan',got:false}];
+function height(x,z){return 5*Math.sin(x*.024)*Math.cos(z*.032)+2.6*Math.sin(x*.065+z*.035)+1.3*Math.cos(z*.10-x*.03)+9*Math.exp(-((x+68)**2+(z+62)**2)/2200)-4*Math.exp(-((x-48)**2+(z-42)**2)/1600);}
+function resetY(){player.y=height(player.x,player.z)+1.7;}
+resetY();
+const objs=[];let worldSeed=45455;function random(){worldSeed=(Math.imul(worldSeed,1664525)+1013904223)>>>0;return worldSeed/4294967296;}
+function addObject(x,z,r,make){const triangles=[];make(triangles);objs.push({x,z,r,triangles});}
+function triangle(arr,a,b,c,color,mat=0){arr.push({v:[a,b,c],color,mat});}
+function quad(arr,a,b,c,d,color,mat=0){triangle(arr,a,b,c,color,mat);triangle(arr,a,c,d,color,mat);}
+function box(arr,x,y,z,w,h,d,c,mat=0){const a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y+h,z-d/2],dd=[x-w/2,y+h,z-d/2],e=[x-w/2,y,z+d/2],f=[x+w/2,y,z+d/2],g=[x+w/2,y+h,z+d/2],hh=[x-w/2,y+h,z+d/2];
+quad(arr,a,dd,cc,b,c,mat);quad(arr,f,g,hh,e,c,mat);quad(arr,e,hh,dd,a,c,mat);quad(arr,b,cc,g,f,c,mat);quad(arr,dd,hh,g,cc,c,mat);quad(arr,e,a,b,f,c,mat);}
+function shard(arr,x,y,z,s=1){let base=height(x,z);let a=[x-s,base,z-s],b=[x+s,base,z-s],c=[x+s,base,z+s],d=[x-s,base,z+s],tip=[x,base+4*s,z];
+triangle(arr,a,b,tip,[29,129,123],2);triangle(arr,b,c,tip,[44,197,168],2);triangle(arr,c,d,tip,[17,106,132],2);triangle(arr,d,a,tip,[100,198,159],2);}
+function oldHouse(x,z,w,d,h){addObject(x,z,Math.max(w,d)*1.9,arr=>{const y=height(x,z)-.3;
+box(arr,x,y,z,w,h*.68,d,[104,88,69],4);
+// Boards + rotten walls and dark cracked roof.
+for(let i=0;i<7;i++){let yy=y+.45+i*h*.085;box(arr,x,yy,z-d*.505,w*.98,.08,.04,i%3===0?[54,49,39]:[126,110,82],4);}
+box(arr,x,y+h*.68,z,w*.97,.46,d*.98,[50,50,48],4);
+box(arr,x-w*.27,y+1,z-d*.515,w*.22,h*.32,.12,[15,18,19]);
+box(arr,x+w*.20,y+1.7,z-d*.515,w*.21,h*.21,.12,[12,17,20]);
+box(arr,x-w*.27,y+1,z-d*.56,.12,h*.34,.16,[84,70,57],4);
+box(arr,x+w*.20,y+1.7,z-d*.56,.08,h*.24,.15,[76,63,53],4);
+box(arr,x,y,z+d*.53,w*.23,h*.46,.12,[21,20,20],4);
+box(arr,x-w*.42,y,z-d*.53,.23,h*.9,.26,[68,55,39],4);
+box(arr,x+w*.42,y,z-d*.53,.27,h*.84,.3,[63,55,43],4);
+box(arr,x-w*.32,y+h*.69,z,.4,h*.4,.48,[49,44,43],4);
+for(let i=0;i<4;i++){const zz=z-d*.45+i*d*.3;box(arr,x+w*.42,y+.1,zz,.12,h*.8,.14,[58+i*2,51,38],4);}
+for(let i=0;i<7;i++){const xx=x+(random()-.5)*w*1.9,zz=z+(random()-.5)*d*1.7;box(arr,xx,height(xx,zz)-.08,zz,.65+random(),.1+random()*.45,.35+random(),[79,71,62],4);}
+});}
+function ruin(x,z){addObject(x,z,13,arr=>{const y=height(x,z)-.3;box(arr,x-5,y,z,.85,8,11,[89,84,77],4);box(arr,x+5,y,z,.8,4,11,[83,78,72],4);box(arr,x,y,z-5,11,6,.8,[94,88,78],4);box(arr,x-3,y,z+5,3,6,.8,[83,77,68],4);box(arr,x+3,y,z+5,3,9,.8,[91,82,75],4);
+for(let i=0;i<6;i++){let px=x+(random()-.5)*12,pz=z+(random()-.5)*12;box(arr,px,height(px,pz),pz,1+random()*1.2,.3+random()*1.3,.8,[89,81,73],4);}
+});}
+function ship(x,z){addObject(x,z,46,arr=>{const Y=height(x,z)-1.5;
+// Full-size 75 m ghost steamer, broad hull. Dark space behind broken iron plates.
+box(arr,x,Y-1.4,z,15.2,3.8,66,[21,27,31],3);
+for(let side of [-1,1])for(let i=0;i<22;i++){
+ let zz=z-32+i*3, gap=(i===4||i===5||i===6||i===12||i===13||i===18);
+ if(gap){if(i===4||i===12||i===18)box(arr,x+side*7.45,Y+.55,zz,.52,.35,2.7,[155,73,46],3);continue;}
+ box(arr,x+side*7.5,Y-.7,zz,.62,3.7,2.94,i%3===0?[84,46,34]:[76,68,59],3);
+ if(i%2===0)box(arr,x+side*7.88,Y+.15,zz,.16,.12,2.4,[150,85,44],3);
+}
+// Bow and stern are faceted like a real hull, not an open-ended box.
+for(let i=-2;i<=1;i++){
+ const xx=x+i*3.2;
+ quad(arr,[xx,Y-1,z-34],[xx+3.2,Y-1,z-34],[xx+2.3,Y+2.9,z-31.8],[xx+.3,Y+2.9,z-31.8],[85,70,55],3);
+ quad(arr,[xx,Y-1,z+34],[xx+3.2,Y-1,z+34],[xx+2.3,Y+2.9,z+31.8],[xx+.3,Y+2.9,z+31.8],[77,56,50],3);
+}
+box(arr,x,Y+2.8,z,14.7,.52,59,[78,77,70],3);
+for(let dz=-26;dz<27;dz+=2.2)box(arr,x,Y+3.4,z+dz,13.4,.09,.12,dz%3?[88,84,73]:[42,45,45],4);
+// Broken cabin, rotted windows, a large bridge and two corroded smokestacks.
+box(arr,x,Y+3.2,z-9,8.4,6.4,16.5,[112,105,90],4);
+box(arr,x,Y+3.2,z+7,6.4,4.3,14,[92,88,78],4);
+box(arr,x,Y+9.7,z-9,9.1,.65,17.1,[43,47,46],3);
+box(arr,x,Y+7.7,z+7,6.8,.6,14.5,[48,44,42],3);
+for(let i=0;i<5;i++){
+ const wx=x-3.45+i*1.7;box(arr,wx,Y+6.9,z-17.37,1.05,1.25,.22,[12,20,24]);
+ if(i!==1)box(arr,wx,Y+6.9,z-17.5,.1,1.32,.13,[75,77,69],3);
+}
+for(let i=0;i<6;i++)for(const sx of [-1,1]){
+ const zz=z-23+i*8.1;box(arr,x+sx*7.48,Y+1.6,zz,.22,.65,.9,[17,22,23]);
+}
+for(const [dx,dz,h] of [[-1.75,-8,9],[1.75,1.3,8.7]]){
+box(arr,x+dx,Y+9.2,z+dz,1.9,h,1.9,[81,50,40],3);
+box(arr,x+dx,Y+9.2+h,z+dz,2.22,.55,2.22,[41,39,35],3);
+for(let k=0;k<4;k++)box(arr,x+dx,Y+10+k*1.9,z+dz,2.05,.13,2.04,[139,82,48],3);
+}
+for(let sx of [-1,1])for(let i=0;i<12;i++){
+ const zz=z-28+i*5.1;box(arr,x+sx*6.8,Y+3.3,zz,.13,1.05,.14,[96,75,58],3);
+}
+box(arr,x-1,Y+9.6,z-18,.25,12,.25,[64,63,52],3);
+box(arr,x-1,Y+18.1,z-17.8,7,.18,.18,[89,71,52],3);
+for(let k=0;k<6;k++){
+ const zz=z-27+k*11;box(arr,x,Y+3.35,z+zz-z,12.4,.13,.14,[31,33,31],3);
+}
+});}
+oldHouse(-23,49,8,6,5.2);oldHouse(-12,57,7,5,4.7);oldHouse(-31,63,9,6.5,5.5);oldHouse(-40,52,6.5,5,4.2);
+ship(-48,58);
+for(const [x,z] of [[-16,-30],[13,-45],[-35,-52],[35,-75],[70,30],[-80,-58]])ruin(x,z);
+addObject(5,-12,34,arr=>{const x=5,z=-12,y=height(x,z);for(const xx of [-3,3])for(const zz of [-3,3])box(arr,x+xx,y,z+zz,.7,27,.7,[87,70,57],4);for(let k=1;k<6;k++){box(arr,x,y+k*4.6,z,6.5,.32,.5,[111,85,64],4);box(arr,x,y+k*4.6,z,.5,.32,6.5,[97,79,67],4);}shard(arr,5,-12,1.6);});
+for(const r of relics)addObject(r.x,r.z,6,arr=>{shard(arr,r.x,r.z,1.2);box(arr,r.x,height(r.x,r.z)-.25,r.z,3,.45,3,[100,94,72]);});
+for(let i=0;i<40;i++){
+ const x=(random()-.5)*260,z=(random()-.5)*260;
+ if(Math.hypot(x+48,z-58)<46||Math.hypot(x,z-24)<13)continue;
+ addObject(x,z,3,arr=>{const yy=height(x,z);const hh=2+random()*4;box(arr,x,yy,z,.28,hh,.28,[58,66,60]);box(arr,x+.4,yy+hh*.7,z,2.1,.35,.6,[46,60,58]);});
+}
+function cssResize(){const w=Math.max(300,innerWidth),h=Math.max(230,innerHeight),d=Math.min(devicePixelRatio||1,1.5),factor=chooseQuality===0?.68:chooseQuality===1?.88:1.08;canvas.width=Math.round(w*factor*d);canvas.height=Math.round(h*factor*d);}
+cssResize();window.addEventListener('resize',cssResize);
+const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+const vlen=(x,z)=>Math.hypot(x,z);
+function go(x,z){if(Math.abs(x)>174||Math.abs(z)>174)return false;const h=height(x,z),current=height(player.x,player.z);if(h-current>1.9)return false;
+ if(vlen(x+48,z-58)<7.7&&Math.abs(z-58)<32)return false;
+ for(const h of [[-23,49,8,6],[-12,57,7,5],[-31,63,9,6.5],[-40,52,6.5,5]])if(Math.abs(x-h[0])<h[2]*.5+.55&&Math.abs(z-h[1])<h[3]*.5+.55)return false;
+ return true;}
+function use(){const r=relics.find(r=>!r.got&&Math.hypot(r.x-player.x,r.z-player.z)<6);
+ if(r){r.got=true;$('count').textContent=relics.filter(q=>q.got).length+' / 3 RELIKER';$('quest').textContent='Relik från '+r.name+' funnen!';}
+ else if(relics.every(r=>r.got)&&Math.hypot(player.x-5,player.z+12)<8){$('quest').textContent='Tornet väcks! Du har klarat uppdraget.';}
+ else if(Math.hypot(player.x+48,player.z-58)<36){$('quest').textContent='Det övergivna skeppets skrov är genomrostat och sönderslaget.';}
+ else $('quest').textContent='Hitta de tre relikerna och återvänd till tornet.';}
+function setPause(value){paused=value;$('pause').textContent=paused?'Fortsätt':'Pausa';}
+$('start').addEventListener('click',()=>{active=true;setPause(false);$('intro').hidden=true;});
+$('startShip').addEventListener('click',()=>{player.x=-10;player.z=23;player.yaw=2.3;player.pitch=0;resetY();active=true;setPause(false);$('intro').hidden=true;$('quest').textContent='Du står framför det enorma skeppsvraket. Titta omkring i 3D!';});
+$('pause').addEventListener('click',()=>setPause(!paused));
+$('quality').addEventListener('click',()=>{chooseQuality=(chooseQuality+1)%3;$('quality').textContent='3D: '+['snabb','kompatibel','detaljerad'][chooseQuality];cssResize();});
+$('light').addEventListener('click',()=>{document.body.classList.toggle('ask-day');$('light').textContent=document.body.classList.contains('ask-day')?'Ljus: dag':'Ljus: skymning';});
+$('jump').addEventListener('pointerdown',()=>jumpWanted=true);
+$('use').addEventListener('pointerdown',()=>useWanted=true);
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space')jumpWanted=true;if(e.code==='KeyE')useWanted=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
+window.addEventListener('keyup',e=>keys[e.code]=false);
+window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;stick.x=stick.y=0;setPause(true);});
+const move=$('move');function stickChange(e){const r=move.getBoundingClientRect();stick.x=clamp((e.clientX-r.left-r.width/2)/40,-1,1);stick.y=clamp((e.clientY-r.top-r.height/2)/40,-1,1);move.querySelector('i').style.transform=`translate(${stick.x*30}px,${stick.y*30}px)`;}
+move.addEventListener('pointerdown',e=>{pointerId=e.pointerId;move.setPointerCapture(e.pointerId);stickChange(e);});
+move.addEventListener('pointermove',e=>{if(pointerId===e.pointerId)stickChange(e);});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])move.addEventListener(ev,()=>{pointerId=null;stick.x=stick.y=0;move.querySelector('i').style.transform='';});
+canvas.addEventListener('pointerdown',e=>{if(!active||paused)return;look={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!active||paused||!look||e.pointerId!==look.id)return;player.yaw-=clamp(e.clientX-look.x,-100,100)*.005;player.pitch=clamp(player.pitch-clamp(e.clientY-look.y,-100,100)*.004,-1.1,1.1);look.x=e.clientX;look.y=e.clientY;});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,()=>look=null);
+function update(dt){if(!active||paused){jumpWanted=useWanted=false;return;}let sx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stick.x,fw=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-stick.y;
+player.yaw+=((keys.ArrowLeft?1:0)-(keys.ArrowRight?1:0))*dt*1.9;
+let pads=[];try{pads=Array.from(navigator.getGamepads?.()||[])}catch{}const pad=pads.find(p=>p?.connected);if(pad){sx+=(pad.axes[0]||0);fw-=(pad.axes[1]||0);player.yaw-=(pad.axes[2]||0)*dt*2;player.pitch=clamp(player.pitch-(pad.axes[3]||0)*dt*1.5,-1.1,1.1);if(pad.buttons[0]?.pressed)jumpWanted=true;if(pad.buttons[2]?.pressed)useWanted=true;}
+const len=Math.max(1,Math.hypot(sx,fw)),sp=dt*(keys.ShiftLeft?11:7.6),dx=(Math.cos(player.yaw)*sx-Math.sin(player.yaw)*fw)/len*sp,dz=(-Math.sin(player.yaw)*sx-Math.cos(player.yaw)*fw)/len*sp;
+if(go(player.x+dx,player.z))player.x+=dx;if(go(player.x,player.z+dz))player.z+=dz;
+const ground=height(player.x,player.z)+1.7;if(jumpWanted&&player.y<=ground+.15)player.vy=6.5;jumpWanted=false;player.vy-=17*dt;player.y+=player.vy*dt;if(player.y<ground){player.y=ground;player.vy=0;}
+if(useWanted)use();useWanted=false;
+const r=relics.filter(r=>!r.got).sort((a,b)=>Math.hypot(a.x-player.x,a.z-player.z)-Math.hypot(b.x-player.x,b.z-player.z))[0];
+$('hint').textContent=r?r.name+' · '+Math.round(Math.hypot(r.x-player.x,r.z-player.z))+' m · Använd vid reliken':'Återvänd till tornet';
+}
+function draw(){const W=canvas.width,H=canvas.height;const day=document.body.classList.contains('ask-day');const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,day?'#668e9b':'#152936');sky.addColorStop(.7,day?'#a5b6a5':'#57616c');sky.addColorStop(1,day?'#797d68':'#313c38');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+// Sky haze, layered mountains and a distant abandoned landscape.
+ctx.fillStyle=day?'#7e9283':'#3e5155';ctx.beginPath();ctx.moveTo(0,H*.53);for(let i=0;i<=24;i++){const x=W*i/24;ctx.lineTo(x,H*(.54+Math.sin(i*.61+player.yaw*.5)*.055+Math.sin(i*.27+3)*.04));}ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+const yaw=player.yaw,pitch=player.pitch,cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);let Fx=H*.96,Fy=H*.96;
+function pos(v){const dx=v[0]-player.x,dy=v[1]-player.y,dz=v[2]-player.z;
+ const xc=cy*dx-sy*dz,yc=sy*sp*dx+cp*dy+cy*sp*dz,depth=-(sy*cp*dx-sp*dy+cy*cp*dz);
+ return {x:W/2+Fx*xc/Math.max(.001,depth),y:H/2-Fy*yc/Math.max(.001,depth),d:depth};}
+const list=[];
+function pushT(t){const a=pos(t.v[0]),b=pos(t.v[1]),c=pos(t.v[2]);if(a.d<.3||b.d<.3||c.d<.3)return;
+ if(a.d>185&&b.d>185&&c.d>185)return;
+ const minX=Math.min(a.x,b.x,c.x),maxX=Math.max(a.x,b.x,c.x),minY=Math.min(a.y,b.y,c.y),maxY=Math.max(a.y,b.y,c.y);
+ if(maxX<-W||minX>W*2||maxY<-H*2||minY>H*3)return;
+ const depth=(a.d+b.d+c.d)/3;
+ // Triangle orientation creates distinct metal, moss, concrete and wood faces.
+ const ab=t.v[1].map((v,i)=>v-t.v[0][i]),ac=t.v[2].map((v,i)=>v-t.v[0][i]);
+ const ny=ab[2]*ac[0]-ab[0]*ac[2];const norm=Math.hypot(ab[1]*ac[2]-ab[2]*ac[1],ny,ab[0]*ac[1]-ab[1]*ac[0])||1;
+ const shade=.59+.32*Math.max(0,ny/norm);
+ const fog=clamp((depth-28)/155,0,.8);
+ const blue=day?[113,133,128]:[50,69,72];let col=t.color.map((v,i)=>Math.max(0,Math.min(255,Math.round(v*shade*(1-fog)+blue[i]*fog))));
+ if(t.mat===2){const pulse=.8+.2*Math.sin(time*2);col=[Math.round(66*pulse),Math.round(218*pulse),Math.round(198*pulse)];}
+ list.push({a,b,c,depth,col:col.join(',')});}
+ // Geometry around camera, rebuilt in a compact terrain grid so hills are real 3D.
+ const step=chooseQuality===0?10:chooseQuality===1?8:6,radius=chooseQuality===0?70:chooseQuality===1?95:105;
+ const cx=Math.floor(player.x/step)*step,cz=Math.floor(player.z/step)*step;
+ for(let z=cz-radius;z<cz+radius;z+=step)for(let x=cx-radius;x<cx+radius;x+=step){const a=[x,height(x,z),z],b=[x+step,height(x+step,z),z],c=[x+step,height(x+step,z+step),z+step],d=[x,height(x,z+step),z+step];const n=Math.sin(x*.12+z*.17)*.5+.5;const color=n>.7?[86,85,73]:n>.42?[66,75,70]:[55,70,67];pushT({v:[a,d,c],color});pushT({v:[a,c,b],color});}
+ for(const o of objs){if(Math.hypot(o.x-player.x,o.z-player.z)>radius+o.r)continue;for(const t of o.triangles)pushT(t);}
+ list.sort((a,b)=>b.depth-a.depth);
+ for(const t of list){ctx.fillStyle='rgb('+t.col+')';ctx.beginPath();ctx.moveTo(t.a.x,t.a.y);ctx.lineTo(t.b.x,t.b.y);ctx.lineTo(t.c.x,t.c.y);ctx.closePath();ctx.fill();}
+ // atmospheric vignette
+ const vignette=ctx.createRadialGradient(W*.5,H*.48,H*.1,W*.5,H*.48,Math.max(W,H)*.76);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(4,10,12,.36)');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+ 
+}
+function tick(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;time+=dt;update(dt);frame++;
+ if(active||frame%3===0)draw();requestAnimationFrame(tick);}
+requestAnimationFrame(tick);
+dispatchEvent(new CustomEvent('duoforge-game-started',{detail:{engine:'software-3d',reason:reason||'requested'}}));
+};
+
+window.__asklandetLite=function(reason){
   const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
   if(!ctx){const e=document.querySelector('#error');e.hidden=false;e.textContent='Grafik kunde inte starta i den här webbläsaren.';return;}
   const $=id=>document.getElementById(id), player={x:0,z:24,yaw:0}, relics=[{x:-78,z:-58,name:'Observatoriet'},{x:72,z:32,name:'Rostgården'},{x:28,z:-103,name:'Gläntan'}], tower={x:5,z:-12};
@@ -14,7 +194,7 @@
   addEventListener('resize',resize);resize();
   function interact(){let r=relics.find(q=>!q.got&&Math.hypot(q.x-player.x,q.z-player.z)<6);if(r){r.got=true;blink=2;let n=relics.filter(q=>q.got).length;$('count').textContent=n+' / 3 RELIKER';$('quest').textContent=n<3?'Relik funnen! Leta efter nästa ljus.':'Alla reliker hittade. Återvänd till tornet.';return;}if(relics.every(q=>q.got)&&Math.hypot(tower.x-player.x,tower.z-player.z)<8){won=true;$('quest').textContent='Tornet har vaknat! Världen är räddad.';blink=5;}}
   addEventListener('keydown',e=>{key[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='KeyE')interact();});addEventListener('keyup',e=>key[e.code]=false);
-  $('start').addEventListener('click',()=>{active=true;paused=false;$('intro').hidden=true;});$('startShip').addEventListener('click',()=>{player.x=-31;player.z=43;player.yaw=2.3;active=true;paused=false;$('intro').hidden=true;$('quest').textContent='Skeppsvraket ligger framför dig. Undersök det övergivna fartyget!';});$('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Fortsätt':'Pausa'});
+  $('start').addEventListener('click',()=>{active=true;paused=false;$('intro').hidden=true;});$('startShip').addEventListener('click',()=>{player.x=-10;player.z=23;player.yaw=2.3;active=true;paused=false;$('intro').hidden=true;$('quest').textContent='Skeppsvraket ligger framför dig. Undersök det övergivna fartyget!';});$('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Fortsätt':'Pausa'});
   $('quality').addEventListener('click',()=>{scale=scale===5?8:scale===8?3.3:5;$('quality').textContent='Karta: '+(scale===8?'nära':scale===5?'mellan':'långt');});
   let light=.4;$('light').addEventListener('click',()=>{light=light===.4?1:.4;$('light').textContent='Ljus: '+(light===1?'dag':'skymning')});
   $('use').addEventListener('pointerdown',interact);$('jump').addEventListener('pointerdown',()=>blink=.25);
@@ -72,7 +252,7 @@
   }
   requestAnimationFrame(draw);
 };
-if(new URLSearchParams(location.search).has('lite')){window.__asklandetLite();}else if(new URLSearchParams(location.search).has('classic')){
+if(new URLSearchParams(location.search).has('lite')||new URLSearchParams(location.search).get('3d')==='software'){window.__asklandetSoft3D('Kompatibelt 3D-läge valt');}else if(new URLSearchParams(location.search).has('classic')){
 (()=>{const c=document.querySelector('#game');c.width=960;c.height=540;document.querySelectorAll('header,aside,nav,#intro,#move,#hint,#cross').forEach(e=>e.remove());const style=document.createElement('style');style.textContent="*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#080a10;color:#e9ebf0;font:14px monospace}body{display:grid;place-items:center;min-height:100vh;overflow:hidden}canvas{display:block;width:min(100vw,960px);height:auto;max-height:100vh;aspect-ratio:16/9;background:#11152d;image-rendering:auto;box-shadow:0 0 65px #284b6655,0 0 120px #603e6b44}\n";document.head.appendChild(style);
 const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
 const W=canvas.width,H=canvas.height,FOV=Math.PI/2.8;
@@ -166,11 +346,11 @@ function frame(now){let elapsed=now-last,dt=Math.min(.05,elapsed/1000);last=now;
 (()=>{'use strict';
 const canvas=document.querySelector('#game'),error=document.querySelector('#error');
 let gl;try{gl=canvas.getContext('webgl',{antialias:false,alpha:false});}catch(e){gl=null;}
-if(!gl){window.__asklandetLite('3D-motorn saknar WebGL-stöd');return;}
+if(!gl){window.__asklandetSoft3D('WebGL saknas – fortsätter med 3D-perspektiv');return;}
 const vs=`attribute vec3 aPos;attribute vec3 aNormal;attribute vec3 aColor;attribute vec2 aUv;attribute float aMat;uniform mat4 uVP;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;void main(){vP=aPos;vN=aNormal;vC=aColor;vUv=aUv;vMat=aMat;gl_Position=uVP*vec4(aPos,1.);}`;
 const fs=`precision mediump float;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;uniform sampler2D uTex;uniform vec3 uEye;uniform float uTime,uLight;void main(){vec3 n=normalize(vN);float grain=texture2D(uTex,vUv).r;float patch=texture2D(uTex,vP.xz*.014+vUv*.03).r;vec3 base=vC*(.72+grain*.5);if(vMat<.5){base=mix(vec3(.17,.22,.19),vec3(.47,.39,.28),patch)*(.66+grain*.6);base=mix(base,vec3(.30,.31,.29)*(.7+grain*.4),smoothstep(.12,.55,1.-n.y));}else if(vMat>2.5&&vMat<3.5){float plank=abs(fract(vUv.y*.65)-.5);float rust=texture2D(uTex,vUv*.18+vec2(vP.z*.01,vP.y*.02)).r;float streak=smoothstep(.38,.52,fract(vUv.x*.18+vP.y*.07));base=mix(vec3(.16,.18,.20),vC,.55+grain*.35);base=mix(base,vec3(.44,.18,.08),rust*.65+streak*.22);base=mix(base,vec3(.05,.05,.06),smoothstep(.44,.49,plank)*.35);}else if(vMat>3.5){float board=abs(fract(vUv.x*.5)-.5);float grime=texture2D(uTex,vUv*.12+vec2(vP.x*.02,vP.z*.02)).r;float crack=smoothstep(.46,.5,abs(sin(vP.y*2.1+vP.x*.7))*grime);base=mix(vC*1.08,vC*0.55,grime*.55);base=mix(base,vec3(.12,.10,.08),crack*.65);base=mix(base,vec3(.34,.25,.16),smoothstep(.42,.5,board)*.18);}float sun=max(0.,dot(n,normalize(vec3(-.6,.8,.3))));vec3 col=base*(.35+uLight*.24+sun*.65);if(vMat>1.5&&vMat<2.5)col=vC*(1.1+.22*sin(uTime*1.6+vP.y));float fog=1.-exp(-pow(distance(vP,uEye)/160.,1.8));vec3 air=mix(vec3(.23,.30,.32),vec3(.48,.49,.43),uLight*.6);gl_FragColor=vec4(mix(col,air,clamp(fog,0.,.94)),1.);}`;
 function shader(type,s){const x=gl.createShader(type);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x;}
-let program;try{program=gl.createProgram();const a=shader(gl.VERTEX_SHADER,vs),b=shader(gl.FRAGMENT_SHADER,fs);gl.attachShader(program,a);gl.attachShader(program,b);gl.linkProgram(program);gl.deleteShader(a);gl.deleteShader(b);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}catch(e){console.error('Asklandet WebGL:',e);window.__asklandetLite('3D-grafiken misslyckades');return;}
+let program;try{program=gl.createProgram();const a=shader(gl.VERTEX_SHADER,vs),b=shader(gl.FRAGMENT_SHADER,fs);gl.attachShader(program,a);gl.attachShader(program,b);gl.linkProgram(program);gl.deleteShader(a);gl.deleteShader(b);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}catch(e){console.error('Asklandet WebGL:',e);window.__asklandetSoft3D('WebGL-kompilering misslyckades – fortsätter i 3D');return;}
 gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
 let seed=7419;function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
 function height(x,z){return 5*Math.sin(x*.024)*Math.cos(z*.032)+2.6*Math.sin(x*.065+z*.035)+1.3*Math.cos(z*.10-x*.03)+9*Math.exp(-((x+68)**2+(z+62)**2)/2200)-4*Math.exp(-((x-48)**2+(z-42)**2)/1600);}
@@ -205,7 +385,7 @@ on(window,'keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRigh
 function clearInput(){Object.keys(keys).forEach(k=>keys[k]=false);stick.x=stick.y=0;touchLook=null;document.querySelector('#move i').style.transform='';}
 on(window,'blur',()=>{clearInput();if(active)setPause(true)});on(document,'visibilitychange',()=>{if(document.hidden){clearInput();setPause(true)}});
 function setPause(v){paused=v;document.querySelector('#pause').textContent=v?'Fortsätt':'Pausa';if(v)document.exitPointerLock?.();}
-on(document.querySelector('#start'),'click',()=>{active=true;setPause(false);document.querySelector('#intro').hidden=true;});on(document.querySelector('#startShip'),'click',()=>{player.x=-31;player.z=43;player.y=height(player.x,player.z)+1.7;player.vy=0;player.yaw=2.3;player.pitch=.08;active=true;setPause(false);document.querySelector('#intro').hidden=true;document.querySelector('#quest').textContent='Skeppsvraket ligger framför dig. Undersök skrovet!';});on(document.querySelector('#pause'),'click',()=>setPause(!paused));
+on(document.querySelector('#start'),'click',()=>{active=true;setPause(false);document.querySelector('#intro').hidden=true;});on(document.querySelector('#startShip'),'click',()=>{player.x=-10;player.z=23;player.y=height(player.x,player.z)+1.7;player.vy=0;player.yaw=2.3;player.pitch=.08;active=true;setPause(false);document.querySelector('#intro').hidden=true;document.querySelector('#quest').textContent='Skeppsvraket ligger framför dig. Undersök skrovet!';});on(document.querySelector('#pause'),'click',()=>setPause(!paused));
 on(canvas,'pointerdown',e=>{if(!active||paused)return;if(e.pointerType==='mouse'){try{const p=canvas.requestPointerLock?.();p?.catch(()=>{});}catch{}}touchLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});on(canvas,'pointermove',e=>{if(!active||paused)return;let dx=0,dy=0;if(document.pointerLockElement===canvas){dx=e.movementX;dy=e.movementY;}else if(touchLook?.id===e.pointerId){dx=e.clientX-touchLook.x;dy=e.clientY-touchLook.y;touchLook.x=e.clientX;touchLook.y=e.clientY;}player.yaw+=dx*.004;player.pitch=Math.max(-1.25,Math.min(1.25,player.pitch-dy*.003));});for(const e of ['pointerup','pointercancel','lostpointercapture'])on(canvas,e,()=>touchLook=null);
 const move=document.querySelector('#move');let moveId=null;function moveStick(e){const r=move.getBoundingClientRect();stick.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/40));stick.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/40));document.querySelector('#move i').style.transform=`translate(${stick.x*30}px,${stick.y*30}px)`;}
 on(move,'pointerdown',e=>{moveId=e.pointerId;move.setPointerCapture(e.pointerId);moveStick(e)});on(move,'pointermove',e=>{if(e.pointerId===moveId)moveStick(e)});for(const e of ['pointerup','pointercancel','lostpointercapture'])on(move,e,()=>{moveId=null;stick.x=stick.y=0;document.querySelector('#move i').style.transform=''});on(document.querySelector('#jump'),'pointerdown',()=>jumpWanted=true);on(document.querySelector('#use'),'pointerdown',()=>useWanted=true);
