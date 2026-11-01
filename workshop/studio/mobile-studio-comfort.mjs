@@ -39,6 +39,19 @@ export function initMobileStudioComfort(){
   more.setAttribute("aria-expanded",String(opened));
  });
  toolbar.append(save,more);topbar.append(toolbar);
+ // Transform operations stay visible; global/snap/focus/camera are one tap away.
+ const editorToolbar=document.querySelector(".viewport > .toolbar");
+ let extra=null;
+ if(editorToolbar){
+  extra=makeButton("mobileEditorToolsMore","Visa ytterligare modelleringsverktyg","⋯ Verktyg");
+  extra.setAttribute("aria-expanded","false");
+  extra.addEventListener("click",()=>{
+   const opened=document.body.classList.toggle("mobile-editor-extras-open");
+   extra.setAttribute("aria-expanded",String(opened));
+   extra.textContent=opened?"✕ Stäng":"⋯ Verktyg";
+  });
+  editorToolbar.append(extra);
+ }
  actions.addEventListener("click",e=>{
   if(e.target.closest("button,label,a"))closeHeader();
  });
@@ -87,6 +100,8 @@ export function initMobileStudioComfort(){
   const active=!preview.hidden;
   if(active!==wasActive){
    closeOptions();closeHud();closeHeader();
+   document.body.classList.remove("mobile-editor-extras-open");
+   if(extra){extra.setAttribute("aria-expanded","false");extra.textContent="⋯ Verktyg";}
    wasActive=active;
   }
  };
