@@ -182,6 +182,14 @@ try{
  assert.ok(pathModule.ok,"Pinned WebGLPathTracer must actually load: "+(pathModule.message||"missing export"));
  console.log("PASS: real WebGL path tracing engine modules load, without sending GLB files to any server");
 
+ // Isolate Cinema Editor verification from the GPU-intensive experimental path
+ // tracer. A fresh film session releases transient WebGL resources and proves
+ // the film deep link restores a usable editor after a path-tracing attempt.
+ await page.reload({waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.body.classList.contains("film-studio-active"),{timeout:30000});
+ assert.equal(await page.locator("#filmStudioOverlay").isVisible(),true,
+  "Film Studio must reopen after path tracing and a page reload");
+
  // Cinema production: real multi-scene editing, pose tracks and offline time-based PNG frames.
  await page.locator("#filmMovieEditor summary").click();
  await page.locator("#filmCutShot").selectOption("orbit");
