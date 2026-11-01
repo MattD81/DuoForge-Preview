@@ -117,9 +117,10 @@ export function mountCloudAssistant({getProject,getPrompt}){
     busy=true;redraw();
     try{
       const project=getProject?.();
+      const csrfToken=document.querySelector('meta[name="duoforge-csrf"]')?.getAttribute("content")||null;
       const result=await requestCloudProposal({
         prompt,model:select.value,projectId:project?.id,revision:project?.revision
-      });
+      },{csrfToken});
       output.textContent=result.proposal;
       output.hidden=false;
       status.textContent="Förslag "+result.proposalId+" sparat för granskning. Ingen kod har ändrats eller publicerats.";
