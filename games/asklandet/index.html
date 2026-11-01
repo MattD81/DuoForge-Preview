@@ -1,5 +1,29 @@
 <!doctype html><html lang="sv"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Shoot UP · Asklandet</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172025;color:#f1e9ce;font-family:system-ui,sans-serif}#game{display:block;width:100%;height:100%;touch-action:none}header{position:fixed;top:max(24px,env(safe-area-inset-top));left:26px;pointer-events:none;text-shadow:0 2px 14px #000}small{font-size:10px;letter-spacing:3px;color:#b7d3bd}h1{font-size:27px;letter-spacing:6px;margin:5px 0}header p{font-size:12px;max-width:260px}aside{position:fixed;top:max(24px,env(safe-area-inset-top));right:22px;display:flex;align-items:center;gap:8px}aside span{font-size:11px;letter-spacing:2px;margin-right:8px}button{font:inherit;color:#e9eedb;background:#182a2cdb;border:1px solid #7da29170;border-radius:8px;padding:10px 14px;cursor:pointer;touch-action:none}button:focus-visible{outline:3px solid #bdffca}#cross{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#def4d588;pointer-events:none}#hint{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:12px;background:#101c22a8;padding:10px 16px;border-radius:20px;white-space:nowrap;pointer-events:none}#intro{position:fixed;left:7vw;top:26%;width:min(440px,86vw);padding:26px;background:linear-gradient(110deg,#111e25ee,#111e2580);border-left:2px solid #b6d1a4;backdrop-filter:blur(7px)}h2{font-size:clamp(34px,5vw,60px);line-height:1.06;font-weight:500;margin:18px 0}#intro p{font-size:14px;line-height:1.7;color:#d4d8cb}#intro #start{background:#b5cf9d;color:#17241e;font-weight:700;padding:14px 24px;border:0}.muted{font-size:11px!important}#move,nav{display:none}#error{position:fixed;inset:25%;padding:24px;background:#392b29;border:1px solid #fda}#error[hidden]{display:none}@media(pointer:coarse){#move{display:block;position:fixed;bottom:max(35px,env(safe-area-inset-bottom));left:25px;width:112px;height:112px;border-radius:50%;background:#29453b55;border:1px solid #d7efc95c;touch-action:none}#move i{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:#adc89c88;pointer-events:none}nav{display:flex;position:fixed;right:22px;bottom:max(38px,env(safe-area-inset-bottom));gap:12px}nav button{min-width:58px;min-height:58px;background:#29453bc9}#hint{bottom:12px;font-size:10px;max-width:90vw;white-space:normal;text-align:center}aside{top:auto;bottom:175px;right:14px;flex-direction:column;align-items:flex-end}aside button{font-size:10px;padding:7px}header{left:18px;top:max(16px,env(safe-area-inset-top))}h1{font-size:22px}#intro{top:15%;padding:18px;max-height:80dvh;overflow-y:auto}#intro h2{font-size:36px}}@media(max-height:480px){#intro{top:4%;padding:12px;max-height:93dvh;overflow-y:auto}#intro h2{font-size:28px;margin:8px 0}#intro p{margin:8px 0}header p{display:none}aside{bottom:auto;top:15px;flex-direction:row}aside span{display:none}}
-[hidden]{display:none!important}</style><canvas id="game" aria-label="Asklandet, öppen 3D-värld"></canvas><header><small>SHOOT UP / EXPEDITION 01</small><h1>ASKLANDET</h1><p id="quest">Hitta tre reliker. Väcka tornet.</p></header><aside><span id="count">0 / 3 RELIKER</span><button id="quality">Grafik: mellan</button><button id="light">Ljus: skymning</button><button id="pause">Pausa</button></aside><div id="cross">+</div><div id="hint">WASD rörelse · dra för att se · E använd · mellanslag hoppa</div><section id="intro"><small>EN VÄRLD EFTER TYSTNADEN</small><h2>Något lyser<br>under askan.</h2><p>Följ ljusen genom kullar, gamla risiga hus och ett stort övergivet ångfartyg. Samla tre reliker och återvänd till det höga tornet.</p><button id="start">Utforska världen →</button><button id="startShip" type="button" style="display:block;margin-top:12px;background:#223e39;color:#e5ffd9;border:1px solid #aed3a5">⛴ Starta vid skeppsvraket</button><a href="?3d=software" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">3D-läge för alla mobiler (utan WebGL)</a><a href="?classic=1" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">Öppna klassiska skjutspelsläget</a><p class="muted">Mobil: vänster styr rörelse, dra på höger sida för att se.</p></section><div id="move" aria-label="Styrspak"><i></i></div><nav><button id="jump" aria-label="Hoppa">↑</button><button id="use">Använd</button></nav><div id="error" role="alert" hidden></div><script>// Asklandet Software 3D: perspective triangle renderer for browsers where WebGL is unavailable.
+[hidden]{display:none!important}#weather-tag{position:fixed;left:24px;bottom:65px;max-width:calc(100vw - 48px);font-size:10px;letter-spacing:2px;color:#e0edda9c;text-shadow:0 1px 7px #000;pointer-events:none}@media(pointer:coarse){#weather-tag{left:18px;top:130px;bottom:auto;font-size:9px;max-width:59vw}#hint{bottom:max(168px,env(safe-area-inset-bottom) + 145px);max-width:70vw;line-height:1.3}aside{gap:5px}aside button{min-height:30px}}</style><canvas id="game" aria-label="Asklandet, öppen 3D-värld"></canvas><header><small>SHOOT UP / EXPEDITION 01</small><h1>ASKLANDET</h1><p id="quest">Hitta tre reliker. Väcka tornet.</p></header><aside><span id="count">0 / 3 RELIKER</span><button id="quality">Grafik: mellan</button><button id="light">Ljus: skymning</button><button id="audio" aria-pressed="false" aria-label="Slå på eller av vind- och vattenljud">Ljud: av</button><button id="pause">Pausa</button></aside><div id="weather-tag" aria-hidden="true">ASKLANDET · DIMBANKAR · VIND 14 M/S</div><div id="cross">+</div><div id="hint">WASD rörelse · dra för att se · E använd · mellanslag hoppa</div><section id="intro"><small>EN VÄRLD EFTER TYSTNADEN</small><h2>Något lyser<br>under askan.</h2><p>Ta dig genom kall dimma, hård vind, svarta vattensamlingar och övervuxna ruiner mot det övergivna ångfartyget. Samla tre reliker och återvänd till det höga tornet.</p><button id="start">Utforska världen →</button><button id="startShip" type="button" style="display:block;margin-top:12px;background:#223e39;color:#e5ffd9;border:1px solid #aed3a5">⛴ Starta vid skeppsvraket</button><a href="?3d=software" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">3D-läge för alla mobiler (utan WebGL)</a><a href="?classic=1" style="display:block;color:#c1d5b6;font-size:12px;margin-top:14px">Öppna klassiska skjutspelsläget</a><p class="muted">Mobil: vänster styr rörelse, dra på höger sida för att se.</p></section><div id="move" aria-label="Styrspak"><i></i></div><nav><button id="jump" aria-label="Hoppa">↑</button><button id="use">Använd</button></nav><div id="error" role="alert" hidden></div><script>// Weather ambience is generated locally; no external sound files or services.
+window.__askAtmos=(()=>{
+ let context=null,master=null,wind=null,water=null,creak=null,enabled=false,clock=0;
+ const button=document.querySelector('#audio');
+ function init(){if(context)return true;const AC=window.AudioContext||window.webkitAudioContext;if(!AC){button.textContent='Ljud: ej tillgängligt';return false;}
+ try{context=new AC();master=context.createGain();master.gain.value=.24;master.connect(context.destination);
+ const n=Math.floor(context.sampleRate*3),buf=context.createBuffer(1,n,context.sampleRate),samples=buf.getChannelData(0);let sm=0;
+ for(let i=0;i<n;i++){sm=sm*.94+(Math.random()*2-1)*.06;samples[i]=sm;}
+ function layer(freq,volume){const src=context.createBufferSource();src.buffer=buf;src.loop=true;const filter=context.createBiquadFilter();filter.type='lowpass';filter.frequency.value=freq;const g=context.createGain();g.gain.value=volume;src.connect(filter);filter.connect(g);g.connect(master);src.start();return {src,g,filter};}
+ wind=layer(480,.42);water=layer(160,.22);
+ const osc=context.createOscillator(),g=context.createGain();osc.type='sine';osc.frequency.value=61;g.gain.value=.028;osc.connect(g);g.connect(master);osc.start();creak={osc,g};
+ return true;}catch(e){button.textContent='Ljud: ej tillgängligt';return false;}}
+ async function start(){if(!init())return;enabled=true;button.textContent='Ljud: på';button.setAttribute('aria-pressed','true');try{await context.resume()}catch{}}
+ function stop(){enabled=false;button.textContent='Ljud: av';button.setAttribute('aria-pressed','false');context?.suspend().catch(()=>{});}
+ function update(time,nearWater){if(!enabled||!context)return;if(time-clock<.15)return;clock=time;
+ const now=context.currentTime;wind.g.gain.setTargetAtTime(.31+Math.sin(time*.59)*.10+Math.sin(time*1.33)*.035,now,.3);
+ water.g.gain.setTargetAtTime(nearWater?.28:.08,now,.8);
+ creak.g.gain.setTargetAtTime(nearWater?.052:.009,now,.7);creak.osc.frequency.setTargetAtTime(48+Math.sin(time*.87)*19,now,.12);}
+ button.addEventListener('click',()=>enabled?stop():start());
+ document.querySelector('#start').addEventListener('click',()=>start());
+ document.querySelector('#startShip').addEventListener('click',()=>start());
+ document.addEventListener('visibilitychange',()=>{if(context){if(document.hidden)context.suspend().catch(()=>{});else if(enabled)context.resume().catch(()=>{});}});
+ return {start,stop,update};
+})();
+// Asklandet Software 3D: perspective triangle renderer for browsers where WebGL is unavailable.
 // World coordinates and the player-facing camera agree with the existing WebGL edition.
 window.__asklandetSoft3D=function(reason){
 'use strict';
@@ -90,6 +114,28 @@ for(let k=0;k<6;k++){
  const zz=z-27+k*11;box(arr,x,Y+3.35,z+zz-z,12.4,.13,.14,[31,33,31],3);
 }
 });}
+// Nature and shoreline geometry are true perspective 3D, even without WebGL.
+function firSoft(x,z,size=1){addObject(x,z,7*size,arr=>{const y=height(x,z),h=(5.2+random()*2.5)*size;
+box(arr,x,y,z,.32*size,h*.7,.32*size,[52,43,37],4);
+for(let layer=0;layer<3;layer++){const cy=y+h*(.29+layer*.20),w=size*(2.8-layer*.67),tip=[x,cy+h*.35,z];
+for(let k=0;k<4;k++){const a=k*Math.PI/2,b=(k+1)*Math.PI/2;
+triangle(arr,[x+Math.cos(a)*w,cy,z+Math.sin(a)*w],[x+Math.cos(b)*w,cy,z+Math.sin(b)*w],tip,[28+layer*4,53+layer*3,50],6);}}
+});}
+function deadTreeSoft(x,z,size=1){addObject(x,z,7*size,arr=>{let y=height(x,z);
+box(arr,x,y,z,.25*size,6*size,.28*size,[69,61,54],4);
+box(arr,x+size,y+3.7*size,z,.20*size,3.1*size,.24*size,[73,65,55],4);
+box(arr,x-size,y+4.6*size,z+size*.6,.18*size,2.5*size,.20*size,[68,58,49],4);});}
+function marshSoft(cx,cz,rx,rz){addObject(cx,cz,Math.max(rx,rz)*1.6,arr=>{const q=3.2;
+for(let x=cx-rx;x<cx+rx;x+=q)for(let z=cz-rz;z<cz+rz;z+=q){const xc=(x+q*.5-cx)/rx,zc=(z+q*.5-cz)/rz;
+if(xc*xc+zc*zc>1.04)continue;
+function v(a,b){return [a,height(a,b)+.11,b];}
+const a=v(x,z),b=v(x+q,z),c=v(x+q,z+q),d=v(x,z+q);
+triangle(arr,a,d,c,[25,61,64],5);triangle(arr,a,c,b,[27,68,73],5);}});}
+// Black tidal pools wrap around the stranded hull without affecting walking physics.
+marshSoft(-51,25,22,15);marshSoft(-70,52,11,24);marshSoft(-34,84,17,10);marshSoft(-24,29,15,8);
+for(let i=0;i<76;i++){let x=-95+random()*135,z=8+random()*118;
+if(Math.hypot(x+48,z-58)<25||Math.hypot(x,z-24)<17||Math.hypot(x+23,z-49)<6||(x>-53&&x<-5&&z>20&&z<64&&Math.abs((z-23)+(x+10)*.95)<13))continue;
+if(i%5===0)deadTreeSoft(x,z,.55+random()*.6);else firSoft(x,z,.55+random()*.65);}
 oldHouse(-23,49,8,6,5.2);oldHouse(-12,57,7,5,4.7);oldHouse(-31,63,9,6.5,5.5);oldHouse(-40,52,6.5,5,4.2);
 ship(-48,58);
 for(const [x,z] of [[-16,-30],[13,-45],[-35,-52],[35,-75],[70,30],[-80,-58]])ruin(x,z);
@@ -142,6 +188,12 @@ const r=relics.filter(r=>!r.got).sort((a,b)=>Math.hypot(a.x-player.x,a.z-player.
 $('hint').textContent=r?r.name+' · '+Math.round(Math.hypot(r.x-player.x,r.z-player.z))+' m · Använd vid reliken':'Återvänd till tornet';
 }
 function draw(){const W=canvas.width,H=canvas.height;const day=document.body.classList.contains('ask-day');const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,day?'#668e9b':'#152936');sky.addColorStop(.7,day?'#a5b6a5':'#57616c');sky.addColorStop(1,day?'#797d68':'#313c38');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+// The cold moon disappears behind low, fast-moving storm clouds.
+let mx=W*(.73+.06*Math.sin(player.yaw*.45));const moon=ctx.createRadialGradient(mx,H*.18,H*.005,mx,H*.18,H*.22);
+moon.addColorStop(0,day?'rgba(234,236,213,.12)':'rgba(192,220,210,.26)');moon.addColorStop(1,'rgba(129,151,150,0)');ctx.fillStyle=moon;ctx.fillRect(0,0,W,H*.53);
+for(let i=0;i<5;i++){let cx=((time*(7+i*2)+i*199+player.yaw*50)%(W*1.6))-W*.35,cy=H*(.12+.075*i);
+const cloud=ctx.createRadialGradient(cx,cy,W*.04,cx,cy,W*.42);
+cloud.addColorStop(0,day?'rgba(86,107,104,.06)':'rgba(9,23,30,.16)');cloud.addColorStop(1,'rgba(12,21,24,0)');ctx.fillStyle=cloud;ctx.fillRect(0,0,W,H*.5);}
 // Sky haze, layered mountains and a distant abandoned landscape.
 ctx.fillStyle=day?'#7e9283':'#3e5155';ctx.beginPath();ctx.moveTo(0,H*.53);for(let i=0;i<=24;i++){const x=W*i/24;ctx.lineTo(x,H*(.54+Math.sin(i*.61+player.yaw*.5)*.055+Math.sin(i*.27+3)*.04));}ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
 const yaw=player.yaw,pitch=player.pitch,cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);let Fx=H*.96,Fy=H*.96;
@@ -158,9 +210,13 @@ function pushT(t){const a=pos(t.v[0]),b=pos(t.v[1]),c=pos(t.v[2]);if(a.d<.3||b.d
  const ab=t.v[1].map((v,i)=>v-t.v[0][i]),ac=t.v[2].map((v,i)=>v-t.v[0][i]);
  const ny=ab[2]*ac[0]-ab[0]*ac[2];const norm=Math.hypot(ab[1]*ac[2]-ab[2]*ac[1],ny,ab[0]*ac[1]-ab[1]*ac[0])||1;
  const shade=.59+.32*Math.max(0,ny/norm);
- const fog=clamp((depth-28)/155,0,.8);
+ const groundY=(t.v[0][1]+t.v[1][1]+t.v[2][1])/3;
+ const rolling=(Math.sin(depth*.085+time*.29)+Math.sin((a.x+b.x+c.x)*.004-time*.43))*.035;
+ const fog=clamp((depth-17)/102+Math.max(0,2.6-groundY)*.014+rolling,0,.87);
  const blue=day?[113,133,128]:[50,69,72];let col=t.color.map((v,i)=>Math.max(0,Math.min(255,Math.round(v*shade*(1-fog)+blue[i]*fog))));
  if(t.mat===2){const pulse=.8+.2*Math.sin(time*2);col=[Math.round(66*pulse),Math.round(218*pulse),Math.round(198*pulse)];}
+ if(t.mat===5){const wave=Math.sin(time*1.65+depth*.19+vlen(a.x,b.y)*.015);col=[Math.round(19+7*wave),Math.round(64+13*wave),Math.round(72+17*wave)];}
+ if(t.mat===6){const sway=Math.sin(time*1.23+t.v[0][0]*.13+t.v[0][2]*.11);a.x+=sway*1.35;b.x+=sway*1.35;c.x+=sway*1.35;}
  list.push({a,b,c,depth,col:col.join(',')});}
  // Geometry around camera, rebuilt in a compact terrain grid so hills are real 3D.
  const step=chooseQuality===0?10:chooseQuality===1?8:6,radius=chooseQuality===0?70:chooseQuality===1?95:105;
@@ -169,11 +225,16 @@ function pushT(t){const a=pos(t.v[0]),b=pos(t.v[1]),c=pos(t.v[2]);if(a.d<.3||b.d
  for(const o of objs){if(Math.hypot(o.x-player.x,o.z-player.z)>radius+o.r)continue;for(const t of o.triangles)pushT(t);}
  list.sort((a,b)=>b.depth-a.depth);
  for(const t of list){ctx.fillStyle='rgb('+t.col+')';ctx.beginPath();ctx.moveTo(t.a.x,t.a.y);ctx.lineTo(t.b.x,t.b.y);ctx.lineTo(t.c.x,t.c.y);ctx.closePath();ctx.fill();}
+ // Volumetric-looking, wind-driven fogbanks at differing distances.
+ for(let i=0;i<3;i++){const yy=H*(.36+i*.14)+Math.sin(time*.21+i*2.1+player.yaw*.7)*H*.038;
+ const shift=(Math.sin(time*.15+i*1.7)*.26+.5)*W;
+ const mist=ctx.createRadialGradient(shift,yy,0,shift,yy,W*(.34+i*.11));
+ mist.addColorStop(0,day?'rgba(166,181,171,.092)':'rgba(110,140,137,.115)');mist.addColorStop(1,'rgba(100,130,129,0)');ctx.fillStyle=mist;ctx.fillRect(0,Math.max(0,yy-H*.24),W,H*.52);}
  // atmospheric vignette
  const vignette=ctx.createRadialGradient(W*.5,H*.48,H*.1,W*.5,H*.48,Math.max(W,H)*.76);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(4,10,12,.36)');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
  
 }
-function tick(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;time+=dt;update(dt);frame++;
+function tick(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;time+=dt;update(dt);window.__askAtmos?.update(time,Math.hypot(player.x+48,player.z-58)<54);frame++;
  if(active||frame%3===0)draw();requestAnimationFrame(tick);}
 requestAnimationFrame(tick);
 dispatchEvent(new CustomEvent('duoforge-game-started',{detail:{engine:'software-3d',reason:reason||'requested'}}));
@@ -347,8 +408,20 @@ function frame(now){let elapsed=now-last,dt=Math.min(.05,elapsed/1000);last=now;
 const canvas=document.querySelector('#game'),error=document.querySelector('#error');
 let gl;try{gl=canvas.getContext('webgl',{antialias:false,alpha:false});}catch(e){gl=null;}
 if(!gl){window.__asklandetSoft3D('WebGL saknas – fortsätter med 3D-perspektiv');return;}
-const vs=`attribute vec3 aPos;attribute vec3 aNormal;attribute vec3 aColor;attribute vec2 aUv;attribute float aMat;uniform mat4 uVP;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;void main(){vP=aPos;vN=aNormal;vC=aColor;vUv=aUv;vMat=aMat;gl_Position=uVP*vec4(aPos,1.);}`;
-const fs=`precision mediump float;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;uniform sampler2D uTex;uniform vec3 uEye;uniform float uTime,uLight;void main(){vec3 n=normalize(vN);float grain=texture2D(uTex,vUv).r;float patch=texture2D(uTex,vP.xz*.014+vUv*.03).r;vec3 base=vC*(.72+grain*.5);if(vMat<.5){base=mix(vec3(.17,.22,.19),vec3(.47,.39,.28),patch)*(.66+grain*.6);base=mix(base,vec3(.30,.31,.29)*(.7+grain*.4),smoothstep(.12,.55,1.-n.y));}else if(vMat>2.5&&vMat<3.5){float plank=abs(fract(vUv.y*.65)-.5);float rust=texture2D(uTex,vUv*.18+vec2(vP.z*.01,vP.y*.02)).r;float streak=smoothstep(.38,.52,fract(vUv.x*.18+vP.y*.07));base=mix(vec3(.16,.18,.20),vC,.55+grain*.35);base=mix(base,vec3(.44,.18,.08),rust*.65+streak*.22);base=mix(base,vec3(.05,.05,.06),smoothstep(.44,.49,plank)*.35);}else if(vMat>3.5){float board=abs(fract(vUv.x*.5)-.5);float grime=texture2D(uTex,vUv*.12+vec2(vP.x*.02,vP.z*.02)).r;float crack=smoothstep(.46,.5,abs(sin(vP.y*2.1+vP.x*.7))*grime);base=mix(vC*1.08,vC*0.55,grime*.55);base=mix(base,vec3(.12,.10,.08),crack*.65);base=mix(base,vec3(.34,.25,.16),smoothstep(.42,.5,board)*.18);}float sun=max(0.,dot(n,normalize(vec3(-.6,.8,.3))));vec3 col=base*(.35+uLight*.24+sun*.65);if(vMat>1.5&&vMat<2.5)col=vC*(1.1+.22*sin(uTime*1.6+vP.y));float fog=1.-exp(-pow(distance(vP,uEye)/160.,1.8));vec3 air=mix(vec3(.23,.30,.32),vec3(.48,.49,.43),uLight*.6);gl_FragColor=vec4(mix(col,air,clamp(fog,0.,.94)),1.);}`;
+const vs=`attribute vec3 aPos;attribute vec3 aNormal;attribute vec3 aColor;attribute vec2 aUv;attribute float aMat;uniform mat4 uVP;uniform float uTime;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;void main(){vec3 pos=aPos; if(aMat>5.5){float gust=sin(uTime*1.36+pos.x*.29+pos.z*.22)*.23+sin(uTime*.75+pos.z*.13)*.17;pos.x+=gust*max(.1,aUv.y);}if(aMat>4.5&&aMat<5.5){pos.y+=.065*sin(uTime*1.7+pos.x*.30+pos.z*.26);}vP=pos;vN=aNormal;vC=aColor;vUv=aUv;vMat=aMat;gl_Position=uVP*vec4(pos,1.);}`;
+const fs=`precision mediump float;varying vec3 vP,vN,vC;varying vec2 vUv;varying float vMat;uniform sampler2D uTex;uniform vec3 uEye;uniform float uTime,uLight;
+float grain(vec2 a){return texture2D(uTex,a).r;}
+void main(){vec3 n=normalize(vN);float g=grain(vUv);float patch=grain(vP.xz*.014+vUv*.03);vec3 base=vC*(.72+g*.5);
+if(vMat<.5){float moss=grain(vP.xz*.018)*.54+grain(vUv*.1)*.46;float dirt=grain(vP.xz*.034+vUv*.11);base=mix(vec3(.24,.26,.22),vec3(.12,.25,.21),smoothstep(.43,.73,moss));base=mix(base,vec3(.39,.34,.26),smoothstep(.58,.82,dirt)*.5);base=mix(base,vec3(.30,.31,.29)*(.7+g*.4),smoothstep(.12,.55,1.-n.y));}
+else if(vMat>2.5&&vMat<3.5){float rust=grain(vUv*.18+vec2(vP.z*.01,vP.y*.02));float streak=smoothstep(.38,.52,fract(vUv.x*.18+vP.y*.07));base=mix(vec3(.13,.17,.18),vC,.55+g*.35);base=mix(base,vec3(.45,.17,.07),rust*.6+streak*.25);base=mix(base,vec3(.04,.05,.055),smoothstep(.44,.49,abs(fract(vUv.y*.65)-.5))*.32);}
+else if(vMat>3.5&&vMat<4.5){float grime=grain(vUv*.12+vec2(vP.x*.02,vP.z*.02));float crack=smoothstep(.46,.5,abs(sin(vP.y*2.1+vP.x*.7))*grime);base=mix(vC*1.08,vC*.52,grime*.65);base=mix(base,vec3(.10,.08,.07),crack*.67);base=mix(base,vec3(.32,.23,.15),smoothstep(.42,.5,abs(fract(vUv.x*.5)-.5))*.28);}
+else if(vMat>4.5&&vMat<5.5){float waves=sin(vP.x*.47+uTime*1.5)*sin(vP.z*.37-uTime*1.1);float ripple=grain(vP.xz*.09+vec2(uTime*.018,-uTime*.013));float foam=smoothstep(.72,.9,waves*.25+ripple*.8);base=mix(vec3(.025,.12,.15),vec3(.13,.29,.31),.5+.45*waves);base+=foam*vec3(.075,.12,.11);}
+else if(vMat>5.5){float moss=grain(vP.xz*.13+vUv*.03);base=mix(vec3(.065,.14,.125),vec3(.20,.30,.24),moss*.7);}
+float sun=max(0.,dot(n,normalize(vec3(-.6,.8,.3))));vec3 col=base*(.34+uLight*.24+sun*.65);
+if(vMat>1.5&&vMat<2.5)col=vC*(1.1+.22*sin(uTime*1.6+vP.y));
+if(vMat>4.5&&vMat<5.5)col+=vec3(.025,.06,.065)*(.6+.4*sin(vP.x*.7+uTime*1.4));
+float dist=distance(vP,uEye);float fog=1.-exp(-pow(dist/114.,1.38));float bank=.12*(1.-smoothstep(-2.,4.5,vP.y));fog=clamp(fog+bank+sin(vP.x*.045+uTime*.25)*sin(vP.z*.037-uTime*.18)*.058,0.,.88);
+vec3 air=mix(vec3(.17,.26,.27),vec3(.52,.56,.51),uLight*.5);gl_FragColor=vec4(mix(col,air,fog),1.);}`;
 function shader(type,s){const x=gl.createShader(type);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x;}
 let program;try{program=gl.createProgram();const a=shader(gl.VERTEX_SHADER,vs),b=shader(gl.FRAGMENT_SHADER,fs);gl.attachShader(program,a);gl.attachShader(program,b);gl.linkProgram(program);gl.deleteShader(a);gl.deleteShader(b);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}catch(e){console.error('Asklandet WebGL:',e);window.__asklandetSoft3D('WebGL-kompilering misslyckades – fortsätter i 3D');return;}
 gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
@@ -357,6 +430,33 @@ function height(x,z){return 5*Math.sin(x*.024)*Math.cos(z*.032)+2.6*Math.sin(x*.
 const verts=[],colliders=[];function vertex(p,n,c,u,v,m){verts.push(...p,...n,...c,u,v,m)}
 function tri(a,b,c,color,mat=1,uv){let ab=b.map((v,i)=>v-a[i]),ac=c.map((v,i)=>v-a[i]),n=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]],len=Math.hypot(...n)||1;n=n.map(v=>v/len);[a,b,c].forEach((p,i)=>vertex(p,n,color,uv?uv[i][0]:p[0]*.25,uv?uv[i][1]:p[2]*.25,mat));}
 function box(x,y,z,w,h,d,c,solid=true,mat=1){const a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y+h,z-d/2],dd=[x-w/2,y+h,z-d/2],e=[x-w/2,y,z+d/2],f=[x+w/2,y,z+d/2],g=[x+w/2,y+h,z+d/2],hh=[x-w/2,y+h,z+d/2];for(const q of [[a,dd,cc,b],[f,g,hh,e],[e,hh,dd,a],[b,cc,g,f],[dd,hh,g,cc],[e,a,b,f]]){const uv=[[0,0],[0,h*.35],[w*.35,h*.35],[w*.35,0]];tri(q[0],q[1],q[2],c,mat,uv.slice(0,3));tri(q[0],q[2],q[3],c,mat,[uv[0],uv[2],uv[3]]);}if(solid)colliders.push({x,z,w:w/2+.45,d:d/2+.45,y,top:y+h});}
+// Dense coastal nature with procedural bark, moss, wind-swaying branches and shoreline pools.
+function fir(x,z,s=1){let yy=height(x,z),hh=(6+random()*3)*s;
+box(x,yy,z,.35*s,hh*.64,.38*s,[.20,.16,.13],false,4);
+for(let level=0;level<4;level++){let y=yy+hh*(.21+level*.16),w=(3.15-level*.66)*s,top=y+hh*.31;
+for(let k=0;k<6;k++){let a=k*Math.PI/3,b=(k+1)*Math.PI/3;
+let va=[x+Math.cos(a)*w,y,z+Math.sin(a)*w],vb=[x+Math.cos(b)*w,y,z+Math.sin(b)*w],tip=[x,top,z];
+tri(va,vb,tip,[.12+level*.02,.28+level*.018,.24+level*.01],6,[[0,0],[1,0],[.5,.90]]);}}
+}
+function deadBirch(x,z,s=1){const y=height(x,z),h=(5+random()*2)*s;
+box(x,y,z,.27*s,h,.29*s,[.31,.30,.26],false,4);
+box(x+.7*s,y+h*.52,z,.17*s,h*.52,.19*s,[.25,.25,.21],false,4);
+box(x-.8*s,y+h*.64,z+.3*s,.13*s,h*.38,.16*s,[.25,.24,.21],false,4);}
+function grassCluster(x,z){let y=height(x,z);for(let k=0;k<3;k++){let rx=x+(k-1)*.24,rz=z+(k%2)*.21,sz=.8+(k*.22);
+tri([rx-.12,y,rz],[rx+.17,y,rz],[rx+.06,y+sz,rz-.14],[.20,.28,.20],6,[[0,0],[1,0],[.5,sz]]);}}
+function tidalWater(cx,cz,rx,rz){const step=3.;for(let x=cx-rx;x<cx+rx;x+=step)for(let z=cz-rz;z<cz+rz;z+=step){let nx=(x+step*.5-cx)/rx,nz=(z+step*.5-cz)/rz;
+if(nx*nx+nz*nz>1.02)continue;
+function v(xx,zz){return [xx,height(xx,zz)+.105,zz];}
+const a=v(x,z),b=v(x+step,z),c=v(x+step,z+step),d=v(x,z+step);
+tri(a,d,c,[.07,.27,.29],5,[[x*.23,z*.23],[x*.23,(z+step)*.23],[(x+step)*.23,(z+step)*.23]]);
+tri(a,c,b,[.07,.27,.29],5,[[x*.23,z*.23],[(x+step)*.23,(z+step)*.23],[(x+step)*.23,z*.23]]);}}
+// Shallow black water and tidepools close to the ship and broken village.
+tidalWater(-51,25,22,15);tidalWater(-70,52,11,24);tidalWater(-34,84,17,10);tidalWater(-24,29,15,8);
+for(let i=0;i<170;i++){const x=-105+random()*175,z=-8+random()*143;
+if(Math.hypot(x+48,z-58)<25||Math.hypot(x,z-24)<18||Math.hypot(x+23,z-49)<7||(x>-53&&x<-5&&z>20&&z<64&&Math.abs((z-23)+(x+10)*.95)<13))continue;
+if(i%6===0)deadBirch(x,z,.62+random()*.7);else fir(x,z,.5+random()*.9);}
+for(let i=0;i<480;i++){const x=-90+random()*155,z=0+random()*118;
+if(Math.hypot(x+48,z-58)<16)continue;grassCluster(x,z);}
 function crystal(x,z,h=4,r=1){let y=height(x,z);for(let i=0;i<6;i++){const a=i*Math.PI/3,b=(i+1)*Math.PI/3,p=[x+Math.cos(a)*r,y+h*.25,z+Math.sin(a)*r],q=[x+Math.cos(b)*r,y+h*.25,z+Math.sin(b)*r];tri(p,[x,y+h,z],q,[.17,.85,.69],2);tri(q,[x,y-.2,z],p,[.09,.40,.39],2);}}
 for(let z=-180;z<180;z+=3)for(let x=-180;x<180;x+=3){const a=[x,height(x,z),z],b=[x+3,height(x+3,z),z],c=[x+3,height(x+3,z+3),z+3],d=[x,height(x,z+3),z+3];tri(a,d,c,[1,1,1],0);tri(a,c,b,[1,1,1],0);}
 // Original procedural concrete, corroded steel and rubble, authored for DuoForge.
@@ -394,8 +494,8 @@ function resize(){const scale=[.7,1,1.5][quality],w=Math.max(1,Math.round(innerW
 function canMove(x,z){if(Math.abs(x)>174||Math.abs(z)>174)return false;const y=height(x,z);if(y-height(player.x,player.z)>.65)return false;return !colliders.some(b=>Math.abs(x-b.x)<b.w&&Math.abs(z-b.z)<b.d&&player.y-1.7<b.top&&player.y>b.y);}
 function interact(){const near=relics.find(r=>!r.got&&Math.hypot(r.x-player.x,r.z-player.z)<5);if(near){near.got=true;document.querySelector('#count').textContent=relics.filter(r=>r.got).length+' / 3 RELIKER';}const count=relics.filter(r=>r.got).length;if(count===3&&Math.hypot(player.x-5,player.z+12)<7){won=true;document.querySelector('#quest').textContent='Tornet vaknar. Asklandet lever igen. Fortsätt utforska.';light=.85;document.querySelector('#light').textContent='Ljus: dag';}else document.querySelector('#quest').textContent=count===3?'Återvänd till tornet och aktivera det.':near?'Relik funnen. Sök nästa ljus.':'Sök nära de tre stora kristallerna.';}
 function update(dt){if(!active||paused){jumpWanted=useWanted=false;return;}let sx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stick.x,fw=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-stick.y;player.yaw+=((keys.ArrowLeft?1:0)-(keys.ArrowRight?1:0))*dt*1.8;let pads=[];try{pads=Array.from(navigator.getGamepads?.()||[])}catch{}let pad=pads.find(p=>p?.connected),pu=false,pj=false;if(pad){const axis=i=>Math.abs(pad.axes[i]||0)>.16?pad.axes[i]:0;sx+=axis(0);fw-=axis(1);player.yaw-=axis(2)*dt*2;player.pitch=Math.max(-1.25,Math.min(1.25,player.pitch-axis(3)*dt*1.5));pj=!!pad.buttons[0]?.pressed;pu=!!pad.buttons[2]?.pressed;if(pj&&!previousJump)jumpWanted=true;if(pu&&!previousUse)useWanted=true;}previousUse=pu;previousJump=pj;const len=Math.max(1,Math.hypot(sx,fw)),speed=(keys.ShiftLeft?12:7)*dt;let dx=(Math.cos(player.yaw)*sx-Math.sin(player.yaw)*fw)/len*speed,dz=(-Math.sin(player.yaw)*sx-Math.cos(player.yaw)*fw)/len*speed;let steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.15));for(let i=0;i<steps;i++){if(canMove(player.x+dx/steps,player.z))player.x+=dx/steps;if(canMove(player.x,player.z+dz/steps))player.z+=dz/steps;}let ground=height(player.x,player.z)+1.7;if(jumpWanted&&player.y<=ground+.12)player.vy=6;jumpWanted=false;player.vy-=17*dt;player.y+=player.vy*dt;if(player.y<ground){player.y=ground;player.vy=0;}if(useWanted)interact();useWanted=false;const target=relics.filter(r=>!r.got).sort((a,b)=>Math.hypot(a.x-player.x,a.z-player.z)-Math.hypot(b.x-player.x,b.z-player.z))[0];document.querySelector('#hint').textContent=target?target.name+' · '+Math.round(Math.hypot(target.x-player.x,target.z-player.z))+' m · E / Använd nära kristallen':won?'Världen är din att utforska.':'Tornet · '+Math.round(Math.hypot(player.x-5,player.z+12))+' m · E / Använd';}
-function render(){const a=canvas.width/canvas.height,f=1/Math.tan(Math.PI/6),near=.1,far=500,proj=new Float32Array([f/a,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw),cp=Math.cos(player.pitch),sp=Math.sin(player.pitch),right=[cy,0,-sy],up=[sy*sp,cp,cy*sp],back=[sy*cp,-sp,cy*cp],eye=[player.x,player.y,player.z],dot=v=>v.reduce((s,x,i)=>s+x*eye[i],0);const view=new Float32Array([right[0],up[0],back[0],0,right[1],up[1],back[1],0,right[2],up[2],back[2],0,-dot(right),-dot(up),-dot(back),1]);gl.clearColor(.23+light*.15,.30+light*.114,.32+light*.066,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.uVP,false,multiply(proj,view));gl.uniform3fv(loc.uEye,eye);gl.uniform1f(loc.uTime,elapsed);gl.uniform1f(loc.uLight,light);gl.drawArrays(gl.TRIANGLES,0,verts.length/12);}
-function frame(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;if(!paused)elapsed+=dt;update(dt);render();if(!ready){ready=true;dispatchEvent(new CustomEvent('duoforge-game-started'));}raf=requestAnimationFrame(frame);}raf=requestAnimationFrame(frame);
+function render(){const a=canvas.width/canvas.height,f=1/Math.tan(Math.PI/6),near=.1,far=500,proj=new Float32Array([f/a,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw),cp=Math.cos(player.pitch),sp=Math.sin(player.pitch),right=[cy,0,-sy],up=[sy*sp,cp,cy*sp],back=[sy*cp,-sp,cy*cp],eye=[player.x,player.y,player.z],dot=v=>v.reduce((s,x,i)=>s+x*eye[i],0);const view=new Float32Array([right[0],up[0],back[0],0,right[1],up[1],back[1],0,right[2],up[2],back[2],0,-dot(right),-dot(up),-dot(back),1]);gl.clearColor(.16+light*.21,.24+light*.16,.265+light*.095,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.uVP,false,multiply(proj,view));gl.uniform3fv(loc.uEye,eye);gl.uniform1f(loc.uTime,elapsed);gl.uniform1f(loc.uLight,light);gl.drawArrays(gl.TRIANGLES,0,verts.length/12);}
+function frame(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;if(!paused)elapsed+=dt;update(dt);window.__askAtmos?.update(elapsed,Math.hypot(player.x+48,player.z-58)<54);render();if(!ready){ready=true;dispatchEvent(new CustomEvent('duoforge-game-started'));}raf=requestAnimationFrame(frame);}raf=requestAnimationFrame(frame);
 on(canvas,'webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(raf);error.hidden=false;error.textContent='Grafiken pausades av enheten. Ladda om spelet för att fortsätta.';});on(window,'pagehide',()=>{cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());gl.deleteBuffer(buffer);gl.deleteTexture(tex);gl.deleteProgram(program)});
 })();
 
