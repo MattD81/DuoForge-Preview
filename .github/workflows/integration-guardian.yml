@@ -1,0 +1,25 @@
+name: Integration Guardian checks
+on:
+  pull_request:
+    paths:
+      - 'workshop/integration-guardian/**'
+      - 'workshop/studio/studio.mjs'
+      - 'workshop/studio/**'
+      - 'tests/integration-guardian.test.mjs'
+      - '.github/workflows/integration-guardian.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guardian:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Guardian syntax and behavior
+        run: |
+          node --check workshop/integration-guardian/core.mjs
+          node --check workshop/integration-guardian/guardian.mjs
+          node --test tests/integration-guardian.test.mjs
