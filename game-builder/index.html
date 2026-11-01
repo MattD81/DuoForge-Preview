@@ -6,6 +6,7 @@
 <title>DuoForge Architect – spelbyggare</title>
 <link rel="stylesheet" href="./builder.css">
 <link rel="stylesheet" href="./architect-ui.css">
+<link rel="stylesheet" href="./cloud-assistant.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/":"https://cdn.jsdelivr.net/npm/three@0.180.0/","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 </head><body>
 <header class="topbar"><a class="brand" href="../">◈ <b>DUOFORGE</b> <span>BUILDER</span></a><nav><a href="../workshop/studio/">3D Studio ↗</a><a href="../games/aetherfall/">Spela Aetherfall ↗</a></nav></header>
@@ -18,7 +19,7 @@
 </section>
 <div class="workspace">
  <section class="editor card" aria-labelledby="promptTitle">
-  <div class="sectionhead"><div><div class="sectiontag">01 / GAME DIRECTOR</div><h2 id="promptTitle">Vad ska vi bygga?</h2></div><span class="local">◌ Ingen server-AI</span></div>
+  <div class="sectionhead"><div><div class="sectiontag">01 / GAME DIRECTOR</div><h2 id="promptTitle">Vad ska vi bygga?</h2></div><span class="local">◌ Lokalt som standard</span></div>
   <label for="prompt">Beskriv spelvärlden eller en ändring</label>
   <textarea id="prompt" spellcheck="true" rows="5" maxlength="1200" placeholder="Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.">Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.</textarea>
   <div class="presets" aria-label="Exempel att välja"><button type="button" data-preset="Skapa ett 3D-äventyr med en viking på ett stormigt hav, fyra banor, tre monster och fem kristaller.">🌊 Viking & storm</button><button type="button" data-preset="Skapa ett fighting-spel i en mörk stad med sex fiender och tre banor.">⚔ Strid i staden</button><button type="button" data-preset="Skapa ett äventyr i en skog vid solnedgången, fem banor och sex kristaller.">🌲 Skogsäventyr</button></div>
@@ -66,7 +67,7 @@
   <p class="legal-note">CC0 kräver normalt inte krediter, men DuoForge visar ändå skaparna och deras donationssidor. Donationer är frivilliga. Betalda paket, okänd licens, varumärkesskyddade objekt och osäkra tredjepartsfiler får inte importeras utan särskild granskning. En uppladdares intyg är inte en oberoende licenskontroll.</p>
  </section>
 </div>
-<footer><strong>DUOFORGE INTELLIGENT GAME BUILDER V1</strong><span>Spelbar 3D-mall • Regelbaserad svensk prompttolkning • Sparas i din webbläsare, inte i Sites • Ingen generativ AI • Öppen preview på GitHub Pages</span></footer>
+<footer><strong>DUOFORGE INTELLIGENT GAME BUILDER V1</strong><span>Spelbar 3D-mall • Regelbaserad svensk prompttolkning • Sparas i din webbläsare, inte i Sites • AI-kodförslag endast via behörig Sites-backend • Öppen preview på GitHub Pages</span></footer>
 </main>
 <script type="module" src="./builder.mjs"></script>
 </body></html>

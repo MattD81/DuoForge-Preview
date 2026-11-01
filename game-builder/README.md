@@ -61,3 +61,16 @@ Tester: `node --test tests/safe-asset-library.test.mjs tests/intelligent-builder
 **Ärlig status:** Inga nya AI-modeller/AI-API:er har anslutits; textförståelsen är fortsatt lokal och regelbaserad. Det finns ingen tillgång till produktionskoden i Sites, så den här ändringen kan köras i GitHub Preview men är **inte** installerad i den publicerade huvudplattformen. För AI-agenter, valfria logiknoder och Sites-projektpublicering behövs dokumenterade, auktoriserade API:er och end-to-end-tester.
 
 **Tester:** `node --test tests/architect-ui.test.mjs tests/intelligent-builder.test.mjs` och `node tests/intelligent-builder-smoke.mjs` via befintligt testsystem.
+
+## Cloud Engine — valbar assistent (GitHub Preview)
+
+`cloud-assistant.mjs` och `cloud-assistant.css` lägger till ett mobilanpassat modellval i **befintliga** `/game-builder/` (inte en ny byggare).
+- **DuoForge lokalt** är standard och använder befintlig `planner.mjs` utan serveranrop.
+- **Cloudflare Llama** och **Cloudflare GLM Flash** syns men är **avaktiverade tills en riktig, autentiserad Sites-backend bekräftar anslutningen**. De erbjuder endast separata, granskningsbara kodförslag och ändrar inte spelprojekt eller publicerar något på egen hand.
+- Webbläsaren anropar enbart **samma origin** på `GET /api/duoforge/ai/status` och `POST /api/duoforge/ai/proposal`. Den får **aldrig** tillgång till Cloudflare Account ID, API-token, Worker BRIDGE_TOKEN eller GitHub-token.
+- `POST /proposal` skickar endast `{prompt,model,projectId,revision}`. Backend måste ta actor-ID från validerad Sites-session, kontrollera projektägarskap/revision, skydda mot CSRF, skicka separat Workersecret server-till-server och uppfylla PR/test/granskning innan eventuell kod används.
+- Om endpoint saknas (vilket gäller GitHub Pages) förblir 3D-spelbyggaren lokalt fungerande. Inga betalda anrop försöks och ingen Cloudflare-anslutning utlovas.
+
+**Cloudflare-backendkod** finns separat i privata `MattD81/DuoForge-Platform/cloudflare/`. Den är inte automatiskt installerad i Sites. För riktig drift krävs D1-binding, Workers Free-kontroll, server-secret och behörig Sites-backend. Inga nya användare eller projekt skapas av den här UI-förändringen.
+
+**Tester:** `node --test tests/cloud-assistant.test.mjs`, inkluderat i Game Builder CI.
