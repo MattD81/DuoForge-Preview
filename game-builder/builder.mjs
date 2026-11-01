@@ -2,13 +2,14 @@ import {BUILDER_VERSION,normalizeConfig,planGame} from "./planner.mjs";
 import {startBuilderGame} from "./runtime.mjs";
 import {downloadGame} from "./export.mjs";
 import {setupSafeAssetPanel} from "./asset-ui.mjs";
+import {mountArchitectUI} from "./architect-ui.mjs";
 
 const $=id=>document.getElementById(id);
 const STORAGE="duoforge-intelligent-builder-v1";
 const SUPPORTED={world:{ocean:"Hav",forest:"Skog",city:"Stad",ruins:"Ruiner"},
  weather:{storm:"Storm",sunset:"Solnedgång",clear:"Dagsljus",night:"Natt"},
  genre:{arena:"Strid",adventure:"Äventyr"},quality:{auto:"Adaptiv GPU",quality:"Hög grafik",performance:"Prestanda"}};
-let game=null,config=null,history=[],busy=false,assets=[],assetPanel=null;
+let game=null,config=null,history=[],busy=false,assets=[],assetPanel=null,architect=null;
 function renderAssets(){assetPanel?.renderAssets(assets);}
 function store(){
  try{localStorage.setItem(STORAGE,JSON.stringify({config,history:history.slice(-10)}));}catch{}
@@ -37,6 +38,21 @@ function renderPlan(plan){
  $("warnings").replaceChildren();
  for(const msg of plan.warnings){const div=document.createElement("div");div.className="warning";div.textContent="⚠ "+msg;$("warnings").appendChild(div);}
 }
+function applyArchitectPatch(patch){
+ const keys=["world","weather","genre","hero","quality","levels","enemies","collectibles"];
+ const safe=Object.fromEntries(Object.entries(patch||{}).filter(([key])=>keys.includes(key)));
+ const old=config,normalized=normalizeConfig({...old,...safe});
+ const changed=keys.filter(key=>old[key]!==normalized[key]);
+ if(!changed.length)return false;
+ history.push(old);if(history.length>10)history.shift();
+ config=normalizeConfig({...normalized,id:old.id,revision:Math.min(9999,old.revision+1)});
+ store();
+ const used=planGame("Skapa 3D-spel",config).used;
+ renderPlan({changes:changed.map(key=>({field:key,from:old[key],to:config[key]})),used,warnings:[]});
+ mount();
+ showFeedback("✓ Uppdaterade "+changed.length+" spelvärden i samma projekt, version "+config.revision+". Provspela direkt!");
+ return true;
+}
 function onGameState(s){
  $("level").textContent="BANA "+Math.min(s.stage,s.levels)+"/"+s.levels;
  $("health").textContent="♥ "+s.life;
@@ -62,6 +78,7 @@ function mount(){
   showFeedback("Kunde inte starta WebGL: "+String(error.message||error),true);
  }
  $("undo").disabled=!history.length;
+ architect?.refresh();
 }
 async function updateFromPrompt(){
  if(busy)return;
@@ -116,7 +133,8 @@ assetPanel=setupSafeAssetPanel({getAssets:()=>assets,
  onPlacement:(id,placement)=>game?.updateAssetPlacement(id,placement)});
 revive();mount();
 renderPlan(planGame("Skapa 3D-spel i "+({ocean:"hav",forest:"skog",city:"stad",ruins:"ruiner"}[config.world]),config));
-showFeedback("✓ Intelligenta Game Builder är redo. Det här är en lokal 3D-mall med regelbaserad prompttolkning. Förändringar sparas i webbläsaren. Använd textfältet för att förbättra samma spel.");
+showFeedback("✓ Architect V1 är redo. Bygg och justera samma 3D-projekt med regelbaserad texttolkning eller visuella inställningar. Ingen extern AI har körts.");
+architect=mountArchitectUI({getConfig:()=>config,getHistory:()=>history,getGame:()=>game,getAssets:()=>assets,applyPatch:applyArchitectPatch});
 Object.defineProperty(window,"__duoforgeBuilder",{value:Object.freeze({
  get config(){return config},get history(){return history.map(x=>x.revision)},
  get active(){return !!game},get game(){return game?.state||null},get assetCount(){return assets.length},
