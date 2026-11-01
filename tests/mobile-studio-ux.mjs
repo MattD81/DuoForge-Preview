@@ -41,7 +41,7 @@ try{
  assert.ok(g.bounds["#scene"].height>=220,"portrait canvas height "+g.bounds["#scene"].height);
  assert.ok(g.scrollX<=g.innerWidth+1,"no horizontal page scroll");
  assert.ok(g.scrollY<=g.innerHeight+1,"no long page scroll");
- assert.ok(g.bounds[".left-panel"].y>=g.bounds[".viewport"].bottom-1||g.bounds[".left-panel"].y>=g.bounds[".viewport"].y,"sheet should be separate from canvas");
+ assert.equal(g.sheetOpen,false,"tools should be closed before the first tap");
  // The existing Character Forge creates real geometry after requesting the tool drawer.
  await portrait.locator('[data-mobile-tab="create"]').click();
  assert.equal(await portrait.locator(".left-panel").isVisible(),true);
