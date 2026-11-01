@@ -42,7 +42,10 @@ try{
  mobile.on("pageerror",e=>errors.push(e.message));
  await mobile.goto("http://127.0.0.1:8080/workshop/studio/",{waitUntil:"domcontentloaded"});
  await mobile.waitForFunction(()=>document.querySelector("#objectCount")?.textContent==="1",{timeout:30000});
+ // New mobile UX starts with the scene exposed, so open each tool explicitly.
+ await mobile.locator('[data-mobile-tab="create"]').click();
  await mobile.locator("#forgeCreate").click();
+ await mobile.locator('[data-mobile-tab="dna"]').click();
  await mobile.locator("#dnaKind").selectOption("stone");
  await mobile.locator("#dnaInspect").click();
  await mobile.waitForFunction(()=>document.querySelector("#dnaStatus")?.textContent?.includes("6-riktningskontroll"));

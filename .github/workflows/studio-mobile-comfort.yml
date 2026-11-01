@@ -1,0 +1,44 @@
+name: Verify DuoForge Studio mobile comfort
+
+on:
+  pull_request:
+    paths:
+      - 'workshop/studio/**'
+      - 'tests/mobile-studio-comfort*.mjs'
+      - '.github/workflows/studio-mobile-comfort.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'workshop/studio/**'
+      - 'tests/mobile-studio-comfort*.mjs'
+      - '.github/workflows/studio-mobile-comfort.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check mobile Studio modules
+        run: |
+          node --check workshop/studio/mobile-studio-ux.mjs
+          node --check workshop/studio/mobile-studio-comfort.mjs
+          node --check workshop/studio/studio.mjs
+          node --check tests/mobile-studio-comfort-smoke.mjs
+      - name: Static mobile regressions
+        run: node --test tests/mobile-studio-comfort.test.mjs
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test real mobile layouts and Render World
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 > /tmp/duoforge-studio-http.log 2>&1 &
+          node tests/mobile-studio-comfort-smoke.mjs
