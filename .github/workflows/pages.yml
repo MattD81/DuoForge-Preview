@@ -18,6 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepublish offline quality gate (block deployment on failure)
+        run: node scripts/prepublish-quality.mjs
       - name: Build detailed GLB fighters and verify game logic (no external model API)
         run: |
           node --check games/rift-champions/build-models.mjs
