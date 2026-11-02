@@ -99,9 +99,6 @@ jobs:
           PY
       # Premium anatomically realistic CC0 MakeHuman meshes (CPU only, no paid services).
       # Previous V3/V2 fighters remain available when this optional build fails.
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - uses: actions/cache@v4
         id: rift-ara-cache
         with:
