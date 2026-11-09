@@ -5,6 +5,8 @@
 import * as THREE from "three";
 import {createGpuTimer,reconstructionPolicy} from "./gpu-deluxe-v2.mjs";
 import {TEMPORAL_RECONSTRUCT_SHADER,PROXY_RAYTRACE_SHADER} from "./gpu-deluxe-v2-effects.mjs";
+import {createNeuralSRShader,createNeuralBudget,NEURAL_SR_MODEL} from "./neural-sr.mjs";
+import {captureTrainingAtlas} from "./neural-training-capture.mjs";
 
 const MAX=PROXY_RAYTRACE_SHADER.maxSpheres;
 export function collectRayProxies(root,{limit=MAX}={}){
@@ -40,17 +42,21 @@ export function initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,isBusy=
   '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:8px 0">',
   '<button type="button" id="gpuV2Temporal" aria-pressed="false">◈ Temporal uppskalning</button>',
   '<button type="button" id="gpuV2Ray" aria-pressed="false">✦ Ray tracing (prototyp)</button>',
+  '<button type="button" id="gpuV2Neural" aria-pressed="false">🧠 Neural SR (tränad AI)</button>',
+  '<button type="button" id="gpuV2Capture">↓ Spara träningspar</button>',
   '<button type="button" id="gpuV2Off">Normal vy</button>',
   '</div>',
   '<p id="gpuV2Status" class="hint" role="status" aria-live="polite">V2 redo.</p>',
+  '<p class="hint">Neural SR kör lokalt med en liten tränad CNN-modell. Experimentell, inte DLSS-kvalitet. Automatisk reservväg vid fel eller för hög GPU-tid.</p>',
   '<p class="hint">Ray tracing visar högst 12 av objektens omslutande sfärer, inte de exakta GLB-ytorna. Kan vara långsam på mobil. Ändrar inte ditt sparade projekt.</p>'
  ].join("");
  sidebar.append(panel);
  const $=id=>panel.querySelector("#"+id);
  const status=$("gpuV2Status");
  const timer=createGpuTimer(renderer);
+ const neuralBudget=createNeuralBudget({maxGpuMs:Math.min(canvas.clientWidth||1280,canvas.clientHeight||720)<700?28:19,consecutive:10});
  let mode="off",low=null,history=[],rayTarget=null,outSize=[0,0],
-  upscaleMaterial=null,rayMaterial=null,lastCamera=null,stable=0,frame=0,
+  upscaleMaterial=null,rayMaterial=null,neuralMaterial=null,lastCamera=null,stable=0,frame=0,
   rayProxyCount=0,rayMeshCount=0,outputs=null,disposed=false;
  const quadGeometry=new THREE.PlaneGeometry(2,2);
  const fullscreen=new THREE.Scene(),quadCamera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
@@ -68,13 +74,24 @@ export function initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,isBusy=
   mode=next;stable=0;lastCamera=null;
   $("gpuV2Temporal").setAttribute("aria-pressed",String(mode==="temporal"));
   $("gpuV2Ray").setAttribute("aria-pressed",String(mode==="raytrace"));
-  status.textContent=mode==="temporal"?"Temporal uppskalning aktiv. Stilla kamera bygger upp historik.":
+  $("gpuV2Neural").setAttribute("aria-pressed",String(mode==="neural"));
+  if(next==="neural")neuralBudget.reset(timer.snapshot().samples);
+  status.textContent=mode==="neural"?"Neural SR: tränad CNN körs lokalt på GPU.":
+   mode==="temporal"?"Temporal uppskalning aktiv. Stilla kamera bygger upp historik.":
    mode==="raytrace"?"Ray tracing av modellernas ungefärliga sfärformer aktiv.":
    "Normal 3D-vy. GPU-tidsmätning fortsätter om den stöds.";
-  if(mode!=="off")notify("GPU Deluxe V2: "+(mode==="temporal"?"Temporal uppskalning":"Ray tracing-prototyp")+".");
+  if(mode!=="off")notify("GPU Deluxe V2: "+(mode==="neural"?"Neural SR":"temporal"===mode?"Temporal uppskalning":"Ray tracing-prototyp")+".");
  }
  $("gpuV2Temporal").onclick=()=>setMode(mode==="temporal"?"off":"temporal");
  $("gpuV2Ray").onclick=()=>setMode(mode==="raytrace"?"off":"raytrace");
+ $("gpuV2Neural").onclick=()=>setMode(mode==="neural"?"off":"neural");
+ $("gpuV2Capture").onclick=()=>{
+  if(isBusy()){status.textContent="Avsluta spelning eller rendering före bildinsamling.";return;}
+  try{
+   const saved=captureTrainingAtlas({renderer,scene,camera,canvas});
+   status.textContent="Träningsbild sparad lokalt: "+saved.width+"×"+saved.height+" referens + 2× lågupplöst par.";
+  }catch(e){status.textContent="Bildinsamling misslyckades: "+e.message;}
+ };
  $("gpuV2Off").onclick=()=>setMode("off");
  const dimensions=new THREE.Vector2();
  function clearTargets(){
@@ -125,6 +142,19 @@ export function initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,isBusy=
   renderer.setRenderTarget(null);renderer.render(fullscreen,quadCamera);
   outputs++;
  }
+ function neural(){
+  if(!neuralMaterial){
+   const shader=createNeuralSRShader();
+   neuralMaterial=makeMaterial(shader,{
+    tCurrent:{value:null},uOutputTexel:{value:new THREE.Vector2(1,1)}
+   });
+  }
+  renderer.setRenderTarget(low);renderer.clear();renderer.render(scene,camera);
+  neuralMaterial.uniforms.tCurrent.value=low.texture;
+  neuralMaterial.uniforms.uOutputTexel.value.set(1/outSize[0],1/outSize[1]);
+  quad.material=neuralMaterial;
+  renderer.setRenderTarget(null);renderer.render(fullscreen,quadCamera);
+ }
  function proxies(){
   const list=collectRayProxies(root),spheres=[],colors=[],reflect=[];
   rayMeshCount=0;root.traverse(x=>{if(x.isMesh)rayMeshCount++});
@@ -161,7 +191,7 @@ export function initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,isBusy=
   if(mode==="off"||disposed||isBusy())return false;
   try{
    allocate();
-   if(mode==="raytrace")raytrace();else temporal();
+   if(mode==="raytrace")raytrace();else if(mode==="neural")neural();else temporal();
    return true;
   }catch(error){
    console.error("GPU Deluxe V2 fallback",error);
@@ -175,14 +205,20 @@ export function initGpuDeluxeV2Studio({renderer,canvas,scene,root,camera,isBusy=
   const q=timer.snapshot();
   const perf=q.supported?(q.gpuMs===null?"GPU väntar på mätvärde":q.gpuMs+" ms GPU")
    :"GPU-timer stöds inte i webbläsaren";
-  if(mode==="raytrace")status.textContent=perf+" · Ray tracing-proxy: "+rayProxyCount+"/"+rayMeshCount+" meshdelar. Geometrin är approximativ.";
+  if(mode==="neural"&&neuralBudget.sample(q)){
+   setMode("temporal");
+   status.textContent="Neural SR pausad: uppmätt GPU-tid över säkerhetsgränsen. Temporal reservläge.";
+   return;
+  }
+  if(mode==="neural")status.textContent=perf+" · Neural SR · "+NEURAL_SR_MODEL.training.kind+" · 2×, modell v0.1";
+  else if(mode==="raytrace")status.textContent=perf+" · Ray tracing-proxy: "+rayProxyCount+"/"+rayMeshCount+" meshdelar. Geometrin är approximativ.";
   else if(mode==="temporal")status.textContent=perf+" · Temporal 0,72× rekonstruktion · "+
    (stable>=3?"stabil kamera, historik aktiv":"historik pausad under rörelse")+". Ingen neural AI.";
   else status.textContent=perf+" · Normal WebGL-rendering.";
  }
  function dispose(){
   disposed=true;timer.dispose();clearTargets();
-  upscaleMaterial?.dispose();rayMaterial?.dispose();
+  upscaleMaterial?.dispose();rayMaterial?.dispose();neuralMaterial?.dispose();
   finalMaterial.dispose();quadGeometry.dispose();panel.remove();
  }
  window.addEventListener("pagehide",dispose,{once:true});
