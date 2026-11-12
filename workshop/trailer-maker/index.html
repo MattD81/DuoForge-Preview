@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1118">
+<title>DuoForge Trailer Maker</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1118;--panel:#151d27;--panel2:#1b2632;--line:#2a3949;--muted:#9aabba;--text:#f4f7f8;--mint:#57e0b4;--blue:#88baff;--danger:#ff7a88;font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% -25%,#1a3c46 0,transparent 45%),var(--bg);color:var(--text);min-height:100vh}
+button,input,select{font:inherit}button{border:1px solid var(--line);border-radius:11px;background:#202c39;color:var(--text);padding:10px 14px;cursor:pointer}button:hover{border-color:#618174}button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:var(--mint);color:#092017;border:0;font-weight:750}button.ghost{background:transparent}button.danger{color:var(--danger)}
+header{height:64px;border-bottom:1px solid #ffffff13;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px);position:sticky;top:0;background:#0c1118eF;backdrop-filter:blur(14px);z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800}.mark{width:29px;height:29px;border:2px solid var(--mint);border-radius:9px;display:grid;place-items:center;color:var(--mint)}.brand small{color:var(--muted);font-weight:550}
+main{max-width:1240px;margin:auto;padding:30px clamp(15px,4vw,44px) 70px}
+.intro{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:0 0 24px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--mint);font-weight:750}.intro h1{font-size:clamp(28px,4vw,43px);line-height:1.08;margin:7px 0}.intro p{color:var(--muted);margin:0;max-width:600px}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(310px,.9fr);gap:18px;align-items:start}
+.panel{background:linear-gradient(145deg,#18222d,#121922);border:1px solid var(--line);border-radius:18px;padding:19px;box-shadow:0 14px 40px #0002}
+.panel h2{font-size:17px;margin:0}.heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.sub{color:var(--muted);font-size:13px}
+.screen-wrap{background:#080b10;border-radius:13px;padding:10px;display:grid;place-items:center}
+canvas{display:block;max-width:100%;max-height:54vh;background:#101821;border-radius:6px;aspect-ratio:16/9;object-fit:contain}
+.preview-actions{display:flex;gap:8px;margin-top:11px}.preview-actions button{flex:1}
+.settings{display:flex;gap:12px;flex-wrap:wrap;margin-top:15px}.field{display:grid;gap:6px;flex:1;min-width:130px}.field>span,.label{font-size:12px;color:var(--muted);font-weight:650}
+input[type=text],select,input[type=number]{width:100%;background:#0e151e;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px}
+input[type=range]{accent-color:var(--mint);width:100%}
+.clips{display:grid;gap:10px}.clip{display:grid;grid-template-columns:88px 1fr auto;gap:12px;align-items:center;background:#101720;border:1px solid #293746;border-radius:12px;padding:9px}
+.thumb{width:88px;aspect-ratio:16/9;background:#243341;border-radius:7px;object-fit:cover}.clip-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.clip-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.range-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.range-row label{font-size:10px;color:var(--muted)}
+.range-row input{display:block;width:100%;padding:6px 8px;border:1px solid var(--line);background:#0d141b;color:white;border-radius:7px}
+.icon-btn{padding:7px 10px}
+.add-row{display:flex;gap:9px;margin-top:12px}.add-row button{flex:1}.hint{font-size:12px;line-height:1.45;color:var(--muted);margin:12px 0 0}
+.stack{display:grid;gap:17px}
+.export-row{display:flex;gap:10px;align-items:center;margin-top:14px}.export-row .primary{flex:1}.status{min-height:22px;color:var(--muted);font-size:12px;margin-top:10px}
+.drop{border:1px dashed #59717e;border-radius:12px;padding:16px;text-align:center;color:var(--muted);font-size:13px;background:#101720}.drop strong{color:var(--text)}.drop.drag{border-color:var(--mint);background:#123027}
+audio{width:100%;margin-top:9px;height:38px}
+footer{text-align:center;color:#718090;font-size:12px;padding:22px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.intro{align-items:start;flex-direction:column}.screen-wrap canvas{max-height:46vh}.panel{padding:15px}}
+@media(max-width:480px){header{height:56px}.grid{gap:12px}.clip{grid-template-columns:70px 1fr auto;gap:8px;padding:8px}.thumb{width:70px}.panel{border-radius:14px}.settings{gap:9px}.field{min-width:calc(50% - 9px)}}
+</style>
+</head>
+<body>
+<header><div class="brand"><span class="mark">▶</span><span>DuoForge <small>Trailer Maker</small></span></div><button class="ghost" id="clearAll">Börja om</button></header>
+<main>
+<section class="intro"><div><div class="eyebrow">lokal videoredigering</div><h1>Gör en trailer av dina klipp</h1><p>Välj scener, trimma dem, lägg till titel och musik. Allt stannar i webbläsaren på din enhet.</p></div><div class="sub" id="clipCount">Inga klipp ännu</div></section>
+<div class="grid">
+<div class="stack">
+<section class="panel">
+<div class="heading"><h2>Förhandsvisning</h2><span class="sub" id="durationText">0 sek</span></div>
+<div class="screen-wrap"><canvas id="stage" width="1280" height="720" aria-label="Trailerförhandsvisning"></canvas></div>
+<div class="preview-actions"><button id="play">▶ Spela trailer</button><button id="stop" class="ghost">■ Stopp</button></div>
+<div class="settings">
+<label class="field"><span>Format</span><select id="aspect"><option value="16:9">16:9 · YouTube</option><option value="9:16">9:16 · Reels / TikTok</option><option value="1:1">1:1 · Flöde</option></select></label>
+<label class="field"><span>Trailertitel</span><input id="title" type="text" maxlength="60" value="DITT SPEL"></label>
+<label class="field"><span>Underrubrik</span><input id="subtitle" type="text" maxlength="90" placeholder="Ett nytt äventyr börjar"></label>
+</div>
+</section>
+<section class="panel">
+<div class="heading"><h2>Scener i trailern</h2><span class="sub">Dra filer hit eller lägg till</span></div>
+<div class="drop" id="drop"><strong>Lägg till videoklipp</strong><br>MP4, MOV, WebM · välj flera samtidigt</div>
+<input id="files" type="file" accept="video/*" multiple hidden>
+<div id="clips" class="clips" style="margin-top:10px"></div>
+<div class="add-row"><button id="addClips">＋ Lägg till klipp</button><button id="addMusic" class="ghost">♫ Lägg till musik</button></div>
+<input id="music" type="file" accept="audio/*" hidden>
+<audio id="audioPlayer" controls hidden></audio>
+<p class="hint">Klippordningen bestämmer trailerns flöde. Använd pilarna på varje klipp för att flytta en scen.</p>
+</section>
+</div>
+<div class="stack">
+<section class="panel">
+<div class="heading"><h2>Exportera trailer</h2><span class="sub">Renderas på enheten</span></div>
+<label class="field"><span>Bildkvalitet</span><select id="quality"><option value="1280">Hög · 720p</option><option value="1920">Max · 1080p</option></select></label>
+<div class="export-row"><button class="primary" id="export">🎬 Skapa och ladda ner</button></div>
+<div class="status" id="status" role="status" aria-live="polite">Lägg till minst ett videoklipp för att börja.</div>
+<p class="hint">Export spelas in i realtid, så en trailer på 30 sekunder tar ungefär 30 sekunder att skapa. Filformatet beror på webbläsarens stöd (vanligen WebM).</p>
+</section>
+<section class="panel">
+<div class="heading"><h2>Så blir trailern bäst</h2></div>
+<p class="hint">Börja med en stark miljöbild. Varva snabba ögonblick med lugnare scener och avsluta med titelbilden. För en kort speltrailer fungerar ofta 15–30 sekunder bra.</p>
+</section>
+</div>
+</div>
+</main>
+<footer>Trailer Maker · bearbetning sker lokalt i webbläsaren</footer>
+<script type="module">
+const $=id=>document.getElementById(id), clips=[], stage=$("stage"), ctx=stage.getContext("2d"), player=$("audioPlayer");
+let active=-1, raf=0, playing=false, exporting=false, musicUrl="", recorder=null, chunks=[], mixedStream=null, audioCtx=null, audioNode=null, audioDest=null;
+const setStatus=t=>$("status").textContent=t;
+function dimensions(){const [w,h]=$("aspect").value.split(":").map(Number),long=Number($("quality").value);return w>=h?[long,Math.round(long*h/w)]:[Math.round(long*w/h),long]}
+function resize(){const [w,h]=dimensions();stage.width=w;stage.height=h;stage.style.aspectRatio=w+"/"+h;renderFrame()}
+function dur(){return clips.reduce((n,c)=>n+Math.max(.25,c.end-c.start),0)}
+function updateInfo(){$("clipCount").textContent=clips.length?clips.length+" klipp":"Inga klipp ännu";$("durationText").textContent=Math.round(dur())+" sek";$("export").disabled=!clips.length||exporting}
+function drawCover(video,alpha=1){const W=stage.width,H=stage.height,vw=video.videoWidth||W,vh=video.videoHeight||H,scale=Math.max(W/vw,H/vh),sw=W/scale,sh=H/scale;ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,W,H);ctx.restore()}
+function renderFrame(){if(!clips.length){ctx.fillStyle="#101821";ctx.fillRect(0,0,stage.width,stage.height);ctx.fillStyle="#90a2b1";ctx.textAlign="center";ctx.font="600 23px system-ui";ctx.fillText("Lägg till dina videoklipp",stage.width/2,stage.height/2);return}
+const c=clips[Math.max(0,active)]||clips[0];ctx.fillStyle="#080b10";ctx.fillRect(0,0,stage.width,stage.height);if(c.video.readyState>=2)drawCover(c.video);
+const title=$("title").value.trim(),sub=$("subtitle").value.trim();const H=stage.height,W=stage.width,fade=Math.min(1,(performance.now()%5000)/650);
+ctx.save();const g=ctx.createLinearGradient(0,H*.48,0,H);g.addColorStop(0,"#0000");g.addColorStop(1,"#000c");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.globalAlpha=fade;ctx.fillStyle="#fff";ctx.textAlign="center";ctx.shadowColor="#0009";ctx.shadowBlur=18;ctx.font="900 "+Math.round(H*.075)+"px system-ui";ctx.fillText(title,W/2,H*.82,W*.88);
+if(sub){ctx.font="500 "+Math.round(H*.029)+"px system-ui";ctx.fillStyle="#d8e4e8";ctx.fillText(sub,W/2,H*.88,W*.84)}ctx.restore()}
+function list(){const root=$("clips");root.replaceChildren();clips.forEach((c,i)=>{const row=document.createElement("article");row.className="clip";const img=document.createElement("canvas");img.className="thumb";img.width=160;img.height=90;const t=img.getContext("2d");t.fillStyle="#1e3440";t.fillRect(0,0,160,90);t.fillStyle="#fff";t.font="12px system-ui";t.fillText("Scen "+(i+1),10,49);if(c.video.readyState>=2){const scale=Math.max(160/c.video.videoWidth,90/c.video.videoHeight),sw=160/scale,sh=90/scale;t.drawImage(c.video,(c.video.videoWidth-sw)/2,(c.video.videoHeight-sh)/2,sw,sh,0,0,160,90)}
+const body=document.createElement("div"),name=document.createElement("div"),meta=document.createElement("div"),ranges=document.createElement("div");name.className="clip-name";name.textContent=c.file.name;meta.className="clip-meta";meta.textContent=(c.end-c.start).toFixed(1)+" s";
+ranges.className="range-row";for(const [label,key,val] of [["In","start",c.start],["Ut","end",c.end]]){const wrap=document.createElement("label");wrap.textContent=label+" (s)";const input=document.createElement("input");input.type="number";input.min=key==="start"?"0":String(c.start+.25);input.max=String(c.video.duration||9999);input.step=".1";input.value=val.toFixed(1);input.onchange=()=>{const n=Math.max(0,Math.min(c.video.duration||9999,Number(input.value)||0));if(key==="start")c.start=Math.min(n,c.end-.25);else c.end=Math.max(n,c.start+.25);input.value=c[key].toFixed(1);meta.textContent=(c.end-c.start).toFixed(1)+" s";updateInfo();renderFrame()};wrap.append(input);ranges.append(wrap)}
+body.append(name,meta,ranges);const actions=document.createElement("div");for(const [symbol,fn,label] of [["↑",()=>move(i,-1),"Flytta upp"],["↓",()=>move(i,1),"Flytta ner"],["×",()=>remove(i),"Ta bort"]]){const b=document.createElement("button");b.className="icon-btn"+(symbol==="×"?" danger":"");b.textContent=symbol;b.title=label;b.setAttribute("aria-label",label);b.disabled=(symbol==="↑"&&i===0)||(symbol==="↓"&&i===clips.length-1);b.onclick=fn;actions.append(b)}row.append(img,body,actions);row.onclick=e=>{if(e.target.closest("button")||e.target.tagName==="INPUT")return;active=i;c.video.currentTime=c.start;c.video.pause();renderFrame()};root.append(row)});updateInfo()}
+function move(i,d){const j=i+d;if(j<0||j>=clips.length)return;[clips[i],clips[j]]=[clips[j],clips[i]];active=j;list();renderFrame()}
+function remove(i){URL.revokeObjectURL(clips[i].url);clips.splice(i,1);active=Math.min(active,clips.length-1);list();renderFrame()}
+function addFiles(files){for(const file of [...files]){if(!file.type.startsWith("video/"))continue;const url=URL.createObjectURL(file),video=document.createElement("video");video.src=url;video.muted=true;video.playsInline=true;video.preload="metadata";const item={file,url,video,start:0,end:0};video.onloadedmetadata=()=>{item.end=video.duration||1;list();renderFrame()};video.onerror=()=>setStatus("Det gick inte att läsa "+file.name+" på den här enheten.");clips.push(item)}active=clips.length-1;list();updateInfo()}
+function seekTo(t){let n=0;for(let i=0;i<clips.length;i++){const len=clips[i].end-clips[i].start;if(t<n+len){active=i;clips[i].video.currentTime=clips[i].start+(t-n);return}n+=len}active=clips.length-1;if(active>=0)clips[active].video.currentTime=clips[active].end}
+async function run({record=false}={}){if(!clips.length)return;playing=true;exporting=record;updateInfo();$("play").disabled=true;setStatus(record?"Spelar in trailern i realtid …":"Spelar förhandsvisning …");const total=dur(),start=performance.now();
+if(record){try{if(!stage.captureStream||!window.MediaRecorder)throw Error("Den här webbläsaren saknar videoinspelning.");
+const stream=stage.captureStream(30);if(musicUrl){audioCtx ||=new(window.AudioContext||window.webkitAudioContext)();audioDest=audioCtx.createMediaStreamDestination();audioNode ||=audioCtx.createMediaElementSource(player);audioNode.connect(audioDest);audioNode.connect(audioCtx.destination);await audioCtx.resume();player.currentTime=0;await player.play();audioDest.stream.getAudioTracks().forEach(t=>stream.addTrack(t))}
+const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/mp4"].find(m=>MediaRecorder.isTypeSupported(m))||"video/webm";recorder=new MediaRecorder(stream,{mimeType:mime});chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{if(!record)return;const blob=new Blob(chunks,{type:recorder.mimeType||"video/webm"});if(blob.size){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="duoforge-trailer."+(blob.type.includes("mp4")?"mp4":"webm");a.click();setTimeout(()=>URL.revokeObjectURL(url),15000);setStatus("Trailer färdig – filen laddades ner.")}else setStatus("Exporten blev tom. Prova igen med kortare klipp.");mixedStream?.getTracks().forEach(t=>t.stop());mixedStream=null;exporting=false;updateInfo();$("play").disabled=false};recorder.start(500);mixedStream=stream}catch(e){setStatus(e.message);playing=false;exporting=false;updateInfo();$("play").disabled=false;return}}
+async function frame(){if(!playing)return;const elapsed=(performance.now()-start)/1000;if(elapsed>=total){playing=false;renderFrame();if(record&&recorder?.state==="recording")recorder.stop();player.pause();if(!record)setStatus("Förhandsvisningen är klar.");if(!record)$("play").disabled=false;return}
+seekTo(elapsed);const c=clips[active];if(c?.video.readyState>=2&&c.video.paused)await c.video.play().catch(()=>{});renderFrame();raf=requestAnimationFrame(frame)}
+await frame()}
+function stop(){playing=false;cancelAnimationFrame(raf);clips.forEach(c=>c.video.pause());player.pause();if(recorder?.state==="recording")recorder.stop();mixedStream?.getTracks().forEach(t=>t.stop());mixedStream=null;exporting=false;$("play").disabled=false;updateInfo();setStatus("Stoppad.")}
+$("files").onchange=e=>{addFiles(e.target.files);e.target.value=""};$("addClips").onclick=()=>$("files").click();$("drop").onclick=()=>$("files").click();$("drop").ondragover=e=>{e.preventDefault();$("drop").classList.add("drag")};$("drop").ondragleave=()=>$("drop").classList.remove("drag");$("drop").ondrop=e=>{e.preventDefault();$("drop").classList.remove("drag");addFiles(e.dataTransfer.files)};
+$("addMusic").onclick=()=>$("music").click();$("music").onchange=e=>{const f=e.target.files[0];if(!f)return;if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(f);player.src=musicUrl;player.hidden=false;player.load();e.target.value=""};
+$("play").onclick=()=>run();$("export").onclick=()=>run({record:true});$("stop").onclick=stop;$("aspect").onchange=resize;$("quality").onchange=resize;$("title").oninput=renderFrame;$("subtitle").oninput=renderFrame;
+$("clearAll").onclick=()=>{stop();clips.forEach(c=>URL.revokeObjectURL(c.url));clips.splice(0);active=-1;if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl="";player.removeAttribute("src");player.hidden=true;list();renderFrame();setStatus("Lägg till minst ett videoklipp för att börja.")};
+resize();renderFrame();updateInfo();
+</script>
+</body>
+</html>
