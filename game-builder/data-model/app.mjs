@@ -308,16 +308,35 @@ function buildGameModule(modelCode, sample, typeName) {
 
   if (supportsQuests(sample)) {
     lines.push(
-      "type DuoForgeQuestState = { quests: Array<{ id: string }>; completedQuestIds?: string[] };",
+      "type DuoForgeQuestState = {",
+      "  quests: Array<{ id: string; objectives?: string[] }>;",
+      "  completedQuestIds?: string[];",
+      "  questProgress?: Record<string, string[]>;",
+      "};",
       "",
-      "export function completeQuest<T extends DuoForgeQuestState>(",
+      "// Registrera ett mål i taget. Uppdraget blir klart när alla mål är avklarade.",
+      "export function completeQuestObjective<T extends DuoForgeQuestState>(",
       "  state: T,",
-      "  questId: string",
-      "): (T & { completedQuestIds: string[] }) | null {",
-      "  if (!state.quests.some(quest => quest.id === questId)) return null;",
-      "  const completed = state.completedQuestIds ?? [];",
-      "  if (completed.includes(questId)) return null;",
-      "  return { ...state, completedQuestIds: [...completed, questId] } as T & { completedQuestIds: string[] };",
+      "  questId: string,",
+      "  objective: string",
+      "): (T & { completedQuestIds: string[]; questProgress: Record<string, string[]> }) | null {",
+      "  const quest = state.quests.find(item => item.id === questId);",
+      "  if (!quest || !quest.objectives?.includes(objective)) return null;",
+      "  const currentProgress = state.questProgress ?? {};",
+      "  const completedObjectives = currentProgress[questId] ?? [];",
+      "  if (completedObjectives.includes(objective)) return null;",
+      "  const nextObjectives = [...completedObjectives, objective];",
+      "  const questProgress = { ...currentProgress, [questId]: nextObjectives };",
+      "  const completedQuestIds = state.completedQuestIds ?? [];",
+      "  const allObjectivesDone = quest.objectives.every(item => nextObjectives.includes(item));",
+      "  const nextCompletedQuestIds = allObjectivesDone && !completedQuestIds.includes(questId)",
+      "    ? [...completedQuestIds, questId]",
+      "    : completedQuestIds;",
+      "  return {",
+      "    ...state,",
+      "    questProgress,",
+      "    completedQuestIds: nextCompletedQuestIds",
+      "  } as T & { completedQuestIds: string[]; questProgress: Record<string, string[]> };",
       "}"
     );
   }
@@ -339,6 +358,10 @@ function buildGameModule(modelCode, sample, typeName) {
   }
   if (supportsZoneRisk(sample) && sample.world.zones[0]?.id) {
     usage.push("zoneRiskScore(initialState, " + JSON.stringify(sample.world.zones[0].id) + ")");
+  }
+  if (supportsQuests(sample) && sample.quests[0]?.id && sample.quests[0]?.objectives?.[0]) {
+    usage.push("completeQuestObjective(initialState, " + JSON.stringify(sample.quests[0].id) +
+      ", " + JSON.stringify(sample.quests[0].objectives[0]) + ")");
   }
   if (usage.length) {
     lines.push("", "// Starta med exempel:", ...usage.map(line => "// " + line));
