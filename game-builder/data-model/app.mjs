@@ -128,26 +128,6 @@ loadAsklandetButton.addEventListener("click", () => {
   setStatus("Asklandet-exemplet är laddat. Välj Skapa spelmodul för att generera kod.");
 });
 
-function loadEngine() {
-  if (!enginePromise) {
-    enginePromise = (async () => {
-      let wasmAvailable = false;
-      try {
-        const response = await fetch(wasmUrl, { mode: "cors" });
-        if (!response.ok) throw new Error("WASM download failed");
-        const bytes = await response.arrayBuffer();
-        globalThis[Symbol.for("quicktype-core.wasmModule")] = await WebAssembly.compile(bytes);
-        wasmAvailable = true;
-      } catch {
-        globalThis[Symbol.for("quicktype-core.wasmModule")] = undefined;
-      }
-      const api = await import(apiUrl);
-      return { api, wasmAvailable };
-    })();
-  }
-  return enginePromise;
-}
-
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
