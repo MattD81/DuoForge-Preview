@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#08111d">
-  <meta name="description" content="Gör JSON-exempel till typad kod direkt i DuoForge Game Builder.">
-  <title>JSON → datamodell · DuoForge</title>
+  <meta name="description" content="Skapa typade speldata och TypeScript-spelmoduler i DuoForge.">
+  <title>JSON → spelkod · DuoForge</title>
   <link rel="stylesheet" href="./data-model.css">
 </head>
 <body>
@@ -19,14 +19,14 @@
   <main class="layout">
     <section class="intro">
       <div class="eyebrow">UTVECKLARVERKTYG · QUICKERTYPE</div>
-      <h1 id="tool-title">Från JSON till<br><em>speldata.</em></h1>
-      <p>Skapa typad kod från ett JSON-exempel för spelinställningar, sparfiler och API-svar. Exemplet stannar i webbläsaren.</p>
+      <h1 id="tool-title">Från JSON till<br><em>spelbar kod.</em></h1>
+      <p>Skapa en typad datamodell eller en DuoForge-spelmodul med startläge och spelmekanik som matchar din data. Exemplet stannar i webbläsaren.</p>
     </section>
 
     <section class="workspace" aria-labelledby="tool-title">
       <div class="settings">
         <label for="root-name">Rottyp</label>
-        <input id="root-name" value="GameData" autocomplete="off" spellcheck="false">
+        <input id="root-name" value="AsklandetGame" autocomplete="off" spellcheck="false">
         <label for="language">Målspråk</label>
         <select id="language">
           <option value="typescript">TypeScript</option>
@@ -37,34 +37,35 @@
           <option value="kotlin">Kotlin</option>
           <option value="swift">Swift</option>
         </select>
+        <label for="output-mode">Kodläge</label>
+        <select id="output-mode">
+          <option value="game" selected>DuoForge-spelmodul</option>
+          <option value="types">Typad datamodell</option>
+        </select>
       </div>
+      <p id="mode-hint" class="mode-hint" aria-live="polite"></p>
 
       <div class="columns">
-        <label class="editor" for="json-input">
-          <span>JSON-exempel</span>
-          <textarea id="json-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">{
-  "player": {
-    "name": "Mira",
-    "lives": 3,
-    "position": { "x": 12, "y": 4, "z": -8 },
-    "inventory": ["key", "map"],
-    "isActive": true
-  }
-}</textarea>
+        <div class="editor">
+          <div class="editor-heading">
+            <label for="json-input">JSON-exempel</label>
+            <button id="load-asklandet" class="text-button" type="button">Återställ Asklandet</button>
+          </div>
+          <textarea id="json-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">{}</textarea>
           <small id="input-count">0 tecken</small>
-        </label>
+        </div>
         <div class="result">
-          <div class="result-heading"><label for="code-output">Genererad kod</label><span id="language-label">TypeScript</span></div>
-          <textarea id="code-output" readonly spellcheck="false" aria-label="Genererad kod" placeholder="Koden visas här när du skapar modellen."></textarea>
+          <div class="result-heading"><label for="code-output">Genererad kod</label><span id="language-label">Spelmodul · TypeScript</span></div>
+          <textarea id="code-output" readonly spellcheck="false" aria-label="Genererad kod" placeholder="Koden visas här när du skapar en spelmodul."></textarea>
         </div>
       </div>
 
       <div class="actions">
-        <button id="generate" class="primary" type="button">Skapa modell</button>
+        <button id="generate" class="primary" type="button">Skapa spelmodul</button>
         <button id="copy" class="secondary" type="button" disabled>Kopiera kod</button>
       </div>
-      <p id="status" class="status" role="status" aria-live="polite">Redo. Välj språk och skapa en modell.</p>
-      <p class="note">Första körningen hämtar Quickertypes webbmotor. Ingen AI-tjänst eller DuoForge-server tar emot JSON-innehållet.</p>
+      <p id="status" class="status" role="status" aria-live="polite">Asklandet-exemplet laddas. Skapa spelmodulen när du är redo.</p>
+      <p class="note">Första körningen hämtar Quickertypes webbmotor. Modulen byggs lokalt i webbläsaren; ingen AI-tjänst eller DuoForge-server tar emot JSON-innehållet.</p>
     </section>
   </main>
   <script type="module" src="./app.mjs"></script>
