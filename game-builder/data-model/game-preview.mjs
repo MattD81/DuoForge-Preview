@@ -141,7 +141,7 @@ export function mountGamePreview(root, source) {
     objective.textContent = activeObjective
       ? "UPPDRAG · " + firstQuest.title + " · " + doneCount + "/" + objectives.length + " mål"
       : (firstQuest ? "UPPDRAG KLART · " + firstQuest.title : "UTFORSKA OMRÅDET");
-    region.textContent = "ZON · " + (zone?.name || "Asklandet") + " · RISK " + risk + "% · HÄLSA " + health;
+    region.textContent = "ZON · " + (zone?.name || "Asklandet") + " · POS " + (x + 1) + "," + (y + 1) + " · RISK " + risk + "% · HÄLSA " + health;
     inventory.textContent = state.player.inventory.length
       ? "PACKNING · " + state.player.inventory.map(item => (item.name || item.id) + " ×" + item.quantity).join("  ·  ")
       : "PACKNING · tom";
