@@ -41,6 +41,14 @@ export function mountGamePreview(root, source) {
   message.setAttribute("role", "status");
   message.setAttribute("aria-live", "polite");
 
+  function actionButton(label, ariaLabel) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.setAttribute("aria-label", ariaLabel);
+    return button;
+  }
+
   const moveButtons = [
     ["up", "↑", "Gå upp"],
     ["left", "←", "Gå vänster"],
@@ -465,13 +473,15 @@ export function mountGamePreview(root, source) {
   }
 
   const keys = { ArrowUp: "up", w: "up", W: "up", ArrowDown: "down", s: "down", S: "down", ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right" };
-  canvas.addEventListener("keydown", event => {
+  const onKeyDown = event => {
     const direction = keys[event.key];
     if (direction) { event.preventDefault(); move(direction); return; }
     if (event.key === "e" || event.key === "E" || event.key === " " || event.key === "Enter") { event.preventDefault(); interact(); }
     if (event.key === "c" || event.key === "C") { event.preventDefault(); craft(); }
     if (event.key === "r" || event.key === "R") { event.preventDefault(); repair(); }
-  });
+  };
+  canvas.addEventListener("keydown", onKeyDown);
+
   interactButton.addEventListener("click", interact);
   craftButton.addEventListener("click", craft);
   repairButton.addEventListener("click", repair);
@@ -481,6 +491,6 @@ export function mountGamePreview(root, source) {
   return () => {
     active = false;
     if (animationFrame) cancelAnimationFrame(animationFrame);
-    canvas.removeEventListener("keydown", () => {});
+    canvas.removeEventListener("keydown", onKeyDown);
   };
 }
