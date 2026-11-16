@@ -62,11 +62,13 @@
 
       <div class="actions">
         <button id="generate" class="primary" type="button">Skapa spelmodul</button>
+        <button id="play-preview" class="secondary" type="button" disabled>Spela direkt ▶</button>
         <button id="copy" class="secondary" type="button" disabled>Kopiera kod</button>
       </div>
       <p id="status" class="status" role="status" aria-live="polite">Asklandet-exemplet laddas. Skapa spelmodulen när du är redo.</p>
       <p class="note">Första körningen hämtar Quickertypes webbmotor. Modulen byggs lokalt i webbläsaren; ingen AI-tjänst eller DuoForge-server tar emot JSON-innehållet.</p>
     </section>
+    <section id="playground" class="playground" aria-label="Spelbar förhandsvisning" hidden></section>
   </main>
   <script type="module" src="./app.mjs"></script>
 </body>
