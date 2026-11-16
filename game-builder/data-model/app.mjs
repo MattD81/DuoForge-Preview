@@ -12,6 +12,7 @@ const status = document.querySelector("#status");
 const count = document.querySelector("#input-count");
 const languageLabel = document.querySelector("#language-label");
 const modeHint = document.querySelector("#mode-hint");
+let disposeGamePreview;
 const playButton = document.querySelector("#play-preview");
 const playground = document.querySelector("#playground");
 
@@ -136,7 +137,8 @@ playButton.addEventListener("click", () => {
   try {
     const sample = JSON.parse(jsonInput.value);
     playground.hidden = false;
-    mountGamePreview(playground, sample);
+    if (disposeGamePreview) disposeGamePreview();
+    disposeGamePreview = mountGamePreview(playground, sample);
     playground.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch {
     setStatus("Skapa om spelmodulen efter att du har rättat JSON-exemplet.", true);
