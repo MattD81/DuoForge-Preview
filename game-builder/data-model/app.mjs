@@ -1,3 +1,5 @@
+import { mountGamePreview } from "./game-preview.mjs";
+
 const jsonInput = document.querySelector("#json-input");
 const rootName = document.querySelector("#root-name");
 const language = document.querySelector("#language");
@@ -10,6 +12,8 @@ const status = document.querySelector("#status");
 const count = document.querySelector("#input-count");
 const languageLabel = document.querySelector("#language-label");
 const modeHint = document.querySelector("#mode-hint");
+const playButton = document.querySelector("#play-preview");
+const playground = document.querySelector("#playground");
 
 const languages = new Map(Array.from(language.options, option => [option.value, option.textContent]));
 const wasmUrl = "https://cdn.jsdelivr.net/npm/quickertype-core@0.3.0/dist/native/wasm/quicktype_wasm_bg.wasm";
@@ -115,15 +119,37 @@ function updateModelLanguage() {
   languageLabel.textContent = languages.get(language.value) || language.value;
 }
 
-jsonInput.addEventListener("input", updateCount);
+jsonInput.addEventListener("input", () => {
+  updateCount();
+  playButton.disabled = true;
+  playground.hidden = true;
+});
 language.addEventListener("change", updateModelLanguage);
-outputMode.addEventListener("change", updateMode);
+outputMode.addEventListener("change", () => {
+  updateMode();
+  playButton.disabled = true;
+  playground.hidden = true;
+});
+
+playButton.addEventListener("click", () => {
+  if (outputMode.value !== "game" || !output.value) return;
+  try {
+    const sample = JSON.parse(jsonInput.value);
+    playground.hidden = false;
+    mountGamePreview(playground, sample);
+    playground.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch {
+    setStatus("Skapa om spelmodulen efter att du har rättat JSON-exemplet.", true);
+  }
+});
 
 loadAsklandetButton.addEventListener("click", () => {
   jsonInput.value = JSON.stringify(asklandetExample, null, 2);
   rootName.value = "AsklandetGame";
   output.value = "";
   copyButton.disabled = true;
+  playButton.disabled = true;
+  playground.hidden = true;
   updateCount();
   setStatus("Asklandet-exemplet är laddat. Välj Skapa spelmodul för att generera kod.");
 });
@@ -397,6 +423,8 @@ async function loadEngine() {
 generateButton.addEventListener("click", async () => {
   status.classList.remove("error");
   copyButton.disabled = true;
+  playButton.disabled = true;
+  playground.hidden = true;
   const source = jsonInput.value;
   const typeName = rootName.value.trim();
   const gameMode = outputMode.value === "game";
@@ -436,6 +464,7 @@ generateButton.addEventListener("click", async () => {
     const modelCode = result.lines.join("\n");
     output.value = gameMode ? buildGameModule(modelCode, sample, typeName) : modelCode;
     copyButton.disabled = !output.value;
+    playButton.disabled = !gameMode || !output.value;
     const systems = gameMode ? gameSystems(sample) : [];
     const resultText = gameMode
       ? "Spelmodul klar: startdata" + (systems.length ? " + " + systems.join(", ") : " + grundläggande state-uppdatering") + "."
