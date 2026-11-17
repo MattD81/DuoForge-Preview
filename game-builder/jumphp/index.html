@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#091625">
+<meta name="description" content="DuoForge JumPHP 2D — ladda och provspela färdigbyggda PHP/WebAssembly-spel.">
+<title>JumPHP 2D | DuoForge Game Builder</title>
+<link rel="stylesheet" href="./jumphp.css">
+</head>
+<body>
+<header class="bar">
+  <a class="logo" href="../">◈ DUOFORGE <span>GAME BUILDER</span></a>
+  <a href="../../">Till preview</a>
+</header>
+<main>
+  <section class="hero">
+    <span class="tag">NY MOTORADAPTER · 2D / WEBASSEMBLY · EXPERIMENT</span>
+    <h1>PHP-spel. <em>Direkt i webbläsaren.</em></h1>
+    <p>Importera en <strong>färdigbyggd</strong> JumPHP-webbversion via dess manifest och provspela den med tangentbord, touch eller gamepad. Dina 3D-spel och ordinarie spelmotorer påverkas inte.</p>
+  </section>
+  <section class="workspace">
+    <div class="card">
+      <h2>01 / Ladda en JumPHP-build</h2>
+      <form id="loadForm">
+        <label for="manifestUrl">Publik HTTPS-adress till <code>duoforge-game.json</code></label>
+        <input id="manifestUrl" type="url" spellcheck="false" autocomplete="url" placeholder="https://exempel.github.io/spel/duoforge-game.json" required>
+        <button type="submit" class="primary" id="load">◈ Läs manifest och förbered spelet</button>
+      </form>
+      <p id="status" role="status" aria-live="polite">Ingen spelbuild laddad. Börja med att ange adressen till ett manifest.</p>
+      <div id="info" hidden><h3 id="title"></h3><p id="details"></p></div>
+      <div class="actions">
+        <button id="restart" disabled>↻ Starta om</button>
+        <a id="openGame" href="#" target="_blank" rel="noopener noreferrer" hidden>↗ Öppna spelet separat</a>
+      </div>
+      <p class="small">Spelet behöver redan vara byggt med JumPHP och publicerat på en HTTPS-webbserver. Webbläsaren kan <strong>inte</strong> kompilera PHP-källkod via denna sida. Inga API-nycklar eller spelkällor laddas upp till DuoForge.</p>
+    </div>
+    <div class="card stage">
+      <div class="stage-head"><h2>02 / Spela direkt</h2><span>Keyboard · touch · gamepad</span></div>
+      <div id="viewport" class="viewport">
+        <div class="empty">Din JumPHP-spelare visas här när ett kompatibelt manifest laddas.</div>
+      </div>
+      <p class="small">Inbäddning kräver att spelservern tillåter iframes. Om en spelbuild ligger på <em>samma origin</em> som denna testmiljö öppnas den i egen flik av säkerhetsskäl. Fullskärm och gamepad fungerar bäst när spelet självt har stöd för det.</p>
+    </div>
+  </section>
+  <section class="card docs">
+    <h2>03 / Förbered ett riktigt PHP/WebAssembly-spel</h2>
+    <p>Skapa spelet med <a href="https://jumphp.net/engine" target="_blank" rel="noopener noreferrer">JumPHP</a> och bygg det till statiska webbfiler enligt motorns dokumentation. Kör därefter DuoForges manifestverktyg på <em>den färdiga build-mappen</em>:</p>
+    <pre><code>bin/jumphp build mitt-spel
+node services/jumphp/pack.mjs /sökväg/till/webb-build mitt-spel "Mitt spel"</code></pre>
+    <p>Lägg den färdiga mappen på en HTTPS-webbserver och ange adressen till dess <code>duoforge-game.json</code> ovan. <a href="../../services/jumphp/README.md">Läs integrationsanvisningarna</a>.</p>
+    <p class="small">Tekniken är fristående från DuoForge Sites i nuläget. Testmiljön laddar existerande WebAssembly-spel men bygger inte PHP, driftsätter inte spel och ger inte åtkomst till privata projekt.</p>
+  </section>
+</main>
+<footer>DUOFORGE · JUMPHP ADAPTER V1 · GitHub-preview, inte publicerad Sites-funktion</footer>
+<script type="module" src="./jumphp.mjs"></script>
+</body></html>

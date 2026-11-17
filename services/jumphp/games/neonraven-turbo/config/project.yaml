@@ -1,0 +1,10 @@
+project:
+  id: neonraven-turbo
+  title: "NEON FOX TURBO"
+  width: 320
+  height: 180
+  start_scene: App\Scene\TurboScene
+  touch: { a: Space, b: Shift, start: Return }
+  smoke:
+    scene: App\Scene\TurboScene
+    params: { demo: true }
