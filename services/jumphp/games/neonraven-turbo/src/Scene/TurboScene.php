@@ -91,7 +91,7 @@ final class TurboScene extends AbstractScene
         }
         $this->platforms = [];
         for ($x = 330; $x < $this->worldWidth - 120; $x += 280) {
-            $this->platforms[] = ['x' => (float)$x, 'y' => 105.0 - (($x / 280) % 2) * 13.0, 'w' => 76.0];
+            $this->platforms[] = ['x' => (float)$x, 'y' => 105.0 - (intdiv($x, 280) % 2) * 13.0, 'w' => 76.0];
         }
         $this->rings = [];
         for ($x = 88; $x < $this->worldWidth - 92; $x += 31) {
